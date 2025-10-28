@@ -1,0 +1,54 @@
+//  Created by homielab.com
+
+// Session Types
+"Focus" = "Focus";
+"Short Break" = "Short Break";
+"Long Break" = "Long Break";
+"cycle_format" = "Cycle %d / %d";
+
+// Controls
+"Pause" = "Pause";
+"Resume" = "Resume";
+"Start" = "Start";
+"Reset" = "Reset";
+"Skip" = "Skip";
+"Restart" = "Restart";
+
+// Settings - Durations
+"minutes_format" = "%d min";
+"Cycles" = "Cycles";
+
+// Settings - Automation & Sound
+"Start at Login" = "Start at Login";
+"Auto-start next session" = "Auto-start next session";
+"Hide Dock icon" = "Hide Dock icon";
+"Show Progress Circle" = "Show Progress Circle";
+"Keep window on top" = "Keep window on top";
+"Start at Login" = "Start at Login";
+"Alarm Sound" = "Alarm Sound";
+"Volume" = "Volume";
+
+// Settings - Language
+"Language" = "Language";
+"System Default" = "System Default";
+"English" = "English";
+"Vietnamese" = "Vietnamese";
+
+// App Actions
+"About" = "About";
+"Support" = "Support";
+"Donate" = "Donate";
+"Quit" = "Quit";
+"Version %@" = "Version %@";
+
+// Notifications
+"%@ session complete!" = "%@ session complete!";
+
+// Reset All Settings feature
+"Reset All Settings" = "Reset All Settings";
+"Reset Settings?" = "Reset Settings?";
+"This will restore all settings to their default values and restart the app. Are you sure?" = "This will restore all settings to their default values and restart the app. Are you sure?";
+"Cancel" = "Cancel";
+
+"Review on App Store" = "Review on App Store";
+"Background Color" = "Background Color";

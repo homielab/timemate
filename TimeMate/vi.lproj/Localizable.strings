@@ -1,0 +1,54 @@
+//  Created by homielab.com
+
+// Session Types
+"Focus" = "Tập trung";
+"Short Break" = "Nghỉ ngắn";
+"Long Break" = "Nghỉ dài";
+"cycle_format" = "Chu kỳ %d / %d";
+
+// Controls
+"Pause" = "Tạm dừng";
+"Resume" = "Tiếp tục";
+"Start" = "Bắt đầu";
+"Reset" = "Đặt lại";
+"Skip" = "Bỏ qua";
+"Restart" = "Bắt đầu lại";
+
+// Settings - Durations
+"minutes_format" = "%d phút";
+"Cycles" = "Chu kỳ";
+
+// Settings - Automation & Sound
+"Start at Login" = "Khởi động cùng máy";
+"Auto-start next session" = "Tự động bắt đầu phiên tiếp theo";
+"Hide Dock icon" = "Ẩn biểu tượng trên Dock";
+"Show Progress Circle" = "Hiển thị vòng tiếng trình";
+"Keep window on top" = "Giữ cửa sổ luôn hiện trên";
+"Start at Login" = "Tự khởi động khi đăng nhập";
+"Alarm Sound" = "Âm báo";
+"Volume" = "Âm lượng";
+
+// Settings - Language
+"Language" = "Ngôn ngữ";
+"System Default" = "Mặc định hệ thống";
+"English" = "Tiếng Anh";
+"Vietnamese" = "Tiếng Việt";
+
+// App Actions
+"About" = "Về ứng dụng";
+"Support" = "Hỗ trợ";
+"Donate" = "Ủng hộ";
+"Quit" = "Thoát";
+"Version %@" = "Phiên bản %@";
+
+// Notifications
+"%@ session complete!" = "Hoàn thành phiên %@!";
+
+// Reset All Settings feature
+"Reset All Settings" = "Đặt lại Tất cả Cài đặt";
+"Reset Settings?" = "Đặt lại Cài đặt?";
+"This will restore all settings to their default values and restart the app. Are you sure?" = "Thao tác này sẽ khôi phục tất cả cài đặt về giá trị mặc định và khởi động lại ứng dụng. Bạn có chắc không?";
+"Cancel" = "Hủy";
+
+"Review on App Store" = "Đánh giá trên App Store";
+"Background Color" = "Màu nền";
