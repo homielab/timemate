@@ -24,6 +24,7 @@
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
 "Keep window on top" = "Giữ cửa sổ luôn hiện trên";
+"Keep Mac awake" = "Giữ Mac luôn mở";
 "Start at Login" = "Tự khởi động khi đăng nhập";
 "Alarm Sound" = "Âm báo";
 "Volume" = "Âm lượng";

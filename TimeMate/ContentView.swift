@@ -25,8 +25,12 @@ struct ContentView: View {
 
       if settingsVisible {
         Divider()
-        SettingsView(
-          showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex)
+        ScrollView {
+          SettingsView(
+            showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex)
+            .padding(.trailing, 8)
+        }
+        .frame(maxHeight: 450)
       }
     }
     .padding()
@@ -266,6 +270,7 @@ private struct SystemSettingsView: View {
   @AppStorage("autoStartNextSession") private var autoStartNextSession = true
   @AppStorage("alarmSound") private var alarmSound = "Glass"
   @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
+  @AppStorage("keepAwake") private var keepAwake = false
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
@@ -298,6 +303,10 @@ private struct SystemSettingsView: View {
           appDelegate.setDockIcon(hidden: newValue)
         }
       Toggle("Keep window on top", isOn: $alwaysVisible)
+      Toggle("Keep Mac awake", isOn: $keepAwake)
+        .onChange(of: keepAwake) { newValue in
+          appDelegate.setKeepAwake(enabled: newValue)
+        }
       Divider()
       Toggle("Show Progress Circle", isOn: $showProgressCircle)
       Toggle("Auto-start next session", isOn: $autoStartNextSession)

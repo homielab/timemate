@@ -12,10 +12,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var popover: NSPopover!
   private let timer = PomodoroTimer()
   private var hostingController: NSHostingController<AnyView>!
+  private let sleepPreventer = SleepPreventer()
 
   // MARK: - App Lifecycle
   func applicationDidFinishLaunching(_ notification: Notification) {
     self.setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
+    self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
       _, _ in
     }
@@ -55,6 +57,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
   func setDockIcon(hidden: Bool) {
     NSApp.setActivationPolicy(hidden ? .accessory : .regular)
+  }
+  
+  func setKeepAwake(enabled: Bool) {
+    if enabled {
+      sleepPreventer.enable()
+    } else {
+      sleepPreventer.disable()
+    }
   }
 
   @objc func togglePopover() {

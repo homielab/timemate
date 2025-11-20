@@ -65,4 +65,8 @@ func resetAllSettings() {
   @objc dynamic var alwaysVisible: Bool {
     return bool(forKey: "alwaysVisible")
   }
+  
+  @objc dynamic var keepAwake: Bool {
+    return bool(forKey: "keepAwake")
+  }
 }
