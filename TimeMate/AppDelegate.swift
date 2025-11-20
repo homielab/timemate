@@ -5,7 +5,7 @@ import Combine
 import SwiftUI
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
   // MARK: - Properties
   private var statusItem: NSStatusItem!
@@ -34,7 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     hostingView.addGestureRecognizer(clickGesture)
 
     // --- Popover Setup ---
-    let contentView = ContentView().environmentObject(timer)
+    let contentView = ContentView().environmentObject(timer).environmentObject(self)
     hostingController = NSHostingController(rootView: AnyView(contentView))
     popover = NSPopover()
     popover.behavior = UserDefaults.standard.alwaysVisible ? .applicationDefined : .transient

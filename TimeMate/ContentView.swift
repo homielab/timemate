@@ -8,9 +8,8 @@ import SwiftUI
 
 struct ContentView: View {
   @EnvironmentObject var timer: PomodoroTimer
+  @EnvironmentObject var appDelegate: AppDelegate
   @State private var settingsVisible = false
-
-  private let appDelegate = NSApp.delegate as? AppDelegate
 
   @AppStorage("backgroundColorHex") private var backgroundColorHex: String = ""
   @AppStorage("showProgressCircle") private var showProgressCircle = true
@@ -39,7 +38,7 @@ struct ContentView: View {
       }
     }
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
-      appDelegate?.updatePopoverSize()
+      appDelegate.updatePopoverSize()
     }
   }
 }
