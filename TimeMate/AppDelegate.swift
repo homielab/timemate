@@ -66,6 +66,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       sleepPreventer.disable()
     }
   }
+  
+  func setPopoverBehavior(alwaysVisible: Bool) {
+    popover.behavior = alwaysVisible ? .applicationDefined : .transient
+  }
 
   @objc func togglePopover() {
     guard let view = statusItem.view else { return }

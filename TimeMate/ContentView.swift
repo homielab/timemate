@@ -136,6 +136,8 @@ private struct SettingsButton: View {
         Image(systemName: "gearshape.fill")
         Image(systemName: settingsVisible ? "chevron.up" : "chevron.down")
           .font(.system(size: 10, weight: .bold))
+          .rotationEffect(.degrees(settingsVisible ? 0 : 0))
+          .animation(.easeInOut(duration: 0.3), value: settingsVisible)
       }
       .padding(5)
       .contentShape(Rectangle())
@@ -303,6 +305,9 @@ private struct SystemSettingsView: View {
           appDelegate.setDockIcon(hidden: newValue)
         }
       Toggle("Keep window on top", isOn: $alwaysVisible)
+        .onChange(of: alwaysVisible) { newValue in
+          appDelegate.setPopoverBehavior(alwaysVisible: newValue)
+        }
       Toggle("Keep Mac awake", isOn: $keepAwake)
         .onChange(of: keepAwake) { newValue in
           appDelegate.setKeepAwake(enabled: newValue)
