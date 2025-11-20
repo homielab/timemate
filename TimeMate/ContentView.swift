@@ -255,6 +255,7 @@ private struct SettingsView: View {
 }
 
 private struct SystemSettingsView: View {
+  @EnvironmentObject var appDelegate: AppDelegate
   @Binding var showProgressCircle: Bool
   @Binding var backgroundColorHex: String
 
@@ -293,6 +294,9 @@ private struct SystemSettingsView: View {
         }
 
       Toggle("Hide Dock icon", isOn: $hideDockIcon)
+        .onChange(of: hideDockIcon) { newValue in
+          appDelegate.setDockIcon(hidden: newValue)
+        }
       Toggle("Keep window on top", isOn: $alwaysVisible)
       Divider()
       Toggle("Show Progress Circle", isOn: $showProgressCircle)

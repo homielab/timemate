@@ -53,7 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
   }
 
-  private func setDockIcon(hidden: Bool) {
+  func setDockIcon(hidden: Bool) {
     NSApp.setActivationPolicy(hidden ? .accessory : .regular)
   }
 
