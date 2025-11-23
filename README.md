@@ -36,6 +36,9 @@ I wanted something that would just sit quietly in my menu bar, do its job, and s
 - **Clean & Minimal Design**: The interface is built to be functional and unobtrusive. It's a tool, not a distraction.
 - **Lightweight & Native**: Built for macOS, it's efficient and uses minimal system resources.
 - **Multi-Language**: Supports both English and Vietnamese.
+- **Full-Screen Break Overlay**: A beautiful, immersive overlay encourages you to take a real break (customizable).
+- **Keep Mac Awake**: Option to prevent your Mac from sleeping during focus sessions.
+- **Customizable Experience**: Toggle notifications, overlay, and dock icon visibility to suit your workflow.
 
 ## 🚀 Why Use TimeMate?
 

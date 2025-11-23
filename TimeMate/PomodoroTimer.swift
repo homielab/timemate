@@ -139,7 +139,10 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+
   private func sendNotification() {
+    guard notificationsEnabled else { return }
     print("DEBUG: Firing notification for session \(currentSessionType.rawValue)...")
 
     let content = UNMutableNotificationContent()

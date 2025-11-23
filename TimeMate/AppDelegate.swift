@@ -13,11 +13,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private let timer = PomodoroTimer()
   private var hostingController: NSHostingController<AnyView>!
   private let sleepPreventer = SleepPreventer()
+  private var breakOverlayController: BreakOverlayWindowController!
 
   // MARK: - App Lifecycle
   func applicationDidFinishLaunching(_ notification: Notification) {
     self.setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
     self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
+
+    // Register defaults
+    UserDefaults.standard.register(defaults: [
+      "overlayEnabled": true,
+      "notificationsEnabled": true,
+      "keepAwake": false,
+      "hideDockIcon": true,
+      "alwaysVisible": false,
+      "showProgressCircle": true,
+      "autoStartNextSession": true,
+    ])
+
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
       _, _ in
     }
@@ -47,6 +60,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       self.togglePopover()
     }
+
+    // --- Break Overlay ---
+    breakOverlayController = BreakOverlayWindowController(timer: timer)
   }
 
   func updatePopoverSize() {
@@ -58,7 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   func setDockIcon(hidden: Bool) {
     NSApp.setActivationPolicy(hidden ? .accessory : .regular)
   }
-  
+
   func setKeepAwake(enabled: Bool) {
     if enabled {
       sleepPreventer.enable()
@@ -66,7 +82,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       sleepPreventer.disable()
     }
   }
-  
+
   func setPopoverBehavior(alwaysVisible: Bool) {
     popover.behavior = alwaysVisible ? .applicationDefined : .transient
   }

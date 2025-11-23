@@ -27,8 +27,9 @@ struct ContentView: View {
         Divider()
         ScrollView {
           SettingsView(
-            showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex)
-            .padding(.trailing, 8)
+            showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex
+          )
+          .padding(.trailing, 8)
         }
         .frame(maxHeight: 450)
       }
@@ -273,6 +274,8 @@ private struct SystemSettingsView: View {
   @AppStorage("alarmSound") private var alarmSound = "Glass"
   @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
   @AppStorage("keepAwake") private var keepAwake = false
+  @AppStorage("overlayEnabled") private var overlayEnabled = true
+  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
@@ -312,6 +315,9 @@ private struct SystemSettingsView: View {
         .onChange(of: keepAwake) { newValue in
           appDelegate.setKeepAwake(enabled: newValue)
         }
+      Divider()
+      Toggle(LocalizedStringKey("Enable Break Overlay"), isOn: $overlayEnabled)
+      Toggle(LocalizedStringKey("Enable Notifications"), isOn: $notificationsEnabled)
       Divider()
       Toggle("Show Progress Circle", isOn: $showProgressCircle)
       Toggle("Auto-start next session", isOn: $autoStartNextSession)

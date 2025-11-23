@@ -53,3 +53,12 @@
 
 "Review on App Store" = "Review on App Store";
 "Background Color" = "Background Color";
+
+// Overlay Features
+"Enable Break Overlay" = "Enable Break Overlay";
+"Enable Notifications" = "Enable Notifications";
+"Relax your eyes..." = "Relax your eyes...";
+"Take a deep breath" = "Take a deep breath";
+"Skip Break" = "Skip Break";
+"Press Esc twice to skip" = "Press Esc twice to skip";
+"Skip available in %d" = "Skip available in %d";
