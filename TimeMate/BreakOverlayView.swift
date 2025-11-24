@@ -22,7 +22,8 @@ struct BreakOverlayView: View {
   @State private var showSkipButton = false
   @State private var countdown = 5
   @State private var isAnimating = false
-
+  @State private var currentTip = ""
+  
   let timerPublisher = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   var body: some View {
@@ -54,19 +55,14 @@ struct BreakOverlayView: View {
             .animation(.easeOut(duration: 1.5), value: isAnimating)
 
           VStack(spacing: 10) {
-            Text(LocalizedStringKey("Relax your eyes..."))
-              .font(.system(size: 40, weight: .light))
-              .foregroundColor(.white.opacity(0.8))
+            Text(LocalizedStringKey(currentTip))
+              .font(.system(size: 32, weight: .light))
+              .multilineTextAlignment(.center)
+              .foregroundColor(.white.opacity(0.9))
+              .padding(.horizontal, 40)
               .opacity(isAnimating ? 1 : 0)
               .offset(y: isAnimating ? 0 : 20)
               .animation(.easeOut(duration: 1.0).delay(0.3), value: isAnimating)
-
-            Text(LocalizedStringKey("Take a deep breath"))
-              .font(.system(size: 24, weight: .thin))
-              .foregroundColor(.white.opacity(0.6))
-              .opacity(isAnimating ? 1 : 0)
-              .offset(y: isAnimating ? 0 : 20)
-              .animation(.easeOut(duration: 1.0).delay(0.6), value: isAnimating)
           }
 
           Text(timer.timeRemaining.toMinuteSecondString())
@@ -122,6 +118,7 @@ struct BreakOverlayView: View {
     }
     .onAppear {
       isAnimating = true
+      currentTip = RelaxationTips.random()
     }
     .onReceive(timerPublisher) { input in
       currentTime = input
@@ -131,6 +128,7 @@ struct BreakOverlayView: View {
       {
         if !isAnimating {
           isAnimating = true
+          currentTip = RelaxationTips.random()
         }
         if countdown > 0 {
           countdown -= 1
