@@ -92,11 +92,13 @@ struct BreakOverlayView: View {
                 .padding(.vertical, 12)
                 .background(
                   Capsule()
+                    .fill(Color.white.opacity(0.1))
+                )
+                .overlay(
+                  Capsule()
                     .strokeBorder(Color.white, lineWidth: 2)
-                    .background(Color.white.opacity(0.1))
                 )
                 .contentShape(Capsule())
-                .clipped()
             }
             .buttonStyle(.plain)
             .transition(.opacity)
