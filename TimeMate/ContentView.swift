@@ -37,6 +37,7 @@ struct ContentView: View {
     .padding()
     .frame(minWidth: 280)
     .background(Color(hex: backgroundColorHex) ?? .clear)
+    .contentShape(Rectangle())
     .onChange(of: [focusDuration, shortBreakDuration, longBreakDuration]) { _ in
       if timer.state == .idle {
         timer.stopTimer()
@@ -276,6 +277,7 @@ private struct SystemSettingsView: View {
   @AppStorage("keepAwake") private var keepAwake = false
   @AppStorage("overlayEnabled") private var overlayEnabled = true
   @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+  @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
@@ -319,6 +321,10 @@ private struct SystemSettingsView: View {
       Toggle(LocalizedStringKey("Enable Break Overlay"), isOn: $overlayEnabled)
       Toggle(LocalizedStringKey("Enable Notifications"), isOn: $notificationsEnabled)
       Divider()
+      Toggle("Hide time in menu bar", isOn: $hideMenuBarTime)
+        .onChange(of: hideMenuBarTime) { newValue in
+          appDelegate.updateMenuBarWidth(hideTime: newValue)
+        }
       Toggle("Show Progress Circle", isOn: $showProgressCircle)
       Toggle("Auto-start next session", isOn: $autoStartNextSession)
       Picker("Alarm Sound", selection: $alarmSound) {
