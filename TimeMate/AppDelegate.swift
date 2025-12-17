@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var hostingController: NSHostingController<AnyView>!
   private let sleepPreventer = SleepPreventer()
   private var breakOverlayController: BreakOverlayWindowController!
+  @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   // MARK: - App Lifecycle
   func applicationDidFinishLaunching(_ notification: Notification) {
@@ -37,26 +38,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     NSColorPanel.shared.showsAlpha = true
 
-    statusItem = NSStatusBar.system.statusItem(withLength: 90)
+    let initialWidth = hideMenuBarTime ? 24.0 : 90.0
+    statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
 
-    let menuBarView = MenuBarView(timer: timer)
+    let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
     let hostingView = NSHostingView(rootView: menuBarView)
-    hostingView.frame = NSRect(x: 0, y: 0, width: 90, height: NSStatusBar.system.thickness)
+    hostingView.frame = NSRect(x: 0, y: 0, width: initialWidth, height: NSStatusBar.system.thickness)
 
-    statusItem.view = hostingView
+    statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
+    statusItem.button?.addSubview(hostingView)
+    hostingView.frame = statusItem.button?.bounds ?? .zero
 
-    let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(togglePopover))
-    hostingView.addGestureRecognizer(clickGesture)
+    statusItem.button?.target = self
+    statusItem.button?.action = #selector(togglePopover)
 
     // --- Popover Setup ---
     let contentView = ContentView().environmentObject(timer).environmentObject(self)
     hostingController = NSHostingController(rootView: AnyView(contentView))
     popover = NSPopover()
-    popover.behavior = UserDefaults.standard.alwaysVisible ? .applicationDefined : .transient
+    popover.behavior = .transient
     popover.contentViewController = hostingController
 
     // --- Initial State ---
     updatePopoverSize()
+    NSApp.activate(ignoringOtherApps: true)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       self.togglePopover()
     }
@@ -84,23 +89,53 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   }
 
   func setPopoverBehavior(alwaysVisible: Bool) {
-    popover.behavior = alwaysVisible ? .applicationDefined : .transient
+    // Always use transient behavior to allow closing on outside clicks
+    popover.behavior = .transient
+  }
+
+  func updateMenuBarWidth(hideTime: Bool) {
+    let newWidth = hideTime ? 24.0 : 90.0
+    let wasShown = popover.isShown
+
+    // Close popover if shown to reposition it
+    if wasShown {
+      popover.performClose(nil)
+    }
+
+    statusItem.length = newWidth
+
+    // Recreate the menu bar view to force immediate refresh
+    let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
+    let hostingView = NSHostingView(rootView: menuBarView)
+    hostingView.frame = NSRect(x: 0, y: 0, width: newWidth, height: NSStatusBar.system.thickness)
+
+    statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
+    statusItem.button?.addSubview(hostingView)
+    hostingView.frame = statusItem.button?.bounds ?? .zero
+
+    // Reopen popover if it was shown
+    if wasShown {
+      DispatchQueue.main.async {
+        self.togglePopover()
+      }
+    }
   }
 
   @objc func togglePopover() {
-    guard let view = statusItem.view else { return }
+    guard let button = statusItem.button else { return }
 
     if popover.isShown {
       popover.performClose(nil)
     } else {
-      popover.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
-      popover.contentViewController?.view.window?.becomeKey()
+      NSApp.activate(ignoringOtherApps: true)
+      popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
   }
 }
 
 private struct MenuBarView: View {
   @ObservedObject var timer: PomodoroTimer
+  @Binding var hideTime: Bool
 
   private var iconName: String {
     switch timer.state {
@@ -137,16 +172,19 @@ private struct MenuBarView: View {
     HStack(spacing: 4) {
       Image(systemName: iconName)
         .font(.system(size: NSFont.systemFontSize + 2))
+        .padding(.horizontal, 4)
+        .background(
+          RoundedRectangle(cornerRadius: 4)
+            .fill(timer.state == .active ? accentColor : .clear)
+        )
+        .foregroundColor(timer.state == .active ? .white : Color(nsColor: .headerTextColor))
 
-      Text(timer.timeRemaining.toMinuteSecondString())
-        .font(.system(size: NSFont.systemFontSize + 1, design: .monospaced).weight(.bold))
+      if !hideTime {
+        Text(timer.timeRemaining.toMinuteSecondString())
+          .font(.system(size: NSFont.systemFontSize + 1, design: .monospaced).weight(.bold))
+          .foregroundColor(foregroundColor)
+      }
     }
-    .padding(.horizontal, 8)
-    .frame(width: 90, height: NSStatusBar.system.thickness, alignment: .center)
-    .foregroundColor(foregroundColor)
-    .background(
-      RoundedRectangle(cornerRadius: 4)
-        .fill(timer.state == .active ? accentColor : .clear)
-    )
+    .frame(width: hideTime ? 24 : 90, height: NSStatusBar.system.thickness, alignment: .center)
   }
 }
