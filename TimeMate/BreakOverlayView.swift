@@ -23,7 +23,7 @@ struct BreakOverlayView: View {
   @State private var countdown = 5
   @State private var isAnimating = false
   @State private var currentTip = ""
-  
+
   let timerPublisher = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   var body: some View {

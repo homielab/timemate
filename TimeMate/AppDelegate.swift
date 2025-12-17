@@ -42,8 +42,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
 
     let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = NSHostingView(rootView: menuBarView)
-    hostingView.frame = NSRect(x: 0, y: 0, width: initialWidth, height: NSStatusBar.system.thickness)
+    let hostingView = PassThroughHostingView(rootView: menuBarView)
+    hostingView.frame = NSRect(
+      x: 0, y: 0, width: initialWidth, height: NSStatusBar.system.thickness)
 
     statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
     statusItem.button?.addSubview(hostingView)
@@ -106,7 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     // Recreate the menu bar view to force immediate refresh
     let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = NSHostingView(rootView: menuBarView)
+    let hostingView = PassThroughHostingView(rootView: menuBarView)
     hostingView.frame = NSRect(x: 0, y: 0, width: newWidth, height: NSStatusBar.system.thickness)
 
     statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
@@ -130,6 +131,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
+  }
+
+  // MARK: - Reopen Window from Dock
+  func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool
+  {
+    if !popover.isShown {
+      togglePopover()
+    }
+    return true
+  }
+}
+
+// MARK: - Pass-through hosting view for menu bar (allows clicks to reach NSStatusBarButton)
+private class PassThroughHostingView<Content: View>: NSHostingView<Content> {
+  override func hitTest(_ point: NSPoint) -> NSView? {
+    // Return nil so that clicks pass through to the underlying NSStatusBarButton
+    return nil
   }
 }
 
