@@ -25,7 +25,7 @@ struct ContentView: View {
 
       if settingsVisible {
         Divider()
-        ScrollView {
+        ScrollView(showsIndicators: false) {
           SettingsView(
             showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex
           )
@@ -230,9 +230,11 @@ private struct ControlButtonsView: View {
       .buttonStyle(.bordered).controlSize(.large).disabled(timer.state == .idle).accessibilityLabel(
         "Reset")
 
-      Button(action: mainButtonAction) { Image(systemName: mainButtonIconName).font(.title) }
-        .buttonStyle(.borderedProminent).tint(mainButtonColor).controlSize(.large)
-        .accessibilityLabel(mainButtonAccessibilityLabel)
+      Button(action: mainButtonAction) {
+        Image(systemName: mainButtonIconName)
+      }
+      .buttonStyle(.borderedProminent).tint(mainButtonColor).controlSize(.large)
+      .accessibilityLabel(mainButtonAccessibilityLabel)
 
       Button {
         timer.skipSession()
