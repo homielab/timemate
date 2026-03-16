@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
 
     let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = PassThroughHostingView(rootView: menuBarView)
+    let hostingView = PassThroughHostingView(rootView: AnyView(menuBarView))
     hostingView.frame = NSRect(
       x: 0, y: 0, width: initialWidth, height: NSStatusBar.system.thickness)
 
@@ -107,7 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     // Recreate the menu bar view to force immediate refresh
     let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = PassThroughHostingView(rootView: menuBarView)
+    let hostingView = PassThroughHostingView(rootView: AnyView(menuBarView))
     hostingView.frame = NSRect(x: 0, y: 0, width: newWidth, height: NSStatusBar.system.thickness)
 
     statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
@@ -144,7 +144,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 }
 
 // MARK: - Pass-through hosting view for menu bar (allows clicks to reach NSStatusBarButton)
-private class PassThroughHostingView<Content: View>: NSHostingView<Content> {
+// NOTE: Using AnyView instead of a generic parameter to work around a Swift 6.2 compiler crash
+// in the SIL optimizer (EarlyPerfInliner) when processing the deinit of generic NSHostingView subclasses.
+private class PassThroughHostingView: NSHostingView<AnyView> {
   override func hitTest(_ point: NSPoint) -> NSView? {
     // Return nil so that clicks pass through to the underlying NSStatusBarButton
     return nil
