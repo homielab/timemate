@@ -274,6 +274,7 @@ private struct SystemSettingsView: View {
   @AppStorage("startAtLogin") private var startAtLogin = false
 
   @AppStorage("autoStartNextSession") private var autoStartNextSession = true
+  @AppStorage("keepBreakScreenOpen") private var keepBreakScreenOpen = true
   @AppStorage("alarmSound") private var alarmSound = "Glass"
   @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
   @AppStorage("keepAwake") private var keepAwake = false
@@ -329,6 +330,7 @@ private struct SystemSettingsView: View {
         }
       Toggle("Show Progress Circle", isOn: $showProgressCircle)
       Toggle("Auto-start next session", isOn: $autoStartNextSession)
+      Toggle("Keep break screen open until continued", isOn: $keepBreakScreenOpen)
       Picker("Alarm Sound", selection: $alarmSound) {
         ForEach(soundOptions, id: \.self) { Text($0) }
       }

@@ -23,6 +23,7 @@ class PomodoroTimer: ObservableObject {
   @Published var currentSessionType: SessionType = .focus
   @Published var focusSessionsCompleted: Int = 0
   @Published var progress: Double = 1.0
+  @Published var isWaitingToContinue: Bool = false
 
   // MARK: - AppStorage Settings
   @AppStorage("focusDuration") private var focusDurationMinutes = 25
@@ -30,6 +31,7 @@ class PomodoroTimer: ObservableObject {
   @AppStorage("longBreakDuration") private var longBreakDurationMinutes = 15
   @AppStorage("longBreakInterval") private var longBreakInterval = 4
   @AppStorage("autoStartNextSession") private var autoStartNextSession = true
+  @AppStorage("keepBreakScreenOpen") private var keepBreakScreenOpen = true
   @AppStorage("alarmSound") private var alarmSound = "Glass"
   @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
 
@@ -63,7 +65,13 @@ class PomodoroTimer: ObservableObject {
           self.timer?.cancel()
           self.playSound(named: self.alarmSound)
           self.sendNotification()
-          self.advanceToNextSession()
+          
+          if self.keepBreakScreenOpen && (self.currentSessionType == .shortBreak || self.currentSessionType == .longBreak) {
+            self.isWaitingToContinue = true
+            self.state = .idle
+          } else {
+            self.advanceToNextSession()
+          }
         }
       }
   }
@@ -74,22 +82,33 @@ class PomodoroTimer: ObservableObject {
   }
 
   func stopTimer() {
+    isWaitingToContinue = false
     state = .idle
     timer?.cancel()
     resetForCurrentSession()
   }
 
   func skipSession() {
+    isWaitingToContinue = false
     timer?.cancel()
     advanceToNextSession()
   }
 
   func restartCycle() {
+    isWaitingToContinue = false
     state = .idle
     focusSessionsCompleted = 0
     currentSessionType = .focus
     timer?.cancel()
     resetForCurrentSession()
+  }
+
+  func continueWork() {
+    isWaitingToContinue = false
+    advanceToNextSession()
+    if !autoStartNextSession {
+      startTimer()
+    }
   }
 
   private func advanceToNextSession() {

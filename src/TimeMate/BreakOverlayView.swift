@@ -77,7 +77,24 @@ struct BreakOverlayView: View {
 
         // Bottom: Skip Button & Hint
         VStack(spacing: 16) {
-          if showSkipButton {
+          if timer.isWaitingToContinue {
+            Button(action: {
+              timer.continueWork()
+            }) {
+              Text(LocalizedStringKey("Continue Work"))
+                .font(.headline)
+                .foregroundColor(.black)
+                .padding(.horizontal, 40)
+                .padding(.vertical, 14)
+                .background(
+                  Capsule()
+                    .fill(Color.white)
+                )
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .transition(.opacity)
+          } else if showSkipButton {
             Button(action: {
               timer.skipSession()
             }) {
@@ -105,10 +122,17 @@ struct BreakOverlayView: View {
               .padding(.vertical, 12)
           }
 
-          Text(LocalizedStringKey("Press Esc twice to skip"))
-            .font(.caption)
-            .foregroundColor(.white.opacity(0.4))
-            .padding(.top, 8)
+          if timer.isWaitingToContinue {
+            Text(LocalizedStringKey("Press Esc twice or click to continue"))
+              .font(.caption)
+              .foregroundColor(.white.opacity(0.4))
+              .padding(.top, 8)
+          } else {
+            Text(LocalizedStringKey("Press Esc twice to skip"))
+              .font(.caption)
+              .foregroundColor(.white.opacity(0.4))
+              .padding(.top, 8)
+          }
         }
         .padding(.bottom, 60)
         .frame(height: 120)
@@ -123,9 +147,9 @@ struct BreakOverlayView: View {
     .onReceive(timerPublisher) { input in
       currentTime = input
 
-      if timer.state == .active
-        && (timer.currentSessionType == .shortBreak || timer.currentSessionType == .longBreak)
-      {
+      let isBreakActive = timer.state == .active && (timer.currentSessionType == .shortBreak || timer.currentSessionType == .longBreak)
+
+      if isBreakActive || timer.isWaitingToContinue {
         if !isAnimating {
           isAnimating = true
           currentTip = RelaxationTips.random()
