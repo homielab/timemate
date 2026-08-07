@@ -1,65 +1,71 @@
-# 🚀 TimeMate
+# TimeMate
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/homielab/timemate/main/docs/assets/icon.png" alt="TimeMate Icon" width="100" height="100" style="border-radius: 22%; border: 0.5px solid rgba(0,0,0,0.1);" />
 </p>
 
 <p align="center">
-  <a href='https://apps.apple.com/us/app/timemate-pomodoro-timer/id6754137356'>
-  <img src='https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg' alt='Download on the Mac App Store' />
-  </a>
+  <b>A lightweight, menu bar Pomodoro timer for macOS</b>
+</p>
+
+<p align="center">
+  <a href="https://homielab.com/en/page/timemate">Official Website</a> •
+  <a href="https://github.com/homielab/timemate/issues">Report Issue</a> •
+  <a href="https://ko-fi.com/homielab">Support Project</a>
 </p>
 
 ---
 
-TimeMate is a Pomodoro timer that lives in your menu bar. It helps you focus on your work and remember to take breaks.
+## Overview
 
-## 🧩 What is TimeMate?
+TimeMate is a clean, focused macOS application built around the Pomodoro Technique. Operating entirely from your menu bar, TimeMate helps you maintain deep focus and manage work-rest cycles without cluttering your desktop or Dock.
 
-TimeMate is a small, focused application for macOS built around the Pomodoro Technique. It lives entirely in your menu bar, providing a simple way to manage cycles of work and rest without adding clutter to your screen or Dock.
+By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minutes) and scheduled long breaks, TimeMate promotes sustained concentration while preventing mental fatigue.
 
-The idea is simple: work in focused sprints (e.g., 25 minutes), then take a short break (5 minutes). After a few cycles, you take a longer break. This rhythm is proven to help maintain concentration and prevent mental fatigue. TimeMate automates this process for you.
+## Key Features
 
-## 💡 Why I Built It
+- **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter.
+- **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions.
+- **Custom Session Durations**: Easily adjust timer lengths to fit your personal workflow.
+- **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.
+- **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms.
+- **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest.
+- **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
+- **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
+- **Multilingual Support**: Available in both English and Vietnamese.
+- **Native & Efficient**: Built specifically for macOS with minimal system resource usage.
 
-As a developer, I'm constantly switching between coding, research, and planning. Distractions are everywhere. I needed a tool to enforce focus, but the apps I found were either too complex, too distracting, or too resource-heavy.
-
-I wanted something that would just sit quietly in my menu bar, do its job, and stay out of my way. I couldn't find exactly what I was looking for, so I built TimeMate—first for myself, and now for anyone else who values simplicity and focus.
-
-## ⚙️ Key Features
-
-- **Lives in Your Menu Bar**: Your timer is always a single click away, without ever cluttering your desktop.
-- **Simple Pomodoro Workflow**: Automatically cycles through Focus, Short Break, and Long Break sessions.
-- **Customizable Durations**: Easily adjust the length of each session to match how you work.
-- **Automatic Transitions**: Move from work to break without any manual clicks, keeping you in the flow.
-- **Gentle Notifications**: A subtle alert lets you know when a session is over, so you don't have to watch the clock.
-- **Clean & Minimal Design**: The interface is built to be functional and unobtrusive. It's a tool, not a distraction.
-- **Lightweight & Native**: Built for macOS, it's efficient and uses minimal system resources.
-- **Multi-Language**: Supports both English and Vietnamese.
-- **Full-Screen Break Overlay**: A beautiful, immersive overlay encourages you to take a real break (customizable).
-- **Keep Mac Awake**: Option to prevent your Mac from sleeping during focus sessions.
-- **Customizable Experience**: Toggle notifications, overlay, and dock icon visibility to suit your workflow.
-
-## 🚀 Why Use TimeMate?
-
-- **To Improve Focus**: It provides a clear structure for deep work, helping you ignore distractions and dedicate your attention to a single task.
-- **To Avoid Burnout:** The regular, enforced breaks help you rest and recharge, leading to a more sustainable and productive workday.
-- **For Simplicity**: There are no unnecessary features. TimeMate is built to do one thing and do it well. It’s a simple solution for a common problem.
-
-## 🖼️ Screenshots
+## Screenshots
 
 <div class="not-prose" style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-  <img src="https://raw.githubusercontent.com/homielab/timemate/main/docs/screenshots/light.png" alt="timemate Light Mode" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
-  <img src="https://raw.githubusercontent.com/homielab/timemate/main/docs/screenshots/dark.png" alt="timemate Dark Mode" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+  <img src="https://raw.githubusercontent.com/homielab/timemate/main/docs/screenshots/light.png" alt="TimeMate Light Mode" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+  <img src="https://raw.githubusercontent.com/homielab/timemate/main/docs/screenshots/dark.png" alt="TimeMate Dark Mode" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
 </div>
 
-## 📫 Feedback & Contributions
+## Requirements & Building
 
-TimeMate was built to solve my personal workflow issue, but I’d love to improve it for others too.
-Feel free to [open an issue](https://github.com/homielab/timemate/issues) or suggest improvements!
+### Requirements
+- macOS 13.0 or later
+- Xcode 14.0 or later (for building from source)
 
-## 🤝 Support
+### Building from Source
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/homielab/timemate.git
+   ```
+2. Open the Xcode project:
+   ```bash
+   open src/TimeMate.xcodeproj
+   ```
+3. Build and run the project (`Cmd + R`) in Xcode.
 
-If you found TimeMate helpful, please consider supporting its development:
+## Feedback & Contributions
 
-[<img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' />](https://ko-fi.com/homielab)
+Contributions, bug reports, and feature requests are welcome. Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/homielab/timemate/issues).
+
+## Support
+
+If you find TimeMate helpful and would like to support its ongoing development, consider buying a coffee:
+
+[<img height="36" style="border:0px;height:36px;" src="https://storage.ko-fi.com/cdn/kofi1.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" />](https://ko-fi.com/homielab)
+
