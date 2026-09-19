@@ -24,6 +24,7 @@
 "Auto-start on launch" = "Tự động chạy khi mở ứng dụng";
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
+"Hide time in menu bar" = "Ẩn thời gian trên thanh menu";
 "Keep window on top" = "Giữ cửa sổ luôn hiện trên";
 "Keep Mac awake" = "Giữ Mac luôn mở";
 "Start at Login" = "Tự khởi động khi đăng nhập";
@@ -54,6 +55,7 @@
 
 "Review on App Store" = "Đánh giá trên App Store";
 "Background Color" = "Màu nền";
+"Clear Background Color" = "Xóa màu nền";
 
 // Overlay Features
 "Enable Break Overlay" = "Bật màn hình nghỉ ngơi";

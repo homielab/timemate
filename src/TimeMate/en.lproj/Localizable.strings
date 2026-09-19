@@ -24,6 +24,7 @@
 "Auto-start on launch" = "Auto-start on launch";
 "Hide Dock icon" = "Hide Dock icon";
 "Show Progress Circle" = "Show Progress Circle";
+"Hide time in menu bar" = "Hide time in menu bar";
 "Keep window on top" = "Keep window visible on top";
 "Keep Mac awake" = "Keep Mac awake";
 "Start at Login" = "Start at Login";
@@ -54,6 +55,7 @@
 
 "Review on App Store" = "Review on App Store";
 "Background Color" = "Background Color";
+"Clear Background Color" = "Clear Background Color";
 
 // Overlay Features
 "Enable Break Overlay" = "Enable Break Overlay";
