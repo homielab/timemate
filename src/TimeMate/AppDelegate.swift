@@ -31,6 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       "showProgressCircle": true,
       "autoStartNextSession": true,
       "autoStartOnLaunch": false,
+      "keepBreakScreenOpen": true,
     ])
 
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {

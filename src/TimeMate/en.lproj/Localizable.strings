@@ -22,6 +22,10 @@
 "Start at Login" = "Start at Login";
 "Auto-start next session" = "Auto-start next session";
 "Auto-start on launch" = "Auto-start on launch";
+"Keep break screen open until continued" = "Keep break screen open until continued";
+"Keep the break overlay on screen until you continue manually." = "Keep the break overlay on screen until you continue manually.";
+"Continue Work" = "Continue Work";
+"Press Esc twice or click to continue" = "Press Esc twice or click to continue";
 "Hide Dock icon" = "Hide Dock icon";
 "Show Progress Circle" = "Show Progress Circle";
 "Hide time in menu bar" = "Hide time in menu bar";

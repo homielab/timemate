@@ -22,6 +22,10 @@
 "Start at Login" = "Khởi động cùng máy";
 "Auto-start next session" = "Tự động bắt đầu phiên tiếp theo";
 "Auto-start on launch" = "Tự động chạy khi mở ứng dụng";
+"Keep break screen open until continued" = "Giữ màn hình nghỉ mở cho đến khi tiếp tục";
+"Keep the break overlay on screen until you continue manually." = "Giữ màn hình nghỉ hiển thị cho đến khi bạn chủ động tiếp tục.";
+"Continue Work" = "Tiếp tục làm việc";
+"Press Esc twice or click to continue" = "Nhấn Esc hai lần hoặc nhấp để tiếp tục";
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
 "Hide time in menu bar" = "Ẩn thời gian trên thanh menu";

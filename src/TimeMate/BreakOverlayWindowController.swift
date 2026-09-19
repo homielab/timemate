@@ -101,7 +101,11 @@ class BreakOverlayWindowController: NSObject {
         let now = Date()
         if let lastPress = self.lastEscPressTime, now.timeIntervalSince(lastPress) < 0.5 {
           // Double press detected
-          self.timer.skipSession()
+          if self.timer.isWaitingToContinue {
+            self.timer.continueWork()
+          } else {
+            self.timer.skipSession()
+          }
           self.lastEscPressTime = nil
         } else {
           self.lastEscPressTime = now

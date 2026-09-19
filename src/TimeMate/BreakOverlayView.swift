@@ -144,6 +144,11 @@ struct BreakOverlayView: View {
       isAnimating = true
       currentTip = RelaxationTips.random()
     }
+    .onTapGesture {
+      if timer.isWaitingToContinue {
+        timer.continueWork()
+      }
+    }
     .onReceive(timerPublisher) { input in
       currentTime = input
 

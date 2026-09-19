@@ -371,6 +371,8 @@ private struct AutomationSettingsSection: View {
     SettingsSection(titleKey: "Automation", systemImage: "play.circle") {
       SettingsToggleRow(titleKey: "Auto-start next session", isOn: $autoStartNextSession)
         .help("Start the next session automatically when the current one ends.")
+      SettingsToggleRow(titleKey: "Keep break screen open until continued", isOn: $keepBreakScreenOpen)
+        .help("Keep the break overlay on screen until you continue manually.")
       SettingsToggleRow(titleKey: "Auto-start on launch", isOn: $autoStartOnLaunch)
         .help("Start a focus session automatically when the app opens.")
     }
@@ -506,39 +508,6 @@ private struct SystemSettingsSection: View {
         .onChange(of: keepAwake) { newValue in
           appDelegate.setKeepAwake(enabled: newValue)
         }
-      Divider()
-      Toggle(LocalizedStringKey("Enable Break Overlay"), isOn: $overlayEnabled)
-      Toggle(LocalizedStringKey("Enable Notifications"), isOn: $notificationsEnabled)
-      Divider()
-      Toggle("Hide time in menu bar", isOn: $hideMenuBarTime)
-        .onChange(of: hideMenuBarTime) { newValue in
-          appDelegate.updateMenuBarWidth(hideTime: newValue)
-        }
-      Toggle("Show Progress Circle", isOn: $showProgressCircle)
-      Toggle("Auto-start next session", isOn: $autoStartNextSession)
-      Toggle("Keep break screen open until continued", isOn: $keepBreakScreenOpen)
-      Toggle("Auto-start on launch", isOn: $autoStartOnLaunch)
-      Picker("Alarm Sound", selection: $alarmSound) {
-        ForEach(soundOptions, id: \.self) { Text($0) }
-      }
-      HStack {
-        Text("Volume")
-        Slider(value: $alarmVolume, in: 0.0...1.0)
-      }
-      HStack(alignment: .center, spacing: 8) {
-        Text("Background Color")
-        CustomColorPicker(hexColor: $backgroundColorHex)
-          .fixedSize()
-
-        Button {
-          backgroundColorHex = ""
-        } label: {
-          Image(systemName: "xmark.circle.fill")
-        }
-        .buttonStyle(.plain)
-        .foregroundColor(.secondary)
-        .accessibilityLabel(Text("Clear Background Color"))
-      }
     }
   }
 }
