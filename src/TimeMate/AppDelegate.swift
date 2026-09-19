@@ -30,6 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       "alwaysVisible": false,
       "showProgressCircle": true,
       "autoStartNextSession": true,
+      "autoStartOnLaunch": false,
     ])
 
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
@@ -65,6 +66,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     NSApp.activate(ignoringOtherApps: true)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       self.togglePopover()
+    }
+
+    // --- Auto-start Timer ---
+    if UserDefaults.standard.bool(forKey: "autoStartOnLaunch") {
+      timer.startTimer()
     }
 
     // --- Break Overlay ---

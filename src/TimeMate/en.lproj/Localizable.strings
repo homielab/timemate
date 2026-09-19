@@ -21,6 +21,7 @@
 // Settings - Automation & Sound
 "Start at Login" = "Start at Login";
 "Auto-start next session" = "Auto-start next session";
+"Auto-start on launch" = "Auto-start on launch";
 "Hide Dock icon" = "Hide Dock icon";
 "Show Progress Circle" = "Show Progress Circle";
 "Keep window on top" = "Keep window visible on top";

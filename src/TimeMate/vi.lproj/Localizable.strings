@@ -21,6 +21,7 @@
 // Settings - Automation & Sound
 "Start at Login" = "Khởi động cùng máy";
 "Auto-start next session" = "Tự động bắt đầu phiên tiếp theo";
+"Auto-start on launch" = "Tự động chạy khi mở ứng dụng";
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
 "Keep window on top" = "Giữ cửa sổ luôn hiện trên";
