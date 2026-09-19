@@ -31,6 +31,18 @@
 "Alarm Sound" = "Âm báo";
 "Volume" = "Âm lượng";
 
+// Settings - Sections
+"Durations" = "Thời lượng";
+"Automation" = "Tự động hóa";
+"Alerts & Sound" = "Thông báo & Âm thanh";
+"Appearance" = "Giao diện";
+"System" = "Hệ thống";
+"About & Support" = "Giới thiệu & Hỗ trợ";
+"Preview Alarm Sound" = "Nghe thử âm báo";
+"Start the next session automatically when the current one ends." = "Tự động bắt đầu phiên tiếp theo khi phiên hiện tại kết thúc.";
+"Start a focus session automatically when the app opens." = "Tự động bắt đầu phiên tập trung khi mở ứng dụng.";
+"Prevent your Mac from going to sleep." = "Ngăn Mac của bạn chuyển sang chế độ ngủ.";
+
 // Settings - Language
 "Language" = "Ngôn ngữ";
 "System Default" = "Mặc định hệ thống";

@@ -251,37 +251,137 @@ private struct SettingsView: View {
   @Binding var backgroundColorHex: String
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      DurationSettingsView()
-      Divider()
-      SystemSettingsView(
+    VStack(alignment: .leading, spacing: 16) {
+      DurationSettingsSection()
+      AutomationSettingsSection()
+      AlertsAndSoundSettingsSection()
+      AppearanceSettingsSection(
         showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex)
-      Divider()
-      LanguageSettingsView()
-      Divider()
-      AboutAndSupportView()
+      SystemSettingsSection()
+      LanguageSettingsSection()
+      AboutAndSupportSection()
     }
   }
 }
 
-private struct SystemSettingsView: View {
-  @EnvironmentObject var appDelegate: AppDelegate
-  @Binding var showProgressCircle: Bool
-  @Binding var backgroundColorHex: String
+// MARK: - Settings Building Blocks
 
-  @AppStorage("hideDockIcon") private var hideDockIcon = true
-  @AppStorage("alwaysVisible") private var alwaysVisible = false
-  @AppStorage("startAtLogin") private var startAtLogin = false
+/// A titled group of settings: a small icon + caption header above a rounded card.
+private struct SettingsSection<Content: View>: View {
+  let titleKey: LocalizedStringKey
+  let systemImage: String
+  private let content: Content
 
+  init(titleKey: LocalizedStringKey, systemImage: String, @ViewBuilder content: () -> Content) {
+    self.titleKey = titleKey
+    self.systemImage = systemImage
+    self.content = content()
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 6) {
+        Image(systemName: systemImage)
+          .font(.system(size: 11, weight: .semibold))
+        Text(titleKey)
+          .font(.system(size: 13, weight: .semibold))
+      }
+      .foregroundColor(.secondary)
+
+      VStack(alignment: .leading, spacing: 12) {
+        content
+      }
+      .padding(.horizontal, 12)
+      .padding(.vertical, 10)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+    }
+  }
+}
+
+/// A settings row with the label on the left and a switch pinned to the right,
+/// so switches stay aligned across rows regardless of label length.
+private struct SettingsToggleRow: View {
+  let titleKey: LocalizedStringKey
+  @Binding var isOn: Bool
+
+  var body: some View {
+    HStack {
+      Text(titleKey)
+      Spacer(minLength: 12)
+      Toggle(isOn: $isOn) { EmptyView() }
+        .toggleStyle(.switch)
+        .fixedSize()
+        .accessibilityLabel(Text(titleKey))
+    }
+  }
+}
+
+// MARK: - Settings Sections
+
+private struct DurationSettingsSection: View {
+  @AppStorage("focusDuration") private var focusDuration = 25
+  @AppStorage("shortBreakDuration") private var shortBreakDuration = 5
+  @AppStorage("longBreakDuration") private var longBreakDuration = 15
+  @AppStorage("longBreakInterval") private var longBreakInterval = 4
+
+  var body: some View {
+    SettingsSection(titleKey: "Durations", systemImage: "timer") {
+      DurationRow(titleKey: "Focus", minutes: $focusDuration, range: 5...60, step: 5)
+      DurationRow(titleKey: "Short Break", minutes: $shortBreakDuration, range: 1...15, step: 1)
+      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, range: 10...30, step: 5)
+      HStack {
+        Text("Cycles")
+        Spacer(minLength: 12)
+        Text("\(longBreakInterval)")
+          .monospacedDigit()
+          .foregroundColor(.secondary)
+          .frame(width: 52, alignment: .trailing)
+        Stepper("", value: $longBreakInterval, in: 2...8).labelsHidden()
+      }
+    }
+  }
+}
+
+private struct DurationRow: View {
+  let titleKey: LocalizedStringKey
+  @Binding var minutes: Int
+  let range: ClosedRange<Int>
+  let step: Int
+
+  var body: some View {
+    HStack {
+      Text(titleKey)
+      Spacer(minLength: 12)
+      Text(String(format: NSLocalizedString("minutes_format", comment: ""), minutes))
+        .monospacedDigit()
+        .foregroundColor(.secondary)
+        .frame(width: 52, alignment: .trailing)
+      Stepper("", value: $minutes, in: range, step: step).labelsHidden()
+    }
+  }
+}
+
+private struct AutomationSettingsSection: View {
   @AppStorage("autoStartNextSession") private var autoStartNextSession = true
   @AppStorage("keepBreakScreenOpen") private var keepBreakScreenOpen = true
   @AppStorage("autoStartOnLaunch") private var autoStartOnLaunch = false
+
+  var body: some View {
+    SettingsSection(titleKey: "Automation", systemImage: "play.circle") {
+      SettingsToggleRow(titleKey: "Auto-start next session", isOn: $autoStartNextSession)
+        .help("Start the next session automatically when the current one ends.")
+      SettingsToggleRow(titleKey: "Auto-start on launch", isOn: $autoStartOnLaunch)
+        .help("Start a focus session automatically when the app opens.")
+    }
+  }
+}
+
+private struct AlertsAndSoundSettingsSection: View {
+  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+  @AppStorage("overlayEnabled") private var overlayEnabled = true
   @AppStorage("alarmSound") private var alarmSound = "Glass"
   @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
-  @AppStorage("keepAwake") private var keepAwake = false
-  @AppStorage("overlayEnabled") private var overlayEnabled = true
-  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
-  @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
@@ -289,8 +389,97 @@ private struct SystemSettingsView: View {
   ]
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Toggle("Start at Login", isOn: $startAtLogin)
+    SettingsSection(titleKey: "Alerts & Sound", systemImage: "bell.fill") {
+      SettingsToggleRow(titleKey: "Enable Notifications", isOn: $notificationsEnabled)
+      SettingsToggleRow(titleKey: "Enable Break Overlay", isOn: $overlayEnabled)
+
+      HStack {
+        Text("Alarm Sound")
+        Spacer(minLength: 12)
+        Picker("", selection: $alarmSound) {
+          ForEach(soundOptions, id: \.self) { Text($0) }
+        }
+        .labelsHidden()
+        .fixedSize()
+      }
+
+      HStack(spacing: 8) {
+        Image(systemName: "speaker.fill")
+          .font(.system(size: 9))
+          .foregroundColor(.secondary)
+        Slider(value: $alarmVolume, in: 0.0...1.0)
+          .accessibilityLabel(Text("Volume"))
+        Button {
+          if let sound = NSSound(named: alarmSound) {
+            sound.volume = Float(alarmVolume)
+            sound.play()
+          }
+        } label: {
+          Image(systemName: "play.fill")
+            .font(.system(size: 10, weight: .semibold))
+        }
+        .buttonStyle(.plain)
+        .foregroundColor(.secondary)
+        .help("Preview Alarm Sound")
+
+        Text(verbatim: "\(Int((alarmVolume * 100).rounded()))%")
+          .font(.caption)
+          .monospacedDigit()
+          .foregroundColor(.secondary)
+          .frame(width: 30, alignment: .trailing)
+      }
+    }
+  }
+}
+
+private struct AppearanceSettingsSection: View {
+  @EnvironmentObject var appDelegate: AppDelegate
+  @Binding var showProgressCircle: Bool
+  @Binding var backgroundColorHex: String
+
+  @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
+  @AppStorage("alwaysVisible") private var alwaysVisible = false
+
+  var body: some View {
+    SettingsSection(titleKey: "Appearance", systemImage: "paintbrush.fill") {
+      SettingsToggleRow(titleKey: "Show Progress Circle", isOn: $showProgressCircle)
+      SettingsToggleRow(titleKey: "Hide time in menu bar", isOn: $hideMenuBarTime)
+        .onChange(of: hideMenuBarTime) { newValue in
+          appDelegate.updateMenuBarWidth(hideTime: newValue)
+        }
+      SettingsToggleRow(titleKey: "Keep window on top", isOn: $alwaysVisible)
+        .onChange(of: alwaysVisible) { newValue in
+          appDelegate.setPopoverBehavior(alwaysVisible: newValue)
+        }
+      HStack {
+        Text("Background Color")
+        Spacer(minLength: 12)
+        CustomColorPicker(hexColor: $backgroundColorHex)
+          .fixedSize()
+
+        Button {
+          backgroundColorHex = ""
+        } label: {
+          Image(systemName: "xmark.circle.fill")
+        }
+        .buttonStyle(.plain)
+        .foregroundColor(.secondary)
+        .accessibilityLabel(Text("Clear Background Color"))
+      }
+    }
+  }
+}
+
+private struct SystemSettingsSection: View {
+  @EnvironmentObject var appDelegate: AppDelegate
+
+  @AppStorage("startAtLogin") private var startAtLogin = false
+  @AppStorage("hideDockIcon") private var hideDockIcon = true
+  @AppStorage("keepAwake") private var keepAwake = false
+
+  var body: some View {
+    SettingsSection(titleKey: "System", systemImage: "gearshape.fill") {
+      SettingsToggleRow(titleKey: "Start at Login", isOn: $startAtLogin)
         .onAppear {
           let service = SMAppService()
           startAtLogin = (service.status == .enabled)
@@ -308,16 +497,12 @@ private struct SystemSettingsView: View {
             startAtLogin.toggle()
           }
         }
-
-      Toggle("Hide Dock icon", isOn: $hideDockIcon)
+      SettingsToggleRow(titleKey: "Hide Dock icon", isOn: $hideDockIcon)
         .onChange(of: hideDockIcon) { newValue in
           appDelegate.setDockIcon(hidden: newValue)
         }
-      Toggle("Keep window on top", isOn: $alwaysVisible)
-        .onChange(of: alwaysVisible) { newValue in
-          appDelegate.setPopoverBehavior(alwaysVisible: newValue)
-        }
-      Toggle("Keep Mac awake", isOn: $keepAwake)
+      SettingsToggleRow(titleKey: "Keep Mac awake", isOn: $keepAwake)
+        .help("Prevent your Mac from going to sleep.")
         .onChange(of: keepAwake) { newValue in
           appDelegate.setKeepAwake(enabled: newValue)
         }
@@ -393,63 +578,9 @@ private struct CustomColorPicker: NSViewRepresentable {
   }
 }
 
-private struct AppActionsView: View {
-  var body: some View {
-    VStack(spacing: 8) {
-      HStack {
-        Spacer()
-        Button {
-          NSApplication.shared.terminate(nil)
-        } label: {
-          Image(systemName: "power")
-        }
-        .buttonStyle(.plain)
-        .foregroundColor(.secondary)
-      }
-    }
-  }
-}
-
 // MARK: - Settings Sub-components
 
-private struct DurationSettingsView: View {
-  @AppStorage("focusDuration") private var focusDuration = 25
-  @AppStorage("shortBreakDuration") private var shortBreakDuration = 5
-  @AppStorage("longBreakDuration") private var longBreakDuration = 15
-  @AppStorage("longBreakInterval") private var longBreakInterval = 4
-
-  var body: some View {
-    Grid(alignment: .leading, horizontalSpacing: 8) {
-      GridRow(alignment: .center) {
-        Text("Focus")
-        Spacer(minLength: 16)
-        Text(String(format: NSLocalizedString("minutes_format", comment: ""), focusDuration))
-        Stepper("", value: $focusDuration, in: 5...60, step: 5).labelsHidden()
-      }
-      GridRow(alignment: .center) {
-        Text("Short Break")
-        Spacer(minLength: 16)
-        Text(String(format: NSLocalizedString("minutes_format", comment: ""), shortBreakDuration))
-        Stepper("", value: $shortBreakDuration, in: 1...15, step: 1).labelsHidden()
-      }
-      GridRow(alignment: .center) {
-        Text("Long Break")
-        Spacer(minLength: 16)
-        Text(String(format: NSLocalizedString("minutes_format", comment: ""), longBreakDuration))
-        Stepper("", value: $longBreakDuration, in: 10...30, step: 5).labelsHidden()
-      }
-      GridRow(alignment: .center) {
-        Text("Cycles")
-        Spacer(minLength: 16)
-        Text("\(longBreakInterval)")
-        Stepper("", value: $longBreakInterval, in: 2...8).labelsHidden()
-      }
-    }
-    .frame(maxWidth: .infinity)
-  }
-}
-
-private struct LanguageSettingsView: View {
+private struct LanguageSettingsSection: View {
   @State private var selectedLanguage: String = "system"
 
   private var savedLanguageCode: String {
@@ -462,79 +593,91 @@ private struct LanguageSettingsView: View {
   }
 
   var body: some View {
-    Picker("Language", selection: $selectedLanguage) {
-      Text("System Default").tag("system")
-      Text("English").tag("en")
-      Text("Vietnamese").tag("vi")
-    }
-    .onAppear { self.selectedLanguage = savedLanguageCode }
-    .onChange(of: selectedLanguage) { newValue in
-      guard newValue != savedLanguageCode else { return }
-      if newValue == "system" {
-        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-      } else {
-        UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
+    SettingsSection(titleKey: "Language", systemImage: "globe") {
+      HStack {
+        Spacer(minLength: 0)
+        Picker("", selection: $selectedLanguage) {
+          Text("System Default").tag("system")
+          Text("English").tag("en")
+          Text("Vietnamese").tag("vi")
+        }
+        .labelsHidden()
+        .fixedSize()
       }
-      restartApp()
+      .onAppear { self.selectedLanguage = savedLanguageCode }
+      .onChange(of: selectedLanguage) { newValue in
+        guard newValue != savedLanguageCode else { return }
+        if newValue == "system" {
+          UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+          UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
+        }
+        restartApp()
+      }
     }
   }
 }
 
-private struct AboutAndSupportView: View {
+private struct AboutAndSupportSection: View {
 
   @State private var showingResetAlert = false
 
   var body: some View {
-    VStack(alignment: .leading) {
-      MenuItemButton(title: "About", systemImage: "info.circle") {
-        if let url = URL(string: "https://homielab.com/page/timemate") {
-          NSWorkspace.shared.open(url)
+    SettingsSection(titleKey: "About & Support", systemImage: "info.circle") {
+      VStack(alignment: .leading) {
+        MenuItemButton(title: "About", systemImage: "info.circle") {
+          if let url = URL(string: "https://homielab.com/page/timemate") {
+            NSWorkspace.shared.open(url)
+          }
         }
-      }
 
-      MenuItemButton(title: "Support", systemImage: "envelope.fill") {
-        if let url = URL(string: "mailto:contact@homielab.com") {
-          NSWorkspace.shared.open(url)
+        MenuItemButton(title: "Support", systemImage: "envelope.fill") {
+          if let url = URL(string: "mailto:contact@homielab.com") {
+            NSWorkspace.shared.open(url)
+          }
         }
-      }
 
-      MenuItemButton(title: "Review on App Store", systemImage: "star.fill") {
-        SKStoreReviewController.requestReview()
-      }
-
-      #if DEBUG
-        MenuItemButton(title: "Donate", systemImage: "heart.fill") {
-          if let url = URL(string: "https://ko-fi.com/homielab") { NSWorkspace.shared.open(url) }
+        MenuItemButton(title: "Review on App Store", systemImage: "star.fill") {
+          SKStoreReviewController.requestReview()
         }
-      #endif
 
-      MenuItemButton(title: "Reset All Settings", systemImage: "arrow.counterclockwise.circle") {
-        showingResetAlert = true
-      }
+        #if DEBUG
+          MenuItemButton(title: "Donate", systemImage: "heart.fill") {
+            if let url = URL(string: "https://ko-fi.com/homielab") {
+              NSWorkspace.shared.open(url)
+            }
+          }
+        #endif
 
-      MenuItemButton(title: "Quit", systemImage: "power") {
-        NSApplication.shared.terminate(nil)
-      }
+        MenuItemButton(title: "Reset All Settings", systemImage: "arrow.counterclockwise.circle") {
+          showingResetAlert = true
+        }
 
-      Divider().padding(.vertical, 4)
+        MenuItemButton(title: "Quit", systemImage: "power") {
+          NSApplication.shared.terminate(nil)
+        }
 
-      Text(
-        String(
-          format: NSLocalizedString("Version %@", comment: ""),
-          "\(Bundle.main.appVersion) (\(Bundle.main.appBuild))")
-      )
-      .font(.caption).foregroundColor(.secondary)
-      .padding(.horizontal, 10)
-    }
-    .alert("Reset Settings?", isPresented: $showingResetAlert) {
-      Button("Reset", role: .destructive) {
-        resetAllSettings()
+        Divider().padding(.vertical, 4)
+
+        Text(
+          String(
+            format: NSLocalizedString("Version %@", comment: ""),
+            "\(Bundle.main.appVersion) (\(Bundle.main.appBuild))")
+        )
+        .font(.caption).foregroundColor(.secondary)
+        .padding(.horizontal, 10)
       }
-      Button("Cancel", role: .cancel) {
+      .alert("Reset Settings?", isPresented: $showingResetAlert) {
+        Button("Reset", role: .destructive) {
+          resetAllSettings()
+        }
+        Button("Cancel", role: .cancel) {
+        }
+      } message: {
+        Text(
+          "This will restore all settings to their default values and restart the app. Are you sure?"
+        )
       }
-    } message: {
-      Text(
-        "This will restore all settings to their default values and restart the app. Are you sure?")
     }
   }
 }

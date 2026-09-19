@@ -31,6 +31,18 @@
 "Alarm Sound" = "Alarm Sound";
 "Volume" = "Volume";
 
+// Settings - Sections
+"Durations" = "Durations";
+"Automation" = "Automation";
+"Alerts & Sound" = "Alerts & Sound";
+"Appearance" = "Appearance";
+"System" = "System";
+"About & Support" = "About & Support";
+"Preview Alarm Sound" = "Preview Alarm Sound";
+"Start the next session automatically when the current one ends." = "Start the next session automatically when the current one ends.";
+"Start a focus session automatically when the app opens." = "Start a focus session automatically when the app opens.";
+"Prevent your Mac from going to sleep." = "Prevent your Mac from going to sleep.";
+
 // Settings - Language
 "Language" = "Language";
 "System Default" = "System Default";
