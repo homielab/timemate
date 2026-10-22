@@ -329,7 +329,7 @@ private struct DurationSettingsSection: View {
     SettingsSection(titleKey: "Durations", systemImage: "timer") {
       DurationRow(titleKey: "Focus", minutes: $focusDuration, range: 5...60, step: 5)
       DurationRow(titleKey: "Short Break", minutes: $shortBreakDuration, range: 1...15, step: 1)
-      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, range: 10...30, step: 5)
+      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, range: 10...60, step: 5)
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
