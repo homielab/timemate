@@ -2,6 +2,16 @@
 
 All notable changes to TimeMate will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- "Start at Login" now actually registers the app as a login item
+  (`SMAppService.mainApp`) and no longer re-registers it every time the
+  settings panel opens.
+- When macOS needs approval for the login item, a hint with an
+  "Open System Settings" button appears next to the toggle.
+
 ## 3.4
 
 ### Added

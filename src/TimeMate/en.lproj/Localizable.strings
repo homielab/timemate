@@ -20,6 +20,8 @@
 
 // Settings - Automation & Sound
 "Start at Login" = "Start at Login";
+"Login item needs approval in System Settings." = "Login item needs approval in System Settings.";
+"Open System Settings" = "Open System Settings";
 "Auto-start next session" = "Auto-start next session";
 "Auto-start on launch" = "Auto-start on launch";
 "Keep break screen open until continued" = "Keep break screen open until continued";

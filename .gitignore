@@ -12,3 +12,6 @@ xcuserdata/
 
 .env.local
 Dist/
+
+# Build output (xcodebuild -derivedDataPath build/DerivedData)
+/build/
