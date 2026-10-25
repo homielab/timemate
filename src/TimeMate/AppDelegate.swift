@@ -30,7 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private var voiceOverObservation: NSKeyValueObservation?
   /// Asks the popover to show its settings ("Settings…" in the right-click menu).
   let openSettingsRequests = PassthroughSubject<Void, Never>()
-  @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
+  @AppStorage(SettingsKey.hideMenuBarTime) private var hideMenuBarTime = false
 
   private static var isRunningTests: Bool {
     ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -52,17 +52,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     // Register defaults
     UserDefaults.standard.register(defaults: [
-      "overlayEnabled": true,
-      "notificationsEnabled": true,
-      "keepAwake": false,
-      "hideDockIcon": true,
+      SettingsKey.overlayEnabled: true,
+      SettingsKey.notificationsEnabled: true,
+      SettingsKey.keepAwake: false,
+      SettingsKey.hideDockIcon: true,
       SettingsKey.alwaysVisible: false,
       SettingsKey.hotKeyStartPauseEnabled: true,
       SettingsKey.hotKeySkipEnabled: true,
-      "showProgressCircle": true,
-      "autoStartNextSession": true,
-      "autoStartOnLaunch": false,
-      "keepBreakScreenOpen": true,
+      SettingsKey.showProgressCircle: true,
+      SettingsKey.autoStartNextSession: true,
+      SettingsKey.autoStartOnLaunch: false,
+      SettingsKey.keepBreakScreenOpen: true,
     ])
 
     // Defaults must be registered before the first read of any setting.
@@ -111,7 +111,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     }
 
     // --- Auto-start Timer ---
-    if UserDefaults.standard.bool(forKey: "autoStartOnLaunch") {
+    if UserDefaults.standard.bool(forKey: SettingsKey.autoStartOnLaunch) {
       timer.startTimer()
     }
 

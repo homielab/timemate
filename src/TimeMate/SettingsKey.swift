@@ -1,8 +1,7 @@
 //  Created by homielab.com
 
-/// Keys of the user-defaults-backed settings that both the UI (ContentView) and
-/// the timer (PomodoroTimer) read or write, so the two sides can never drift
-/// apart on the raw key strings.
+/// Keys of the user-defaults-backed settings, shared by the settings UI, the
+/// app delegate and the timer, so they can never drift apart on the raw strings.
 enum SettingsKey {
   static let focusDuration = "focusDuration"
   static let shortBreakDuration = "shortBreakDuration"
@@ -15,6 +14,13 @@ enum SettingsKey {
   static let notificationsEnabled = "notificationsEnabled"
   static let alwaysVisible = "alwaysVisible"
   static let overlaySkipDelay = "overlaySkipDelay"
+  static let backgroundColorHex = "backgroundColorHex"
+  static let showProgressCircle = "showProgressCircle"
+  static let hideMenuBarTime = "hideMenuBarTime"
+  static let hideDockIcon = "hideDockIcon"
+  static let keepAwake = "keepAwake"
+  static let overlayEnabled = "overlayEnabled"
+  static let autoStartOnLaunch = "autoStartOnLaunch"
   static let hotKeyStartPauseKeyCode = "hotKeyStartPauseKeyCode"
   static let hotKeyStartPauseModifiers = "hotKeyStartPauseModifiers"
   static let hotKeyStartPauseEnabled = "hotKeyStartPauseEnabled"

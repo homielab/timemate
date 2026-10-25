@@ -71,6 +71,18 @@ xcodebuild test -project src/TimeMate.xcodeproj -scheme TimeMate -derivedDataPat
 
 Or press `Cmd + U` in Xcode.
 
+### Project Layout
+
+Sources are in `src/TimeMate/`:
+
+- `PomodoroTimer.swift` — the timer state machine; `SettingsKey.swift` — all user-defaults keys.
+- `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
+- `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,
+  `ControlButtonsView`).
+- `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
+  building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`.
+- `BreakOverlay*.swift` — the full-screen break screen.
+
 ## Feedback & Contributions
 
 Contributions, bug reports, and feature requests are welcome. Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/homielab/timemate/issues).

@@ -67,7 +67,7 @@ func resetAllSettings() {
 
 @objc extension UserDefaults {
   @objc dynamic var hideDockIcon: Bool {
-    return bool(forKey: "hideDockIcon")
+    return bool(forKey: SettingsKey.hideDockIcon)
   }
 
   @objc dynamic var alwaysVisible: Bool {
@@ -75,6 +75,6 @@ func resetAllSettings() {
   }
 
   @objc dynamic var keepAwake: Bool {
-    return bool(forKey: "keepAwake")
+    return bool(forKey: SettingsKey.keepAwake)
   }
 }

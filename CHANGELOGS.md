@@ -34,6 +34,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- Internal: the popover and settings code is split into `Views/` and one file per
+  settings section under `Settings/`; no visible change.
 - Break screen: the cat animation plays only on the screen you work on (less CPU with
   several displays), and that screen gets the keyboard focus. With Reduce Motion on,
   the break screen shows a still image and appears without fading.

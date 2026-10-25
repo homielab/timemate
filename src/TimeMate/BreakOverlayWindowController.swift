@@ -171,7 +171,7 @@ class BreakOverlayWindowController: NSObject {
     let shouldShow = (state == .active && isBreak && !isBreakPostponed) || isWaitingToContinue
 
     // Check user setting
-    let overlayEnabled = UserDefaults.standard.bool(forKey: "overlayEnabled")
+    let overlayEnabled = UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled)
 
     if shouldShow && overlayEnabled {
       // Not when the overlay only comes back during its fade-out.
