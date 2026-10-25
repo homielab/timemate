@@ -66,11 +66,26 @@ class PomodoroTimer: ObservableObject {
   private var totalDuration: Int = 0
   /// When the latest tick fired, per `now`; lets tests verify the injected clock.
   private(set) var lastTickAt: Date?
+  /// Wall-clock moment the running session ends. The remaining time is always
+  /// derived from it, so sleep, App Nap or late timer fires cannot stretch a
+  /// session. `nil` unless the timer is active.
+  private(set) var endDate: Date?
 
-  init(defaults: UserDefaults = .standard, now: @escaping () -> Date = { Date() }) {
+  init(
+    defaults: UserDefaults = .standard,
+    now: @escaping () -> Date = { Date() },
+    workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
+  ) {
     self.defaults = defaults
     self.now = now
     resetForCurrentSession()
+
+    workspaceNotificationCenter.publisher(for: NSWorkspace.willSleepNotification)
+      .sink { [weak self] _ in self?.handleWillSleep() }
+      .store(in: &cancellables)
+    workspaceNotificationCenter.publisher(for: NSWorkspace.didWakeNotification)
+      .sink { [weak self] _ in self?.handleDidWake() }
+      .store(in: &cancellables)
 
     #if DEBUG
       print("--- TimeMate running in DEBUG mode (timers are in seconds) ---")
@@ -82,7 +97,13 @@ class PomodoroTimer: ObservableObject {
       resetForCurrentSession()
     }
     state = .active
+    endDate = now().addingTimeInterval(TimeInterval(timeRemaining))
+    startTicking()
+  }
 
+  /// Fires `handleTick` every second to refresh the menu bar countdown.
+  private func startTicking() {
+    timer?.cancel()
     timer = Timer.publish(every: 1, on: .main, in: .common)
       .autoconnect()
       .sink { [weak self] _ in
@@ -90,15 +111,22 @@ class PomodoroTimer: ObservableObject {
       }
   }
 
-  /// One tick of the state machine: count the session down and, at zero, finish
-  /// it. Internal so tests can drive ticks without waiting on real timers.
+  /// One tick of the state machine: recompute the remaining time from `endDate`
+  /// and, once it is reached, finish the session. Internal so tests can drive
+  /// ticks without waiting on real timers.
   func handleTick() {
-    lastTickAt = now()
+    let tickTime = now()
+    lastTickAt = tickTime
+    guard state == .active, let endDate else { return }
 
-    if timeRemaining > 0 {
-      timeRemaining -= 1
+    let remaining = max(0, Int(endDate.timeIntervalSince(tickTime).rounded()))
+    if remaining > 0 {
+      timeRemaining = remaining
       progress = Double(timeRemaining) / Double(max(1, totalDuration))
     } else {
+      timeRemaining = 0
+      progress = 0
+      self.endDate = nil
       timer?.cancel()
       playSound(named: alarmSound)
       sendNotification()
@@ -114,20 +142,47 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  /// The Mac is about to sleep: stop the ticking loop. `endDate` keeps counting
+  /// in wall-clock time while the Mac sleeps.
+  func handleWillSleep() {
+    guard state == .active else { return }
+    handleTick()
+    timer?.cancel()
+  }
+
+  /// The Mac woke up: catch up with the wall clock right away. A session whose
+  /// end passed during sleep finishes once, then ticking resumes if active.
+  func handleDidWake() {
+    guard state == .active else { return }
+    handleTick()
+    if state == .active {
+      startTicking()
+    }
+  }
+
   func pauseTimer() {
+    guard state == .active else { return }
+    // Freeze the exact remaining time; if the session already ended, finish it
+    // instead of pausing whatever comes next.
+    let runningEndDate = endDate
+    handleTick()
+    guard state == .active, endDate == runningEndDate else { return }
     state = .paused
+    endDate = nil
     timer?.cancel()
   }
 
   func stopTimer() {
     isWaitingToContinue = false
     state = .idle
+    endDate = nil
     timer?.cancel()
     resetForCurrentSession()
   }
 
   func skipSession() {
     isWaitingToContinue = false
+    endDate = nil
     timer?.cancel()
     advanceToNextSession()
   }
@@ -137,6 +192,7 @@ class PomodoroTimer: ObservableObject {
     state = .idle
     focusSessionsCompleted = 0
     currentSessionType = .focus
+    endDate = nil
     timer?.cancel()
     resetForCurrentSession()
   }

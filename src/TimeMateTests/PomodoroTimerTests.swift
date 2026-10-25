@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import AppKit
 import XCTest
 
 @testable import TimeMate
@@ -9,6 +10,7 @@ final class PomodoroTimerTests: XCTestCase {
 
   private var defaults: UserDefaults!
   private var currentTime: Date!
+  private var workspaceCenter: NotificationCenter!
   private var timer: PomodoroTimer!
 
   override func setUp() {
@@ -16,6 +18,7 @@ final class PomodoroTimerTests: XCTestCase {
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     defaults = UserDefaults(suiteName: Self.suiteName)
     currentTime = Date(timeIntervalSince1970: 1_000_000)
+    workspaceCenter = NotificationCenter()
     timer = makeTimer()
   }
 
@@ -27,9 +30,8 @@ final class PomodoroTimerTests: XCTestCase {
 
   // MARK: - Helpers
 
-  /// Debug builds count one tick per minute value (`durationFor` uses minutes as
-  /// seconds under DEBUG), so focus 3 finishes after 3 countdown ticks plus one
-  /// firing tick.
+  /// Debug builds use minute values as seconds (`durationFor` under DEBUG), so
+  /// focus 3 lasts 3 seconds of the fake clock: it finishes on the third tick.
   private func makeTimer(
     focus: Int = 3, short: Int = 2, long: Int = 4, interval: Int = 4,
     autoStart: Bool = true, keepBreakOpen: Bool = false
@@ -47,17 +49,24 @@ final class PomodoroTimerTests: XCTestCase {
       defaults: defaults,
       now: { [weak self] in
         self?.currentTime ?? Date(timeIntervalSince1970: 0)
-      })
+      },
+      workspaceNotificationCenter: workspaceCenter)
   }
 
+  /// Advances the fake clock one second per tick, like the real 1 s timer.
   private func runTicks(_ timer: PomodoroTimer, _ count: Int) {
     for _ in 0..<count {
+      advanceClock(by: 1)
       timer.handleTick()
     }
   }
 
+  private func advanceClock(by seconds: TimeInterval) {
+    currentTime = currentTime.addingTimeInterval(seconds)
+  }
+
   private func finishSession(_ timer: PomodoroTimer) {
-    runTicks(timer, timer.timeRemaining + 1)
+    runTicks(timer, timer.timeRemaining)
   }
 
   // MARK: - Initial state
@@ -176,14 +185,15 @@ final class PomodoroTimerTests: XCTestCase {
     timer = makeTimer(autoStart: false, keepBreakOpen: true)
     timer.startTimer()
     finishSession(timer)
+    timer.startTimer()  // auto-start is off: the user starts the break
     finishSession(timer)  // the held short break sets the waiting flag
     XCTAssertTrue(timer.isWaitingToContinue)
     timer.continueWork()
     XCTAssertEqual(timer.state, .active)
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertEqual(timer.timeRemaining, 3)
-    // Exactly one ticking loop: one manual tick decrements by one, not by two.
-    timer.handleTick()
+    // Exactly one ticking loop: one second decrements by one, not by two.
+    runTicks(timer, 1)
     XCTAssertEqual(timer.timeRemaining, 2)
   }
 
@@ -197,7 +207,7 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertEqual(timer.state, .active)
     XCTAssertEqual(timer.timeRemaining, 3)
-    timer.handleTick()
+    runTicks(timer, 1)
     XCTAssertEqual(timer.timeRemaining, 2)
   }
 
@@ -217,11 +227,23 @@ final class PomodoroTimerTests: XCTestCase {
     timer.pauseTimer()
     timer.startTimer()  // state == .paused -> no reset
     XCTAssertEqual(timer.timeRemaining, 1)
-    timer.handleTick()
-    XCTAssertEqual(timer.timeRemaining, 0)
-    timer.handleTick()  // session fires
+    runTicks(timer, 1)  // remaining reaches zero -> session fires
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
     XCTAssertEqual(timer.state, .active)
+  }
+
+  func testTimeSpentPausedDoesNotCount() {
+    timer = makeTimer(focus: 1500)
+    timer.startTimer()
+    runTicks(timer, 100)
+    timer.pauseTimer()
+    advanceClock(by: 3600)
+    timer.handleTick()  // a stray tick while paused changes nothing
+    XCTAssertEqual(timer.timeRemaining, 1400)
+    timer.startTimer()
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1400))
+    runTicks(timer, 10)
+    XCTAssertEqual(timer.timeRemaining, 1390)
   }
 
   // MARK: - Restart / skip / stop
@@ -268,6 +290,86 @@ final class PomodoroTimerTests: XCTestCase {
     currentTime = second
     timer.handleTick()
     XCTAssertEqual(timer.lastTickAt, second)
+  }
+
+  // MARK: - Wall-clock end date (sleep / App Nap)
+
+  func testClockJumpOfTenMinutesDropsRemainingByTenMinutes() {
+    timer = makeTimer(focus: 1500)
+    timer.startTimer()
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1500))
+    advanceClock(by: 600)
+    timer.handleTick()
+    XCTAssertEqual(timer.timeRemaining, 900)
+    XCTAssertEqual(timer.progress, 0.6, accuracy: 0.0001)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testDelayedTicksDoNotStretchTheSession() {
+    timer = makeTimer(focus: 10)
+    timer.startTimer()
+    // App Nap: only two ticks get through over the whole session length.
+    advanceClock(by: 4)
+    timer.handleTick()
+    XCTAssertEqual(timer.timeRemaining, 6)
+    advanceClock(by: 6)
+    timer.handleTick()
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testJumpPastEndDateFinishesSessionExactlyOnce() {
+    timer = makeTimer(autoStart: false)
+    var sessionChanges = 0
+    let cancellable = timer.$currentSessionType.dropFirst().sink { _ in sessionChanges += 1 }
+    timer.startTimer()
+    advanceClock(by: 3600)
+    timer.handleTick()
+    timer.handleTick()
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(sessionChanges, 1)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.timeRemaining, 2)
+    cancellable.cancel()
+  }
+
+  func testWakeAfterEndDateFinishesSessionOnceWithoutATick() {
+    timer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 2)
+    // A second wake (or the timer's late fire) must not finish the next session.
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    timer.handleTick()
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.timeRemaining, 2)
+  }
+
+  func testWakeBeforeEndDateShowsRealRemainingTime() {
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    runTicks(timer, 5)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 60)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.timeRemaining, 55)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testWakeWhilePausedKeepsRemainingTime() {
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    runTicks(timer, 20)
+    timer.pauseTimer()
+    advanceClock(by: 600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 100)
   }
 
   func testTimerReadsLiveFromInjectedDefaults() {

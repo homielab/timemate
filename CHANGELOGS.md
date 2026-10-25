@@ -13,6 +13,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The countdown now follows the real clock: a session no longer runs longer
+  than its set length when the Mac sleeps or macOS throttles the app (App Nap).
+  After waking, the timer shows the true remaining time, and a session that
+  ended during sleep finishes once with a single notification.
 - "Start at Login" now actually registers the app as a login item
   (`SMAppService.mainApp`) and no longer re-registers it every time the
   settings panel opens.
