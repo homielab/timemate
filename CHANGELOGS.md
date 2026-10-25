@@ -23,6 +23,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The "session complete" notification now shows as a banner even when TimeMate is
+  in front (e.g. as the break screen opens), has "Start Next" and "Skip" buttons,
+  and no longer plays a second sound on top of the alarm chosen in Settings.
 - The break screen no longer disappears when it is shown again right after being
   hidden (it used to close at the end of the fade-out).
 - Changing the language or resetting all settings relaunches the app through Launch

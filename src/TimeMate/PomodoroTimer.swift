@@ -263,20 +263,25 @@ class PomodoroTimer: ObservableObject {
   private func sendNotification() {
     guard notificationsEnabled else { return }
 
-    let content = UNMutableNotificationContent()
-    content.title = "TimeMate"
-
-    let localizedSessionTitle = NSLocalizedString(
-      currentSessionType.rawValue, comment: "The name of the current session type")
-
-    content.subtitle = String(
-      format: NSLocalizedString("%@ session complete!", comment: "Notification format string"),
-      localizedSessionTitle
-    )
-
-    content.sound = .default
+    let content = SessionNotification.content(forCompleted: currentSessionType)
     let request = UNNotificationRequest(
       identifier: UUID().uuidString, content: content, trigger: nil)
     UNUserNotificationCenter.current().add(request)
+  }
+
+  /// Runs a button tapped on the "session complete" notification.
+  /// "Start Next" starts the session that follows unless it is already running
+  /// (auto-start); "Skip" skips it.
+  func handleNotificationAction(_ action: SessionNotificationAction) {
+    switch action {
+    case .startNext:
+      if isWaitingToContinue {
+        continueWork()
+      } else if state != .active {
+        startTimer()
+      }
+    case .skip:
+      skipSession()
+    }
   }
 }

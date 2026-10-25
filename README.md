@@ -28,7 +28,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions.
 - **Custom Session Durations**: Set any focus or break length from 1 to 180 minutes (e.g. 50/10 or 90-minute deep work) by typing it or with the stepper.
 - **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.
-- **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms.
+- **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms. The banner shows even while TimeMate is in front, plays only your chosen alarm sound, and has **Start Next** / **Skip** buttons.
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest.
 - **Today's Statistics**: See how many pomodoros and focus minutes you completed today. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
 - **Global Keyboard Shortcuts**: Start/pause with ⌃⌥P and skip the current session with ⌃⌥S from any app. Record your own combination (it must include ⌃ or ⌘) or turn each shortcut off in Settings → Keyboard Shortcuts. No Accessibility permission needed.

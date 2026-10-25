@@ -5,7 +5,9 @@ import Combine
 import SwiftUI
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, ObservableObject {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
+  UNUserNotificationCenterDelegate, ObservableObject
+{
 
   // MARK: - Properties
   private var statusItem: NSStatusItem!
@@ -63,7 +65,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, Observabl
     observeTimerForKeepAwake()
     self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
 
-    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
+    let notificationCenter = UNUserNotificationCenter.current()
+    notificationCenter.delegate = self
+    notificationCenter.setNotificationCategories([SessionNotification.category()])
+    notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) {
       _, _ in
     }
 
@@ -200,6 +205,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, Observabl
     } else {
       NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    }
+  }
+
+  // MARK: - UNUserNotificationCenterDelegate
+
+  /// Show the banner even while TimeMate is in front (e.g. the break screen
+  /// just appeared); without this macOS hides it silently.
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .list])
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let action = SessionNotificationAction(rawValue: response.actionIdentifier)
+    DispatchQueue.main.async { [weak self] in
+      if let action {
+        self?.timer.handleNotificationAction(action)
+      }
+      completionHandler()
     }
   }
 

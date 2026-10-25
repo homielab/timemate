@@ -1,0 +1,54 @@
+//  Created by homielab.com
+
+import Foundation
+import UserNotifications
+
+/// Buttons on the "session complete" notification.
+enum SessionNotificationAction: String, CaseIterable {
+  case startNext = "com.homielab.timemate.action.startNext"
+  case skip = "com.homielab.timemate.action.skip"
+
+  /// Untranslated title, looked up in `Localizable.strings`.
+  var titleKey: String {
+    switch self {
+    case .startNext: return "Start Next"
+    case .skip: return "Skip"
+    }
+  }
+}
+
+/// Builds the "session complete" notification and its category.
+enum SessionNotification {
+  static let categoryIdentifier = "com.homielab.timemate.category.sessionComplete"
+  /// Groups all TimeMate session notifications into one stack in Notification Center.
+  static let threadIdentifier = "com.homielab.timemate.sessions"
+
+  /// The category with the "Start Next" and "Skip" buttons; register it at launch.
+  static func category() -> UNNotificationCategory {
+    let actions = SessionNotificationAction.allCases.map { action in
+      UNNotificationAction(
+        identifier: action.rawValue,
+        title: NSLocalizedString(action.titleKey, comment: "Notification action button"),
+        options: [])
+    }
+    return UNNotificationCategory(
+      identifier: categoryIdentifier, actions: actions, intentIdentifiers: [], options: [])
+  }
+
+  /// Content for the end of a session of `sessionType`. It carries no sound: the
+  /// app already plays the alarm chosen in Settings, so the user hears it once.
+  static func content(forCompleted sessionType: SessionType) -> UNMutableNotificationContent {
+    let content = UNMutableNotificationContent()
+    content.title = "TimeMate"
+    let localizedSessionTitle = NSLocalizedString(
+      sessionType.rawValue, comment: "The name of the current session type")
+    content.subtitle = String(
+      format: NSLocalizedString("%@ session complete!", comment: "Notification format string"),
+      localizedSessionTitle
+    )
+    content.sound = nil
+    content.categoryIdentifier = categoryIdentifier
+    content.threadIdentifier = threadIdentifier
+    return content
+  }
+}
