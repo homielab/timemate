@@ -3,6 +3,7 @@
 import ServiceManagement
 import StoreKit
 import SwiftUI
+import UserNotifications
 
 // MARK: - Main Content View
 
@@ -384,6 +385,7 @@ private struct AlertsAndSoundSettingsSection: View {
   @AppStorage("overlayEnabled") private var overlayEnabled = true
   @AppStorage(SettingsKey.alarmSound) private var alarmSound = "Glass"
   @AppStorage(SettingsKey.alarmVolume) private var alarmVolume: Double = 1.0
+  @State private var notificationsDenied = false
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
@@ -393,6 +395,23 @@ private struct AlertsAndSoundSettingsSection: View {
   var body: some View {
     SettingsSection(titleKey: "Alerts & Sound", systemImage: "bell.fill") {
       SettingsToggleRow(titleKey: "Enable Notifications", isOn: $notificationsEnabled)
+      if notificationsDenied {
+        HStack {
+          Text("Notifications denied in System Settings.")
+            .font(.caption)
+            .foregroundColor(.secondary)
+          Spacer(minLength: 12)
+          Button("Open System Settings") {
+            if let url = URL(
+              string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")
+            {
+              NSWorkspace.shared.open(url)
+            }
+          }
+          .buttonStyle(.link)
+          .font(.caption)
+        }
+      }
       SettingsToggleRow(titleKey: "Enable Break Overlay", isOn: $overlayEnabled)
 
       HStack {
@@ -430,6 +449,19 @@ private struct AlertsAndSoundSettingsSection: View {
           .foregroundColor(.secondary)
           .frame(width: 30, alignment: .trailing)
       }
+    }
+    .onAppear(perform: refreshNotificationStatus)
+    .onReceive(
+      NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+    ) { _ in
+      refreshNotificationStatus()
+    }
+  }
+
+  private func refreshNotificationStatus() {
+    UNUserNotificationCenter.current().getNotificationSettings { settings in
+      let denied = settings.authorizationStatus == .denied
+      DispatchQueue.main.async { notificationsDenied = denied }
     }
   }
 }

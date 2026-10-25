@@ -13,6 +13,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Default settings are now registered before they are read, so the Dock icon is
+  hidden on a fresh install as intended.
+- "Keep Mac awake" now holds the Mac awake only while a focus session is running,
+  not while idle, paused or on a break.
+- When notification permission is denied, Settings → Alerts & Sound shows a notice
+  with a button that opens System Settings.
 - The countdown now follows the real clock: a session no longer runs longer
   than its set length when the Mac sleeps or macOS throttles the app (App Nap).
   After waking, the timer shows the true remaining time, and a session that

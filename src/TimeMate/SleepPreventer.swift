@@ -6,6 +6,13 @@ class SleepPreventer {
   private var assertionID: IOPMAssertionID = 0
   private var isEnabled = false
 
+  /// The Mac is kept awake only while the setting is on AND a focus session is counting down.
+  static func shouldHoldAssertion(
+    keepAwake: Bool, state: PomodoroState, sessionType: SessionType
+  ) -> Bool {
+    keepAwake && state == .active && sessionType == .focus
+  }
+
   func enable() {
     guard !isEnabled else { return }
 
@@ -23,9 +30,6 @@ class SleepPreventer {
     if success == kIOReturnSuccess {
       self.assertionID = assertionID
       self.isEnabled = true
-      print("Sleep prevention enabled")
-    } else {
-      print("Failed to enable sleep prevention")
     }
   }
 
@@ -37,9 +41,6 @@ class SleepPreventer {
     if success == kIOReturnSuccess {
       self.assertionID = 0
       self.isEnabled = false
-      print("Sleep prevention disabled")
-    } else {
-      print("Failed to disable sleep prevention")
     }
   }
 

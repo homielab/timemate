@@ -15,6 +15,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private let sleepPreventer = SleepPreventer()
   private var breakOverlayController: BreakOverlayWindowController!
   private var escapeKeyMonitor: Any?
+  private var keepAwakeEnabled = false
+  private var cancellables = Set<AnyCancellable>()
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   // MARK: - App Lifecycle
@@ -24,9 +26,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
       return
     }
-
-    self.setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
-    self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
 
     // Register defaults
     UserDefaults.standard.register(defaults: [
@@ -40,6 +39,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       "autoStartOnLaunch": false,
       "keepBreakScreenOpen": true,
     ])
+
+    // Defaults must be registered before the first read of any setting.
+    self.setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
+    observeTimerForKeepAwake()
+    self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
 
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
       _, _ in
@@ -98,7 +102,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   }
 
   func setKeepAwake(enabled: Bool) {
-    if enabled {
+    keepAwakeEnabled = enabled
+    updateSleepPrevention(state: timer.state, sessionType: timer.currentSessionType)
+  }
+
+  /// Holds the assertion only while a focus session is running; released on pause, idle, breaks.
+  private func observeTimerForKeepAwake() {
+    // @Published emits before the change lands, so use the emitted values.
+    Publishers.CombineLatest(timer.$state, timer.$currentSessionType)
+      .sink { [weak self] state, sessionType in
+        self?.updateSleepPrevention(state: state, sessionType: sessionType)
+      }
+      .store(in: &cancellables)
+  }
+
+  private func updateSleepPrevention(state: PomodoroState, sessionType: SessionType) {
+    if SleepPreventer.shouldHoldAssertion(
+      keepAwake: keepAwakeEnabled, state: state, sessionType: sessionType)
+    {
       sleepPreventer.enable()
     } else {
       sleepPreventer.disable()

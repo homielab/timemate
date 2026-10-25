@@ -254,7 +254,6 @@ class PomodoroTimer: ObservableObject {
 
   private func sendNotification() {
     guard notificationsEnabled else { return }
-    print("DEBUG: Firing notification for session \(currentSessionType.rawValue)...")
 
     let content = UNMutableNotificationContent()
     content.title = "TimeMate"
