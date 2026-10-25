@@ -11,6 +11,7 @@ final class PomodoroTimerTests: XCTestCase {
   private var defaults: UserDefaults!
   private var currentTime: Date!
   private var workspaceCenter: NotificationCenter!
+  private var history: SessionHistory!
   private var timer: PomodoroTimer!
 
   override func setUp() {
@@ -19,6 +20,9 @@ final class PomodoroTimerTests: XCTestCase {
     defaults = UserDefaults(suiteName: Self.suiteName)
     currentTime = Date(timeIntervalSince1970: 1_000_000)
     workspaceCenter = NotificationCenter()
+    history = SessionHistory(
+      fileURL: nil,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) })
     timer = makeTimer()
   }
 
@@ -50,7 +54,8 @@ final class PomodoroTimerTests: XCTestCase {
       now: { [weak self] in
         self?.currentTime ?? Date(timeIntervalSince1970: 0)
       },
-      workspaceNotificationCenter: workspaceCenter)
+      workspaceNotificationCenter: workspaceCenter,
+      history: history)
   }
 
   /// Advances the fake clock one second per tick, like the real 1 s timer.
@@ -377,5 +382,65 @@ final class PomodoroTimerTests: XCTestCase {
     defaults.set(6, forKey: SettingsKey.focusDuration)
     timer.stopTimer()  // resets with the new duration
     XCTAssertEqual(timer.timeRemaining, 6)
+  }
+
+  // MARK: - Session history
+
+  func testCompletedSessionsAreRecordedWithTheirKind() {
+    timer.startTimer()
+    let focusEnd = currentTime.addingTimeInterval(3)
+    finishSession(timer)  // focus 3 s
+    finishSession(timer)  // short break 2 s
+
+    XCTAssertEqual(history.records.map(\.kind), [.focus, .short])
+    XCTAssertEqual(history.records.first?.end, focusEnd)
+    XCTAssertEqual(history.records.first?.duration, 3)
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+    XCTAssertEqual(history.todayTotals().focusSeconds, 3)
+  }
+
+  func testSkippedSessionsAreNotRecorded() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.skipSession()  // focus skipped
+    timer.skipSession()  // short break skipped
+
+    XCTAssertEqual(history.records, [])
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+  }
+
+  func testPausedTimeIsNotCountedAsFocus() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    advanceClock(by: 600)
+    timer.startTimer()
+    finishSession(timer)
+
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(history.records.first?.duration, 3)
+    XCTAssertEqual(history.records.first?.end, currentTime)
+  }
+
+  func testBreakHeldOnBreakScreenIsRecordedOnce() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)  // short break ends, waits on the break screen
+    XCTAssertTrue(timer.isWaitingToContinue)
+    timer.continueWork()
+
+    XCTAssertEqual(history.records.map(\.kind), [.focus, .short])
+  }
+
+  func testSessionEndingDuringSleepIsRecordedAtItsEnd() {
+    timer.startTimer()
+    let focusEnd = currentTime.addingTimeInterval(3)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(history.records.first?.end, focusEnd)
   }
 }

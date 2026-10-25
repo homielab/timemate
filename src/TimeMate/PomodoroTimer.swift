@@ -31,6 +31,8 @@ class PomodoroTimer: ObservableObject {
   private let defaults: UserDefaults
   /// Source of wall-clock time; tests inject a fixed clock.
   private let now: () -> Date
+  /// Log of completed sessions behind the "Today" statistics.
+  let history: SessionHistory
 
   private var focusDurationMinutes: Int {
     defaults.object(forKey: SettingsKey.focusDuration) as? Int ?? 25
@@ -74,10 +76,12 @@ class PomodoroTimer: ObservableObject {
   init(
     defaults: UserDefaults = .standard,
     now: @escaping () -> Date = { Date() },
-    workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
+    workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
+    history: SessionHistory = SessionHistory(fileURL: nil)
   ) {
     self.defaults = defaults
     self.now = now
+    self.history = history
     resetForCurrentSession()
 
     workspaceNotificationCenter.publisher(for: NSWorkspace.willSleepNotification)
@@ -128,6 +132,9 @@ class PomodoroTimer: ObservableObject {
       progress = 0
       self.endDate = nil
       timer?.cancel()
+      // Only sessions that run to the end count; skipping never reaches here.
+      history.recordCompletedSession(
+        currentSessionType, duration: TimeInterval(totalDuration), end: endDate)
       playSound(named: alarmSound)
       sendNotification()
 

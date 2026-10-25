@@ -30,6 +30,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.
 - **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms.
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest.
+- **Today's Statistics**: See how many pomodoros and focus minutes you completed today. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
 - **Multilingual Support**: Available in both English and Vietnamese.

@@ -10,7 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   // MARK: - Properties
   private var statusItem: NSStatusItem!
   private var popover: NSPopover!
-  private let timer = PomodoroTimer()
+  private let timer = PomodoroTimer(history: AppDelegate.makeSessionHistory())
   private var hostingController: NSHostingController<AnyView>!
   private let sleepPreventer = SleepPreventer()
   private var breakOverlayController: BreakOverlayWindowController!
@@ -19,11 +19,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var cancellables = Set<AnyCancellable>()
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
+  private static var isRunningTests: Bool {
+    ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+  }
+
+  /// The saved session history, or an in-memory one when hosting tests so they
+  /// never touch the user's statistics.
+  private static func makeSessionHistory() -> SessionHistory {
+    SessionHistory(fileURL: isRunningTests ? nil : SessionHistory.defaultFileURL())
+  }
+
   // MARK: - App Lifecycle
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Running as the test host: skip the app shell so tests drive the state
     // machine without status items, popovers or notification prompts.
-    if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+    if Self.isRunningTests {
       return
     }
 

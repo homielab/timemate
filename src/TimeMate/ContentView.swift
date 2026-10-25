@@ -124,7 +124,27 @@ private struct TimerDisplayView: View {
         total: longBreakInterval,
         isLongBreak: timer.currentSessionType == .longBreak
       )
+
+      TodayStatsView(history: timer.history)
     }
+  }
+}
+
+/// "Today: N pomodoros · X min" from the saved session history.
+private struct TodayStatsView: View {
+  @ObservedObject var history: SessionHistory
+
+  var body: some View {
+    let totals = history.todayTotals()
+    Text(
+      String(
+        format: NSLocalizedString(
+          "Today: %lld pomodoros · %lld min", comment: "Completed focus sessions and minutes today"),
+        totals.pomodoros, totals.focusMinutes)
+    )
+    .font(.caption)
+    .foregroundColor(.secondary)
+    .monospacedDigit()
   }
 }
 
@@ -259,6 +279,7 @@ private struct SettingsView: View {
       AppearanceSettingsSection(
         showProgressCircle: $showProgressCircle, backgroundColorHex: $backgroundColorHex)
       SystemSettingsSection()
+      StatisticsSettingsSection()
       LanguageSettingsSection()
       AboutAndSupportSection()
     }
@@ -639,6 +660,28 @@ private struct LanguageSettingsSection: View {
           UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
         }
         restartApp()
+      }
+    }
+  }
+}
+
+private struct StatisticsSettingsSection: View {
+  @EnvironmentObject var timer: PomodoroTimer
+  @State private var showingResetAlert = false
+
+  var body: some View {
+    SettingsSection(titleKey: "Statistics", systemImage: "chart.bar.fill") {
+      MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
+        showingResetAlert = true
+      }
+      .alert("Reset Statistics?", isPresented: $showingResetAlert) {
+        Button("Reset", role: .destructive) {
+          timer.history.reset()
+        }
+        Button("Cancel", role: .cancel) {
+        }
+      } message: {
+        Text("This will delete the history of completed sessions. Are you sure?")
       }
     }
   }

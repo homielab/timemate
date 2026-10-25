@@ -110,3 +110,10 @@
 "Don't be a workaholic. Be a work-a-frolic." = "Đừng làm việc quá sức. Hãy làm việc vui vẻ.";
 "Give your brain a hug." = "Ôm bộ não của bạn một cái.";
 "Silence is golden. Enjoy it." = "Im lặng là vàng. Tận hưởng đi.";
+
+// Session statistics
+"Today: %lld pomodoros · %lld min" = "Hôm nay: %lld pomodoro · %lld phút";
+"Statistics" = "Thống kê";
+"Reset Statistics" = "Đặt lại Thống kê";
+"Reset Statistics?" = "Đặt lại Thống kê?";
+"This will delete the history of completed sessions. Are you sure?" = "Thao tác này sẽ xoá lịch sử các phiên đã hoàn tất. Bạn có chắc không?";

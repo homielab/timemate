@@ -110,3 +110,10 @@
 "Don't be a workaholic. Be a work-a-frolic." = "Don't be a workaholic. Be a work-a-frolic.";
 "Give your brain a hug." = "Give your brain a hug.";
 "Silence is golden. Enjoy it." = "Silence is golden. Enjoy it.";
+
+// Session statistics
+"Today: %lld pomodoros · %lld min" = "Today: %lld pomodoros · %lld min";
+"Statistics" = "Statistics";
+"Reset Statistics" = "Reset Statistics";
+"Reset Statistics?" = "Reset Statistics?";
+"This will delete the history of completed sessions. Are you sure?" = "This will delete the history of completed sessions. Are you sure?";

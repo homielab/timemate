@@ -6,6 +6,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Today's statistics: the popover shows "Today: N pomodoros · X min" for completed
+  focus sessions. Completed sessions (skipped ones don't count) are saved for 90 days
+  and survive restarts; Settings → Statistics → "Reset Statistics" clears them.
 - Unit test suite (`TimeMateTests`, 19 tests) for the Pomodoro state machine: session
   progression and long-break cycles, auto-start, pause/resume, and the break screen's
   "continue" flow. The timer now takes its `UserDefaults` and clock through its
