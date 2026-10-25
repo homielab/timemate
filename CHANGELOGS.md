@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Global keyboard shortcuts that work while another app is in front: ⌃⌥P starts or
+  pauses the timer (and continues past a waiting break screen), ⌃⌥S skips to the next
+  session. Change or turn off each one in Settings → Keyboard Shortcuts; a shortcut
+  already taken by another app is flagged there. No Accessibility permission needed.
 - Today's statistics: the popover shows "Today: N pomodoros · X min" for completed
   focus sessions. Completed sessions (skipped ones don't count) are saved for 90 days
   and survive restarts; Settings → Statistics → "Reset Statistics" clears them.

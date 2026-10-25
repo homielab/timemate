@@ -117,3 +117,13 @@
 "Reset Statistics" = "Đặt lại Thống kê";
 "Reset Statistics?" = "Đặt lại Thống kê?";
 "This will delete the history of completed sessions. Are you sure?" = "Thao tác này sẽ xoá lịch sử các phiên đã hoàn tất. Bạn có chắc không?";
+
+// Global keyboard shortcuts
+"Keyboard Shortcuts" = "Phím tắt";
+"Start / Pause" = "Bắt đầu / Tạm dừng";
+"Skip Session" = "Bỏ qua phiên";
+"This shortcut is used by another app. Record a different one." = "Phím tắt này đang được ứng dụng khác dùng. Hãy ghi một tổ hợp khác.";
+"Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘." = "Dùng được trong mọi ứng dụng. Bấm vào phím tắt rồi nhấn tổ hợp mới có ⌃ hoặc ⌘.";
+"Add ⌃ or ⌘" = "Thêm ⌃ hoặc ⌘";
+"Press keys…" = "Nhấn phím…";
+"Click to record a new shortcut" = "Bấm để ghi phím tắt mới";

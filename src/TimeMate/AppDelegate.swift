@@ -16,6 +16,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var breakOverlayController: BreakOverlayWindowController!
   private var escapeKeyMonitor: Any?
   private var keepAwakeEnabled = false
+  /// Global shortcuts; registered only when running as the app, not under tests.
+  private(set) lazy var hotKeyManager = HotKeyManager { [weak self] action in
+    self?.timer.perform(action)
+  }
   private var cancellables = Set<AnyCancellable>()
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
@@ -44,6 +48,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       "keepAwake": false,
       "hideDockIcon": true,
       SettingsKey.alwaysVisible: false,
+      SettingsKey.hotKeyStartPauseEnabled: true,
+      SettingsKey.hotKeySkipEnabled: true,
       "showProgressCircle": true,
       "autoStartNextSession": true,
       "autoStartOnLaunch": false,
@@ -78,12 +84,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     // --- Popover Setup ---
     let contentView = ContentView().environmentObject(timer).environmentObject(self)
+      .environmentObject(hotKeyManager)
     hostingController = NSHostingController(rootView: AnyView(contentView))
     popover = NSPopover()
     popover.behavior = Self.popoverBehavior(
       alwaysVisible: UserDefaults.standard.bool(forKey: SettingsKey.alwaysVisible))
     popover.contentViewController = hostingController
     installEscapeKeyMonitor()
+    hotKeyManager.activate()
 
     // --- Initial State ---
     updatePopoverSize()
@@ -150,7 +158,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   /// application-defined popover is not dismissed by the system.
   private func installEscapeKeyMonitor() {
     escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-      guard let self, event.keyCode == 53, self.popover.isShown,
+      // While a shortcut is being recorded, Escape cancels the recording.
+      guard let self, event.keyCode == 53, self.popover.isShown, !self.hotKeyManager.isRecording,
         event.window === self.popover.contentViewController?.view.window
       else { return event }
       self.popover.performClose(nil)
