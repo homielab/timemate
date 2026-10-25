@@ -6,6 +6,11 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Right-click (or Control-click) the menu bar item for a quick menu: Start / Pause
+  (Resume, Continue Work), Skip, Reset, Settings… and Quit. A left click still opens
+  the popover.
+- VoiceOver reads the menu bar item with the session and the time remaining, e.g.
+  "TimeMate, Focus, 12 minutes, 34 seconds remaining", instead of an unnamed button.
 - Break screen: **+5 min** makes the break longer (or adds five more minutes once
   it has ended), and **Postpone 1 / 3 / 5 min** hides the break screen and brings the
   break back at its full length when the time is up. The popover shows "Break

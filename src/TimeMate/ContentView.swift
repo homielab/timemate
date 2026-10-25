@@ -49,6 +49,9 @@ struct ContentView: View {
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
       appDelegate.updatePopoverSize()
     }
+    .onReceive(appDelegate.openSettingsRequests) { _ in
+      settingsVisible = true
+    }
   }
 }
 

@@ -25,6 +25,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     self?.timer.perform(action)
   }
   private var cancellables = Set<AnyCancellable>()
+  /// Keeps the menu bar item's VoiceOver label current; only while VoiceOver is on.
+  private var accessibilityLabelUpdates: AnyCancellable?
+  private var voiceOverObservation: NSKeyValueObservation?
+  /// Asks the popover to show its settings ("Settings…" in the right-click menu).
+  let openSettingsRequests = PassthroughSubject<Void, Never>()
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   private static var isRunningTests: Bool {
@@ -82,7 +87,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     layoutMenuBar(hideTime: hideMenuBarTime)
 
     statusItem.button?.target = self
-    statusItem.button?.action = #selector(togglePopover)
+    statusItem.button?.action = #selector(statusItemClicked)
+    statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+    observeVoiceOverForAccessibilityLabel()
 
     // --- Popover Setup ---
     let contentView = ContentView().environmentObject(popoverModel).environmentObject(self)
@@ -197,6 +204,110 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     }
   }
 
+  /// Left click toggles the popover; right click (or Control-click) opens the menu.
+  @objc private func statusItemClicked() {
+    let event = NSApp.currentEvent
+    if StatusItemMenu.opensMenu(
+      eventType: event?.type, modifierFlags: event?.modifierFlags ?? [])
+    {
+      showStatusItemMenu()
+    } else {
+      togglePopover()
+    }
+  }
+
+  private func showStatusItemMenu() {
+    guard let button = statusItem.button else { return }
+    if popover.isShown {
+      popover.performClose(nil)
+    }
+    // Attaching the menu only for this click keeps left clicks on the popover
+    // and lets the system place and highlight the menu like any menu extra.
+    statusItem.menu = makeStatusItemMenu()
+    button.performClick(nil)
+    statusItem.menu = nil
+  }
+
+  /// Built on every right click, so titles follow the timer's current state.
+  private func makeStatusItemMenu() -> NSMenu {
+    let menu = NSMenu()
+    menu.autoenablesItems = false
+    menu.addItem(
+      menuItem(
+        StatusItemMenu.startPauseTitle(
+          state: timer.state, isWaitingToContinue: timer.isWaitingToContinue),
+        action: #selector(menuStartPause)))
+    menu.addItem(menuItem(NSLocalizedString("Skip", comment: ""), action: #selector(menuSkip)))
+    let reset = menuItem(NSLocalizedString("Reset", comment: ""), action: #selector(menuReset))
+    reset.isEnabled = StatusItemMenu.isResetEnabled(state: timer.state)
+    menu.addItem(reset)
+    menu.addItem(.separator())
+    menu.addItem(
+      menuItem(NSLocalizedString("Settings…", comment: ""), action: #selector(menuOpenSettings)))
+    menu.addItem(.separator())
+    menu.addItem(
+      menuItem(
+        NSLocalizedString("Quit", comment: ""), action: #selector(NSApplication.terminate(_:)),
+        target: NSApp, keyEquivalent: "q"))
+    return menu
+  }
+
+  private func menuItem(
+    _ title: String, action: Selector, target: AnyObject? = nil, keyEquivalent: String = ""
+  ) -> NSMenuItem {
+    let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+    item.target = target ?? self
+    return item
+  }
+
+  @objc private func menuStartPause() { timer.perform(.startPause) }
+  @objc private func menuSkip() { timer.perform(.skip) }
+  @objc private func menuReset() { timer.stopTimer() }
+
+  @objc private func menuOpenSettings() {
+    if !popover.isShown {
+      togglePopover()
+    }
+    DispatchQueue.main.async { self.openSettingsRequests.send() }
+  }
+
+  // MARK: - VoiceOver label
+
+  /// VoiceOver reads the menu bar item as "TimeMate, Focus, 12 minutes,
+  /// 34 seconds remaining". The label follows the timer only while VoiceOver
+  /// is on, so the menu bar does no extra work every second otherwise.
+  private func observeVoiceOverForAccessibilityLabel() {
+    voiceOverObservation = NSWorkspace.shared.observe(
+      \.isVoiceOverEnabled, options: [.initial, .new]
+    ) { [weak self] workspace, _ in
+      let enabled = workspace.isVoiceOverEnabled
+      DispatchQueue.main.async { self?.setAccessibilityLabelUpdates(enabled: enabled) }
+    }
+  }
+
+  private func setAccessibilityLabelUpdates(enabled: Bool) {
+    guard enabled else {
+      accessibilityLabelUpdates = nil
+      statusItem.button?.setAccessibilityLabel(Bundle.main.appName)
+      return
+    }
+    updateStatusItemAccessibilityLabel()
+    // objectWillChange fires before the new values land; read them on the next pass.
+    accessibilityLabelUpdates = timer.objectWillChange
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.updateStatusItemAccessibilityLabel() }
+  }
+
+  private func updateStatusItemAccessibilityLabel() {
+    let label = StatusItemMenu.accessibilityLabel(
+      sessionType: timer.currentSessionType, state: timer.state,
+      secondsRemaining: timer.timeRemaining, isBreakPostponed: timer.isBreakPostponed,
+      isWaitingToContinue: timer.isWaitingToContinue)
+    if statusItem.button?.accessibilityLabel() != label {
+      statusItem.button?.setAccessibilityLabel(label)
+    }
+  }
+
   @objc func togglePopover() {
     guard let button = statusItem.button else { return }
 
@@ -301,6 +412,8 @@ private struct MenuBarView: View {
   }
 
   var body: some View {
+    // The status item button carries the VoiceOver label (time included), so
+    // its drawing stays out of the accessibility tree.
     HStack(spacing: 4) {
       Image(systemName: iconName)
         .font(.system(size: NSFont.systemFontSize + 2))
@@ -320,5 +433,6 @@ private struct MenuBarView: View {
     .frame(
       width: Self.width(hideTime: hideTime), height: NSStatusBar.system.thickness,
       alignment: .center)
+    .accessibilityHidden(true)
   }
 }

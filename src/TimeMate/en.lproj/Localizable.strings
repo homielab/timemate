@@ -142,3 +142,10 @@
 "Skip button delay" = "Skip button delay";
 "%d s" = "%d s";
 "Seconds before the Skip button appears on the break screen (0 shows it right away)." = "Seconds before the Skip button appears on the break screen (0 shows it right away).";
+
+// Menu bar item: right-click menu and VoiceOver label
+"Settings…" = "Settings…";
+"TimeMate, %1$@, %2$@ remaining" = "TimeMate, %1$@, %2$@ remaining";
+"TimeMate, %1$@, paused, %2$@ remaining" = "TimeMate, %1$@, paused, %2$@ remaining";
+"TimeMate, %1$@, ready, %2$@" = "TimeMate, %1$@, ready, %2$@";
+"TimeMate, %@ finished" = "TimeMate, %@ finished";

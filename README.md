@@ -24,7 +24,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 
 ## Key Features
 
-- **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter.
+- **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter. Right-click (or Control-click) the menu bar item for a quick menu: Start/Pause, Skip, Reset, Settings… and Quit. VoiceOver reads the item with the session and the time remaining, e.g. "TimeMate, Focus, 12 minutes, 34 seconds remaining".
 - **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions.
 - **Custom Session Durations**: Set any focus or break length from 1 to 180 minutes (e.g. 50/10 or 90-minute deep work) by typing it or with the stepper.
 - **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.

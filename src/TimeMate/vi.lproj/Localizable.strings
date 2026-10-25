@@ -142,3 +142,10 @@
 "Skip button delay" = "Thời gian chờ nút Bỏ qua";
 "%d s" = "%d giây";
 "Seconds before the Skip button appears on the break screen (0 shows it right away)." = "Số giây trước khi nút Bỏ qua hiện trên màn hình nghỉ (0 = hiện ngay).";
+
+// Menu bar item: right-click menu and VoiceOver label
+"Settings…" = "Cài đặt…";
+"TimeMate, %1$@, %2$@ remaining" = "TimeMate, %1$@, còn %2$@";
+"TimeMate, %1$@, paused, %2$@ remaining" = "TimeMate, %1$@, tạm dừng, còn %2$@";
+"TimeMate, %1$@, ready, %2$@" = "TimeMate, %1$@, sẵn sàng, %2$@";
+"TimeMate, %@ finished" = "TimeMate, %@ đã xong";
