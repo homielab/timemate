@@ -37,6 +37,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- Build number is now 15, matching the 3.5 release commit.
+- README: correct requirements (macOS 13.5, Xcode 26), command-line build and test commands.
 - Internal: the popover and settings code is split into `Views/` and one file per
   settings section under `Settings/`; no visible change.
 - Break screen: the cat animation plays only on the screen you work on (less CPU with
@@ -75,6 +77,13 @@ All notable changes to TimeMate will be documented in this file.
   elsewhere and closes from the menu bar icon or the Escape key; when off, it
   closes on outside clicks as before.
 
+## 3.5
+
+### Changed
+
+- The long break can now last up to 60 minutes (it was 30).
+- Updated app icon (Icon Composer format).
+
 ## 3.4
 
 ### Added
@@ -107,6 +116,6 @@ All notable changes to TimeMate will be documented in this file.
 - "Clear Background Color" (accessibility label) is now localized in English and
   Vietnamese.
 
-## [3.3] – Previous release
+## 3.3 – Previous release
 
 See [releases](https://apps.apple.com/us/app/timemate-pomodoro-timer/id6754137356) for earlier changes.
