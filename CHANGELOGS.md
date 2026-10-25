@@ -18,6 +18,9 @@ All notable changes to TimeMate will be documented in this file.
   settings panel opens.
 - When macOS needs approval for the login item, a hint with an
   "Open System Settings" button appears next to the toggle.
+- "Keep window on top" now works: when on, the popover stays open when you click
+  elsewhere and closes from the menu bar icon or the Escape key; when off, it
+  closes on outside clicks as before.
 
 ## 3.4
 

@@ -440,7 +440,7 @@ private struct AppearanceSettingsSection: View {
   @Binding var backgroundColorHex: String
 
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
-  @AppStorage("alwaysVisible") private var alwaysVisible = false
+  @AppStorage(SettingsKey.alwaysVisible) private var alwaysVisible = false
 
   var body: some View {
     SettingsSection(titleKey: "Appearance", systemImage: "paintbrush.fill") {

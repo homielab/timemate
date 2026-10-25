@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var hostingController: NSHostingController<AnyView>!
   private let sleepPreventer = SleepPreventer()
   private var breakOverlayController: BreakOverlayWindowController!
+  private var escapeKeyMonitor: Any?
   @AppStorage("hideMenuBarTime") private var hideMenuBarTime = false
 
   // MARK: - App Lifecycle
@@ -33,7 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       "notificationsEnabled": true,
       "keepAwake": false,
       "hideDockIcon": true,
-      "alwaysVisible": false,
+      SettingsKey.alwaysVisible: false,
       "showProgressCircle": true,
       "autoStartNextSession": true,
       "autoStartOnLaunch": false,
@@ -65,8 +66,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     let contentView = ContentView().environmentObject(timer).environmentObject(self)
     hostingController = NSHostingController(rootView: AnyView(contentView))
     popover = NSPopover()
-    popover.behavior = .transient
+    popover.behavior = Self.popoverBehavior(
+      alwaysVisible: UserDefaults.standard.bool(forKey: SettingsKey.alwaysVisible))
     popover.contentViewController = hostingController
+    installEscapeKeyMonitor()
 
     // --- Initial State ---
     updatePopoverSize()
@@ -102,9 +105,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
   }
 
+  /// "Keep window on top" keeps the popover open when the user clicks elsewhere;
+  /// it then closes only via the menu bar icon or the Escape key.
+  static func popoverBehavior(alwaysVisible: Bool) -> NSPopover.Behavior {
+    alwaysVisible ? .applicationDefined : .transient
+  }
+
   func setPopoverBehavior(alwaysVisible: Bool) {
-    // Always use transient behavior to allow closing on outside clicks
-    popover.behavior = .transient
+    popover.behavior = Self.popoverBehavior(alwaysVisible: alwaysVisible)
+  }
+
+  /// Closes the popover on Escape whatever its behavior, since an
+  /// application-defined popover is not dismissed by the system.
+  private func installEscapeKeyMonitor() {
+    escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self, event.keyCode == 53, self.popover.isShown,
+        event.window === self.popover.contentViewController?.view.window
+      else { return event }
+      self.popover.performClose(nil)
+      return nil
+    }
   }
 
   func updateMenuBarWidth(hideTime: Bool) {

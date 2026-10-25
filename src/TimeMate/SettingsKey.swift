@@ -13,4 +13,5 @@ enum SettingsKey {
   static let alarmSound = "alarmSound"
   static let alarmVolume = "alarmVolume"
   static let notificationsEnabled = "notificationsEnabled"
+  static let alwaysVisible = "alwaysVisible"
 }
