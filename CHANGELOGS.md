@@ -49,6 +49,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- "Review on App Store" now opens TimeMate's review page in the App Store, and
+  the unused push-notification entitlement was removed.
 - The "session complete" notification now shows as a banner even when TimeMate is
   in front (e.g. as the break screen opens), has "Start Next" and "Skip" buttons,
   and no longer plays a second sound on top of the alarm chosen in Settings.

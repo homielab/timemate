@@ -1,7 +1,6 @@
 //  Created by homielab.com
 
 import AppKit
-import StoreKit
 import SwiftUI
 
 struct AboutSection: View {
@@ -23,7 +22,11 @@ struct AboutSection: View {
         }
 
         MenuItemButton(title: "Review on App Store", systemImage: "star.fill") {
-          SKStoreReviewController.requestReview()
+          if let url = URL(
+            string: "macappstore://apps.apple.com/app/id6754137356?action=write-review")
+          {
+            NSWorkspace.shared.open(url)
+          }
         }
 
         #if DEBUG
