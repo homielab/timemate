@@ -85,6 +85,9 @@
 "Skip Break" = "Bỏ qua nghỉ ngơi";
 "Press Esc twice to skip" = "Nhấn Esc 2 lần để bỏ qua";
 "Skip available in %d" = "Bỏ qua sau %d";
+"Break started, 1 minute" = "Bắt đầu nghỉ, 1 phút";
+"Break started, %d minutes" = "Bắt đầu nghỉ, %d phút";
+"Break time remaining" = "Thời gian nghỉ còn lại";
 
 // Relaxation Tips
 "Posture check! You look like a shrimp 🦐" = "Kiểm tra tư thế! Bạn trông như con tôm 🦐";

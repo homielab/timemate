@@ -18,13 +18,22 @@ struct VisualEffectBlur: NSViewRepresentable {
 
 struct BreakOverlayView: View {
   @ObservedObject var timer: PomodoroTimer
+  /// Only the overlay on the main screen plays the animation.
+  let isPrimary: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var currentTime = Date()
   @State private var showSkipButton = false
   @State private var countdown = 5
   @State private var isAnimating = false
   @State private var currentTip = ""
 
-  let timerPublisher = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+  /// One clock shared by the overlays of all screens.
+  private static let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+  /// The entrance animation, or none when Reduce Motion is on.
+  private func entrance(_ duration: Double, delay: Double = 0) -> Animation? {
+    reduceMotion ? nil : .easeOut(duration: duration).delay(delay)
+  }
 
   var body: some View {
     ZStack {
@@ -41,18 +50,28 @@ struct BreakOverlayView: View {
           .foregroundColor(.white.opacity(0.6))
           .padding(.top, 60)
           .opacity(isAnimating ? 1 : 0)
-          .animation(.easeOut(duration: 1.0), value: isAnimating)
+          .animation(entrance(1.0), value: isAnimating)
 
         Spacer()
 
         // Center: Image, Relaxation Tip & Timer
         VStack(spacing: 30) {
-          LottieView(animation: .named("cat-playing"))
-            .playing(loopMode: .loop)
+          if isPrimary {
+            Group {
+              if reduceMotion {
+                LottieView(animation: .named("cat-playing"))
+                  .paused(at: .progress(0.5))
+              } else {
+                LottieView(animation: .named("cat-playing"))
+                  .playing(loopMode: .loop)
+              }
+            }
             .frame(width: 535, height: 228)
             .opacity(isAnimating ? 1 : 0)
-            .scaleEffect(isAnimating ? 1 : 0.9)
-            .animation(.easeOut(duration: 1.5), value: isAnimating)
+            .scaleEffect(isAnimating || reduceMotion ? 1 : 0.9)
+            .animation(entrance(1.5), value: isAnimating)
+            .accessibilityHidden(true)
+          }
 
           VStack(spacing: 10) {
             Text(LocalizedStringKey(currentTip))
@@ -61,8 +80,8 @@ struct BreakOverlayView: View {
               .foregroundColor(.white.opacity(0.9))
               .padding(.horizontal, 40)
               .opacity(isAnimating ? 1 : 0)
-              .offset(y: isAnimating ? 0 : 20)
-              .animation(.easeOut(duration: 1.0).delay(0.3), value: isAnimating)
+              .offset(y: isAnimating || reduceMotion ? 0 : 20)
+              .animation(entrance(1.0, delay: 0.3), value: isAnimating)
           }
 
           Text(timer.timeRemaining.toMinuteSecondString())
@@ -70,7 +89,10 @@ struct BreakOverlayView: View {
             .foregroundColor(.white)
             .padding(.top, 20)
             .opacity(isAnimating ? 1 : 0)
-            .animation(.easeOut(duration: 1.0).delay(0.9), value: isAnimating)
+            .animation(entrance(1.0, delay: 0.9), value: isAnimating)
+            .accessibilityLabel(Text(LocalizedStringKey("Break time remaining")))
+            .accessibilityValue(
+              Text(BreakOverlayAccessibility.countdownValue(secondsRemaining: timer.timeRemaining)))
         }
 
         Spacer()
@@ -93,6 +115,7 @@ struct BreakOverlayView: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            .accessibilityHint(Text(LocalizedStringKey("Press Esc twice or click to continue")))
             .transition(.opacity)
           } else if showSkipButton {
             Button(action: {
@@ -114,6 +137,7 @@ struct BreakOverlayView: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            .accessibilityHint(Text(LocalizedStringKey("Press Esc twice to skip")))
             .transition(.opacity)
           } else {
             Text(String(format: NSLocalizedString("Skip available in %d", comment: ""), countdown))
@@ -137,7 +161,7 @@ struct BreakOverlayView: View {
         .padding(.bottom, 60)
         .frame(height: 120)
         .opacity(isAnimating ? 1 : 0)
-        .animation(.easeOut(duration: 1.0).delay(1.2), value: isAnimating)
+        .animation(entrance(1.0, delay: 1.2), value: isAnimating)
       }
     }
     .onAppear {
@@ -149,7 +173,7 @@ struct BreakOverlayView: View {
         timer.continueWork()
       }
     }
-    .onReceive(timerPublisher) { input in
+    .onReceive(Self.clock) { input in
       currentTime = input
 
       let isBreakActive = timer.state == .active && (timer.currentSessionType == .shortBreak || timer.currentSessionType == .longBreak)
@@ -162,7 +186,7 @@ struct BreakOverlayView: View {
         if countdown > 0 {
           countdown -= 1
         } else {
-          withAnimation {
+          withAnimation(reduceMotion ? nil : .default) {
             showSkipButton = true
           }
         }

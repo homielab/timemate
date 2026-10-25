@@ -85,6 +85,9 @@
 "Skip Break" = "Skip Break";
 "Press Esc twice to skip" = "Press Esc twice to skip";
 "Skip available in %d" = "Skip available in %d";
+"Break started, 1 minute" = "Break started, 1 minute";
+"Break started, %d minutes" = "Break started, %d minutes";
+"Break time remaining" = "Break time remaining";
 
 // Relaxation Tips
 "Posture check! You look like a shrimp 🦐" = "Posture check! You look like a shrimp 🦐";

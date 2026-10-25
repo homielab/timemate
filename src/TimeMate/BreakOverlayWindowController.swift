@@ -43,6 +43,8 @@ struct OverlayVisibilityGeneration {
 
 class BreakOverlayWindowController: NSObject {
   private var windows: [NSWindow] = []
+  /// The window on the screen the user works on: it gets focus and the animation.
+  private var primaryWindow: NSWindow?
   private var timer: PomodoroTimer
   private var cancellables = Set<AnyCancellable>()
   private var eventMonitor: Any?
@@ -81,7 +83,12 @@ class BreakOverlayWindowController: NSObject {
   private func createWindows() {
     closeAllWindows()  // Clear existing
 
-    for screen in NSScreen.screens {
+    let screens = NSScreen.screens
+    let primaryIndex = BreakOverlayAccessibility.primaryScreenIndex(
+      screens: screens.map(\.frame), main: NSScreen.main?.frame)
+
+    for (index, screen) in screens.enumerated() {
+      let isPrimary = index == primaryIndex
       let window = BreakOverlayWindow(
         contentRect: screen.frame,
         styleMask: [.borderless, .fullSizeContentView],
@@ -101,16 +108,20 @@ class BreakOverlayWindowController: NSObject {
       window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
       window.isReleasedWhenClosed = false
 
-      let contentView = BreakOverlayView(timer: timer)
+      let contentView = BreakOverlayView(timer: timer, isPrimary: isPrimary)
       window.contentView = NSHostingView(rootView: contentView)
 
       windows.append(window)
+      if isPrimary {
+        primaryWindow = window
+      }
     }
   }
 
   private func closeAllWindows() {
     windows.forEach { $0.close() }
     windows.removeAll()
+    primaryWindow = nil
   }
 
   private func setupSubscriptions() {
@@ -156,10 +167,15 @@ class BreakOverlayWindowController: NSObject {
     let overlayEnabled = UserDefaults.standard.bool(forKey: "overlayEnabled")
 
     if shouldShow && overlayEnabled {
+      // Not when the overlay only comes back during its fade-out.
+      let isNewlyShown = windows.isEmpty
       if windows.isEmpty {
         createWindows()
       }
       showWindows(animated: true)
+      if isNewlyShown && !isWaitingToContinue {
+        announceBreakStart()
+      }
     } else {
       hideWindows(animated: true)
     }
@@ -176,22 +192,53 @@ class BreakOverlayWindowController: NSObject {
       return
     }
 
-    for window in windows {
-      window.alphaValue = 0
-      window.makeKeyAndOrderFront(nil)
+    let fadeDuration =
+      animated
+      ? BreakOverlayAccessibility.fadeDuration(
+        reduceMotion: BreakOverlayAccessibility.reduceMotion) : nil
 
-      // Ensure app is active to receive key events
-      NSApp.activate(ignoringOtherApps: true)
+    // Activate once so the overlay receives key events (Esc), then give focus
+    // to the window on the screen the user works on.
+    NSApp.activate(ignoringOtherApps: true)
+    for window in windows where window !== primaryWindow {
+      window.alphaValue = fadeDuration == nil ? 1 : 0
+      window.orderFront(nil)
+    }
+    if let primaryWindow {
+      primaryWindow.alphaValue = fadeDuration == nil ? 1 : 0
+      primaryWindow.makeKeyAndOrderFront(nil)
+    }
 
-      if animated {
-        NSAnimationContext.runAnimationGroup { context in
-          context.duration = 1.5
+    if let fadeDuration {
+      NSAnimationContext.runAnimationGroup { context in
+        context.duration = fadeDuration
+        for window in windows {
           window.animator().alphaValue = 1
         }
-      } else {
-        window.alphaValue = 1
       }
     }
+  }
+
+  private func announceBreakStart() {
+    // The session type changes before the timer resets to the break length, so
+    // read the remaining time once the current change has finished.
+    DispatchQueue.main.async { [weak self] in
+      guard let self, !self.windows.isEmpty, !self.visibilityGeneration.isClosePending else {
+        return
+      }
+      self.postAnnouncement()
+    }
+  }
+
+  private func postAnnouncement() {
+    let text = BreakOverlayAccessibility.announcement(secondsRemaining: timer.timeRemaining)
+    NSAccessibility.post(
+      element: primaryWindow ?? NSApp as Any,
+      notification: .announcementRequested,
+      userInfo: [
+        .announcement: text,
+        .priority: NSAccessibilityPriorityLevel.high.rawValue,
+      ])
   }
 
   private func hideWindows(animated: Bool) {
@@ -200,9 +247,14 @@ class BreakOverlayWindowController: NSObject {
     let windowsToClose = windows  // Capture current windows
     let token = visibilityGeneration.beginHide()
 
-    if animated {
+    let fadeDuration =
+      animated
+      ? BreakOverlayAccessibility.fadeDuration(
+        reduceMotion: BreakOverlayAccessibility.reduceMotion) : nil
+
+    if let fadeDuration {
       NSAnimationContext.runAnimationGroup { context in
-        context.duration = 1.5
+        context.duration = fadeDuration
         windowsToClose.forEach { $0.animator().alphaValue = 0 }
       } completionHandler: { [weak self] in
         // Ensure we are on main thread and self exists
@@ -211,12 +263,16 @@ class BreakOverlayWindowController: NSObject {
           guard let self, self.visibilityGeneration.shouldClose(token) else { return }
           windowsToClose.forEach { $0.close() }
           self.windows.removeAll(where: { windowsToClose.contains($0) })
+          if let primary = self.primaryWindow, windowsToClose.contains(primary) {
+            self.primaryWindow = nil
+          }
         }
       }
     } else {
       _ = visibilityGeneration.shouldClose(token)
       windowsToClose.forEach { $0.close() }
       windows.removeAll()
+      primaryWindow = nil
     }
   }
 

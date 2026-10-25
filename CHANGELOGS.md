@@ -21,6 +21,14 @@ All notable changes to TimeMate will be documented in this file.
   "continue" flow. The timer now takes its `UserDefaults` and clock through its
   initializer, and settings keys live in one shared `SettingsKey` enum.
 
+### Changed
+
+- Break screen: the cat animation plays only on the screen you work on (less CPU with
+  several displays), and that screen gets the keyboard focus. With Reduce Motion on,
+  the break screen shows a still image and appears without fading.
+- VoiceOver announces "Break started, 5 minutes" and reads the break countdown and
+  the Skip / Continue buttons with their Esc shortcut.
+
 ### Fixed
 
 - The "session complete" notification now shows as a banner even when TimeMate is
