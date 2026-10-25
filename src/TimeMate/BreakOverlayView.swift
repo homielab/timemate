@@ -23,7 +23,7 @@ struct BreakOverlayView: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var currentTime = Date()
   @State private var showSkipButton = false
-  @State private var countdown = 5
+  @State private var countdown = BreakOverlayAccessibility.defaultSkipDelay
   @State private var isAnimating = false
   @State private var currentTip = ""
 
@@ -33,6 +33,67 @@ struct BreakOverlayView: View {
   /// The entrance animation, or none when Reduce Motion is on.
   private func entrance(_ duration: Double, delay: Double = 0) -> Animation? {
     reduceMotion ? nil : .easeOut(duration: duration).delay(delay)
+  }
+
+  /// A white-outlined capsule, the look of the secondary break buttons.
+  private func outlinedCapsule(_ label: Text, compact: Bool = false) -> some View {
+    label
+      .font(compact ? .subheadline.weight(.semibold) : .headline)
+      .foregroundColor(.white)
+      .padding(.horizontal, compact ? 16 : 30)
+      .padding(.vertical, compact ? 8 : 12)
+      .background(
+        Capsule()
+          .fill(Color.white.opacity(0.1))
+      )
+      .overlay(
+        Capsule()
+          .strokeBorder(Color.white, lineWidth: compact ? 1 : 2)
+      )
+      .contentShape(Capsule())
+  }
+
+  /// "+5 min": makes the break longer (or, once it ended, starts 5 more minutes).
+  private var extendButton: some View {
+    Button(action: {
+      timer.extend(by: BreakOverlayAccessibility.extendMinutes)
+    }) {
+      outlinedCapsule(Text(LocalizedStringKey("+5 min")))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(Text(LocalizedStringKey("Add 5 minutes to the break")))
+  }
+
+  /// "Postpone 1 / 3 / 5 min": hides the break screen and brings the break back later.
+  private var postponeButtons: some View {
+    HStack(spacing: 8) {
+      Text(LocalizedStringKey("Postpone"))
+        .font(.subheadline)
+        .foregroundColor(.white.opacity(0.7))
+        .accessibilityHidden(true)
+      ForEach(BreakOverlayAccessibility.postponeOptions, id: \.self) { minutes in
+        Button(action: {
+          timer.postponeBreak(minutes: minutes)
+        }) {
+          outlinedCapsule(
+            Text(String(format: NSLocalizedString("%d min", comment: ""), minutes)), compact: true)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(BreakOverlayAccessibility.postponeLabel(minutes: minutes)))
+      }
+    }
+  }
+
+  /// Seconds before Skip and Postpone show, from Settings.
+  private var skipDelay: Int {
+    BreakOverlayAccessibility.skipDelay(
+      stored: UserDefaults.standard.object(forKey: SettingsKey.overlaySkipDelay))
+  }
+
+  /// Starts the wait before Skip shows; with no delay it shows right away.
+  private func resetSkipCountdown() {
+    countdown = skipDelay
+    showSkipButton = countdown == 0
   }
 
   var body: some View {
@@ -97,53 +158,51 @@ struct BreakOverlayView: View {
 
         Spacer()
 
-        // Bottom: Skip Button & Hint
+        // Bottom: Break actions & Hint
         VStack(spacing: 16) {
-          if timer.isWaitingToContinue {
-            Button(action: {
-              timer.continueWork()
-            }) {
-              Text(LocalizedStringKey("Continue Work"))
-                .font(.headline)
-                .foregroundColor(.black)
-                .padding(.horizontal, 40)
-                .padding(.vertical, 14)
-                .background(
-                  Capsule()
-                    .fill(Color.white)
+          HStack(spacing: 16) {
+            if timer.isWaitingToContinue {
+              Button(action: {
+                timer.continueWork()
+              }) {
+                Text(LocalizedStringKey("Continue Work"))
+                  .font(.headline)
+                  .foregroundColor(.black)
+                  .padding(.horizontal, 40)
+                  .padding(.vertical, 14)
+                  .background(
+                    Capsule()
+                      .fill(Color.white)
+                  )
+                  .contentShape(Capsule())
+              }
+              .buttonStyle(.plain)
+              .accessibilityHint(Text(LocalizedStringKey("Press Esc twice or click to continue")))
+              .transition(.opacity)
+              extendButton
+            } else {
+              extendButton
+              if showSkipButton {
+                postponeButtons
+                  .transition(.opacity)
+                Button(action: {
+                  timer.skipSession()
+                }) {
+                  outlinedCapsule(Text(LocalizedStringKey("Skip Break")))
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text(LocalizedStringKey("Press Esc twice to skip")))
+                .transition(.opacity)
+              } else {
+                Text(
+                  String(
+                    format: NSLocalizedString("Skip available in %d", comment: ""), countdown)
                 )
-                .contentShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(Text(LocalizedStringKey("Press Esc twice or click to continue")))
-            .transition(.opacity)
-          } else if showSkipButton {
-            Button(action: {
-              timer.skipSession()
-            }) {
-              Text(LocalizedStringKey("Skip Break"))
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 30)
+                .font(.body)
+                .foregroundColor(.white.opacity(0.5))
                 .padding(.vertical, 12)
-                .background(
-                  Capsule()
-                    .fill(Color.white.opacity(0.1))
-                )
-                .overlay(
-                  Capsule()
-                    .strokeBorder(Color.white, lineWidth: 2)
-                )
-                .contentShape(Capsule())
+              }
             }
-            .buttonStyle(.plain)
-            .accessibilityHint(Text(LocalizedStringKey("Press Esc twice to skip")))
-            .transition(.opacity)
-          } else {
-            Text(String(format: NSLocalizedString("Skip available in %d", comment: ""), countdown))
-              .font(.body)
-              .foregroundColor(.white.opacity(0.5))
-              .padding(.vertical, 12)
           }
 
           if timer.isWaitingToContinue {
@@ -165,6 +224,7 @@ struct BreakOverlayView: View {
       }
     }
     .onAppear {
+      resetSkipCountdown()
       isAnimating = true
       currentTip = RelaxationTips.random()
     }
@@ -176,23 +236,23 @@ struct BreakOverlayView: View {
     .onReceive(Self.clock) { input in
       currentTime = input
 
-      let isBreakActive = timer.state == .active && (timer.currentSessionType == .shortBreak || timer.currentSessionType == .longBreak)
+      let isBreakActive = timer.state == .active && timer.isBreak && !timer.isBreakPostponed
 
       if isBreakActive || timer.isWaitingToContinue {
         if !isAnimating {
           isAnimating = true
           currentTip = RelaxationTips.random()
         }
-        if countdown > 0 {
+        if countdown > 1 {
           countdown -= 1
-        } else {
+        } else if !showSkipButton {
+          countdown = 0
           withAnimation(reduceMotion ? nil : .default) {
             showSkipButton = true
           }
         }
       } else {
-        countdown = 5
-        showSkipButton = false
+        resetSkipCountdown()
         isAnimating = false
       }
     }

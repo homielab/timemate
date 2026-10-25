@@ -24,6 +24,9 @@ class PomodoroTimer: ObservableObject {
   @Published var focusSessionsCompleted: Int = 0
   @Published var progress: Double = 1.0
   @Published var isWaitingToContinue: Bool = false
+  /// The break was put off with `postponeBreak(minutes:)`: the countdown runs
+  /// until the break comes back, and the break overlay stays hidden.
+  @Published private(set) var isBreakPostponed: Bool = false
 
   // MARK: - Settings
   // Settings are read live from the injected defaults on every use, so changes
@@ -122,6 +125,13 @@ class PomodoroTimer: ObservableObject {
     let tickTime = now()
     lastTickAt = tickTime
     guard state == .active, let endDate else { return }
+
+    if isBreakPostponed, endDate <= tickTime {
+      // The postponed break comes back at its full length.
+      resetForCurrentSession()
+      self.endDate = tickTime.addingTimeInterval(TimeInterval(timeRemaining))
+      return
+    }
 
     let remaining = max(0, Int(endDate.timeIntervalSince(tickTime).rounded()))
     if remaining > 0 {
@@ -232,7 +242,68 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  /// Whether the current session is a break.
+  var isBreak: Bool {
+    currentSessionType == .shortBreak || currentSessionType == .longBreak
+  }
+
+  /// Adds `minutes` to the running break ("+5 min" on the break screen). A
+  /// break that already ended and waits on the break screen starts again for
+  /// `minutes`. Does nothing during focus or a postponed break.
+  func extend(by minutes: Int) {
+    guard minutes > 0, isBreak, !isBreakPostponed else { return }
+    let extra = Self.seconds(forMinutes: minutes)
+    if isWaitingToContinue {
+      isWaitingToContinue = false
+      totalDuration = extra
+      timeRemaining = extra
+      progress = 1.0
+      state = .active
+      endDate = now().addingTimeInterval(TimeInterval(extra))
+      startTicking()
+      return
+    }
+    switch state {
+    case .active:
+      guard let endDate else { return }
+      let newEndDate = endDate.addingTimeInterval(TimeInterval(extra))
+      self.endDate = newEndDate
+      totalDuration += extra
+      timeRemaining = max(0, Int(newEndDate.timeIntervalSince(now()).rounded()))
+    case .paused:
+      totalDuration += extra
+      timeRemaining += extra
+    case .idle:
+      return
+    }
+    progress = Double(timeRemaining) / Double(max(1, totalDuration))
+  }
+
+  /// Puts off the running break by `minutes`: the break screen goes away and
+  /// the break starts again, at its full length, once they have passed.
+  func postponeBreak(minutes: Int) {
+    guard minutes > 0, isBreak, state == .active, !isBreakPostponed else { return }
+    let delay = Self.seconds(forMinutes: minutes)
+    isBreakPostponed = true
+    totalDuration = delay
+    timeRemaining = delay
+    progress = 1.0
+    endDate = now().addingTimeInterval(TimeInterval(delay))
+    startTicking()
+  }
+
+  /// Seconds in `minutes` of session time. Debug builds treat minutes as
+  /// seconds so sessions can be tried out quickly.
+  static func seconds(forMinutes minutes: Int) -> Int {
+    #if DEBUG
+      return minutes
+    #else
+      return minutes * 60
+    #endif
+  }
+
   private func resetForCurrentSession() {
+    isBreakPostponed = false
     self.totalDuration = durationFor(session: currentSessionType)
     self.timeRemaining = totalDuration
     self.progress = 1.0
@@ -245,12 +316,7 @@ class PomodoroTimer: ObservableObject {
     case .shortBreak: stored = shortBreakDurationMinutes
     case .longBreak: stored = longBreakDurationMinutes
     }
-    let minutes = SessionDuration.sanitized(stored)
-    #if DEBUG
-      return minutes
-    #else
-      return minutes * 60
-    #endif
+    return Self.seconds(forMinutes: SessionDuration.sanitized(stored))
   }
 
   private func playSound(named soundName: String) {

@@ -46,4 +46,20 @@ final class BreakOverlayAccessibilityTests: XCTestCase {
     XCTAssertNil(BreakOverlayAccessibility.fadeDuration(reduceMotion: true))
     XCTAssertEqual(BreakOverlayAccessibility.fadeDuration(reduceMotion: false), 1.5)
   }
+
+  func testSkipDelayDefaultsToFiveAndIsClamped() {
+    XCTAssertEqual(BreakOverlayAccessibility.skipDelay(stored: nil), 5)
+    XCTAssertEqual(BreakOverlayAccessibility.skipDelay(stored: 0), 0)
+    XCTAssertEqual(BreakOverlayAccessibility.skipDelay(stored: 12), 12)
+    XCTAssertEqual(BreakOverlayAccessibility.skipDelay(stored: -3), 0)
+    XCTAssertEqual(BreakOverlayAccessibility.skipDelay(stored: 99), 30)
+  }
+
+  func testPostponeLabelsAreSpelledOut() {
+    XCTAssertEqual(
+      BreakOverlayAccessibility.postponeLabel(minutes: 1), "Postpone break by 1 minute")
+    XCTAssertEqual(
+      BreakOverlayAccessibility.postponeLabel(minutes: 3), "Postpone break by 3 minutes")
+    XCTAssertEqual(BreakOverlayAccessibility.postponeOptions, [1, 3, 5])
+  }
 }

@@ -6,6 +6,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Break screen: **+5 min** makes the break longer (or adds five more minutes once
+  it has ended), and **Postpone 1 / 3 / 5 min** hides the break screen and brings the
+  break back at its full length when the time is up. The popover shows "Break
+  postponed" meanwhile. Both read clearly with VoiceOver.
+- Settings → Alerts & Sound → "Skip button delay": choose how long the break screen
+  waits before offering Skip and Postpone (0–30 s, default 5 s).
 - Any session length from 1 to 180 minutes (e.g. 50/10 or a 90-minute focus):
   type the minutes in Settings → Durations or use the stepper; invalid entries
   are shown in red and not saved.

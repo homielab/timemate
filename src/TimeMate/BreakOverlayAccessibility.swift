@@ -40,6 +40,31 @@ enum BreakOverlayAccessibility {
     reduceMotion ? nil : 1.5
   }
 
+  /// Minutes the break screen offers to postpone the break by.
+  static let postponeOptions = [1, 3, 5]
+  /// Minutes the "+5 min" button adds to the break.
+  static let extendMinutes = 5
+
+  /// VoiceOver label of a postpone button, e.g. "Postpone break by 3 minutes".
+  static func postponeLabel(minutes: Int) -> String {
+    if minutes == 1 {
+      return NSLocalizedString("Postpone break by 1 minute", comment: "VoiceOver label")
+    }
+    return String(
+      format: NSLocalizedString("Postpone break by %d minutes", comment: "VoiceOver label"),
+      minutes)
+  }
+
+  /// Seconds before the Skip button shows (Settings, 0–30 s). The default is 5.
+  static let skipDelayRange = 0...30
+  static let defaultSkipDelay = 5
+
+  /// The stored skip delay clamped to `skipDelayRange`; the default if unset.
+  static func skipDelay(stored: Any?) -> Int {
+    guard let seconds = stored as? Int else { return defaultSkipDelay }
+    return min(max(seconds, skipDelayRange.lowerBound), skipDelayRange.upperBound)
+  }
+
   static var reduceMotion: Bool {
     NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
   }

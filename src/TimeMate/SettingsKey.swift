@@ -14,6 +14,7 @@ enum SettingsKey {
   static let alarmVolume = "alarmVolume"
   static let notificationsEnabled = "notificationsEnabled"
   static let alwaysVisible = "alwaysVisible"
+  static let overlaySkipDelay = "overlaySkipDelay"
   static let hotKeyStartPauseKeyCode = "hotKeyStartPauseKeyCode"
   static let hotKeyStartPauseModifiers = "hotKeyStartPauseModifiers"
   static let hotKeyStartPauseEnabled = "hotKeyStartPauseEnabled"

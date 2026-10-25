@@ -125,11 +125,15 @@ class BreakOverlayWindowController: NSObject {
   }
 
   private func setupSubscriptions() {
-    timer.$state.combineLatest(timer.$currentSessionType, timer.$isWaitingToContinue)
-      .sink { [weak self] state, sessionType, isWaiting in
-        self?.handleStateChange(state: state, sessionType: sessionType, isWaitingToContinue: isWaiting)
-      }
-      .store(in: &cancellables)
+    timer.$state.combineLatest(
+      timer.$currentSessionType, timer.$isWaitingToContinue, timer.$isBreakPostponed
+    )
+    .sink { [weak self] state, sessionType, isWaiting, isPostponed in
+      self?.handleStateChange(
+        state: state, sessionType: sessionType, isWaitingToContinue: isWaiting,
+        isBreakPostponed: isPostponed)
+    }
+    .store(in: &cancellables)
   }
 
   private func setupEventMonitor() {
@@ -159,9 +163,12 @@ class BreakOverlayWindowController: NSObject {
     }
   }
 
-  private func handleStateChange(state: PomodoroState, sessionType: SessionType, isWaitingToContinue: Bool) {
+  private func handleStateChange(
+    state: PomodoroState, sessionType: SessionType, isWaitingToContinue: Bool,
+    isBreakPostponed: Bool
+  ) {
     let isBreak = sessionType == .shortBreak || sessionType == .longBreak
-    let shouldShow = (state == .active && isBreak) || isWaitingToContinue
+    let shouldShow = (state == .active && isBreak && !isBreakPostponed) || isWaitingToContinue
 
     // Check user setting
     let overlayEnabled = UserDefaults.standard.bool(forKey: "overlayEnabled")

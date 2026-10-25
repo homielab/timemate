@@ -132,3 +132,13 @@
 "Press keys…" = "Press keys…";
 "Click to record a new shortcut" = "Click to record a new shortcut";
 "Start Next" = "Start Next";
+"+5 min" = "+5 min";
+"Add 5 minutes to the break" = "Add 5 minutes to the break";
+"Postpone" = "Postpone";
+"%d min" = "%d min";
+"Postpone break by 1 minute" = "Postpone break by 1 minute";
+"Postpone break by %d minutes" = "Postpone break by %d minutes";
+"Break postponed" = "Break postponed";
+"Skip button delay" = "Skip button delay";
+"%d s" = "%d s";
+"Seconds before the Skip button appears on the break screen (0 shows it right away)." = "Seconds before the Skip button appears on the break screen (0 shows it right away).";

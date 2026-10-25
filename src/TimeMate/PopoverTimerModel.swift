@@ -14,6 +14,7 @@ final class PopoverTimerModel: ObservableObject {
   @Published private(set) var state: PomodoroState
   @Published private(set) var currentSessionType: SessionType
   @Published private(set) var focusSessionsCompleted: Int
+  @Published private(set) var isBreakPostponed: Bool
 
   /// The timer itself, for actions and the session history (not observed).
   let timer: PomodoroTimer
@@ -25,6 +26,7 @@ final class PopoverTimerModel: ObservableObject {
     state = timer.state
     currentSessionType = timer.currentSessionType
     focusSessionsCompleted = timer.focusSessionsCompleted
+    isBreakPostponed = timer.isBreakPostponed
     countdown = PopoverCountdown(timer: timer)
 
     timer.$state.removeDuplicates()
@@ -35,6 +37,9 @@ final class PopoverTimerModel: ObservableObject {
       .store(in: &cancellables)
     timer.$focusSessionsCompleted.removeDuplicates()
       .sink { [weak self] in self?.focusSessionsCompleted = $0 }
+      .store(in: &cancellables)
+    timer.$isBreakPostponed.removeDuplicates()
+      .sink { [weak self] in self?.isBreakPostponed = $0 }
       .store(in: &cancellables)
   }
 

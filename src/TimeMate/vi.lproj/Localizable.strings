@@ -132,3 +132,13 @@
 "Press keys…" = "Nhấn phím…";
 "Click to record a new shortcut" = "Bấm để ghi phím tắt mới";
 "Start Next" = "Bắt đầu phiên tiếp";
+"+5 min" = "+5 phút";
+"Add 5 minutes to the break" = "Nghỉ thêm 5 phút";
+"Postpone" = "Hoãn";
+"%d min" = "%d phút";
+"Postpone break by 1 minute" = "Hoãn nghỉ 1 phút";
+"Postpone break by %d minutes" = "Hoãn nghỉ %d phút";
+"Break postponed" = "Đã hoãn nghỉ";
+"Skip button delay" = "Thời gian chờ nút Bỏ qua";
+"%d s" = "%d giây";
+"Seconds before the Skip button appears on the break screen (0 shows it right away)." = "Số giây trước khi nút Bỏ qua hiện trên màn hình nghỉ (0 = hiện ngay).";
