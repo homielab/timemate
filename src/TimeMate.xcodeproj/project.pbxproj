@@ -10,14 +10,30 @@
 		B411D80A2ED3741300F24E88 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = B411D8092ED3741300F24E88 /* Lottie */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B4A11CE52E6A25A000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B45208272EA172990048CF20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B452082E2EA172990048CF20;
+			remoteInfo = TimeMate;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		B452082F2EA172990048CF20 /* TimeMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4A11CE52E6A25A000000002 /* TimeMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B45208312EA172990048CF20 /* TimeMate */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TimeMate;
+			sourceTree = "<group>";
+		};
+		B4A11CE52E6A25A000000001 /* TimeMateTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TimeMateTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +47,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B4A11CE52E6A25A000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -38,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				B45208312EA172990048CF20 /* TimeMate */,
+				B4A11CE52E6A25A000000001 /* TimeMateTests */,
 				B45208302EA172990048CF20 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				B452082F2EA172990048CF20 /* TimeMate.app */,
+				B4A11CE52E6A25A000000002 /* TimeMateTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -76,6 +101,28 @@
 			productReference = B452082F2EA172990048CF20 /* TimeMate.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B4A11CE52E6A25A000000004 /* TimeMateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4A11CE52E6A25A000000009 /* Build configuration list for PBXNativeTarget "TimeMateTests" */;
+			buildPhases = (
+				B4A11CE52E6A25A00000000A /* Sources */,
+				B4A11CE52E6A25A000000003 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B4A11CE52E6A25A000000006 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B4A11CE52E6A25A000000001 /* TimeMateTests */,
+			);
+			name = TimeMateTests;
+			packageProductDependencies = (
+			);
+			productName = TimeMateTests;
+			productReference = B4A11CE52E6A25A000000002 /* TimeMateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -88,6 +135,10 @@
 				TargetAttributes = {
 					B452082E2EA172990048CF20 = {
 						CreatedOnToolsVersion = 26.0.1;
+					};
+					B4A11CE52E6A25A000000004 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = B452082E2EA172990048CF20;
 					};
 				};
 			};
@@ -110,6 +161,7 @@
 			projectRoot = "";
 			targets = (
 				B452082E2EA172990048CF20 /* TimeMate */,
+				B4A11CE52E6A25A000000004 /* TimeMateTests */,
 			);
 		};
 /* End PBXProject section */
@@ -132,7 +184,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B4A11CE52E6A25A00000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B4A11CE52E6A25A000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B452082E2EA172990048CF20 /* TimeMate */;
+			targetProxy = B4A11CE52E6A25A000000005 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B45208382EA1729A0048CF20 /* Debug */ = {
@@ -341,6 +408,44 @@
 			};
 			name = Release;
 		};
+		B4A11CE52E6A25A000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 79LQ4MHVMG;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.timemateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeMate.app/Contents/MacOS/TimeMate";
+			};
+			name = Debug;
+		};
+		B4A11CE52E6A25A000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 79LQ4MHVMG;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.timemateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeMate.app/Contents/MacOS/TimeMate";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -358,6 +463,15 @@
 			buildConfigurations = (
 				B452083B2EA1729A0048CF20 /* Debug */,
 				B452083C2EA1729A0048CF20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4A11CE52E6A25A000000009 /* Build configuration list for PBXNativeTarget "TimeMateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4A11CE52E6A25A000000007 /* Debug */,
+				B4A11CE52E6A25A000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

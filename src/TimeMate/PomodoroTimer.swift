@@ -25,22 +25,51 @@ class PomodoroTimer: ObservableObject {
   @Published var progress: Double = 1.0
   @Published var isWaitingToContinue: Bool = false
 
-  // MARK: - AppStorage Settings
-  @AppStorage("focusDuration") private var focusDurationMinutes = 25
-  @AppStorage("shortBreakDuration") private var shortBreakDurationMinutes = 5
-  @AppStorage("longBreakDuration") private var longBreakDurationMinutes = 15
-  @AppStorage("longBreakInterval") private var longBreakInterval = 4
-  @AppStorage("autoStartNextSession") private var autoStartNextSession = true
-  @AppStorage("keepBreakScreenOpen") private var keepBreakScreenOpen = true
-  @AppStorage("alarmSound") private var alarmSound = "Glass"
-  @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
+  // MARK: - Settings
+  // Settings are read live from the injected defaults on every use, so changes
+  // made in the settings UI apply to the running timer just like @AppStorage did.
+  private let defaults: UserDefaults
+  /// Source of wall-clock time; tests inject a fixed clock.
+  private let now: () -> Date
+
+  private var focusDurationMinutes: Int {
+    defaults.object(forKey: SettingsKey.focusDuration) as? Int ?? 25
+  }
+  private var shortBreakDurationMinutes: Int {
+    defaults.object(forKey: SettingsKey.shortBreakDuration) as? Int ?? 5
+  }
+  private var longBreakDurationMinutes: Int {
+    defaults.object(forKey: SettingsKey.longBreakDuration) as? Int ?? 15
+  }
+  private var longBreakInterval: Int {
+    defaults.object(forKey: SettingsKey.longBreakInterval) as? Int ?? 4
+  }
+  private var autoStartNextSession: Bool {
+    defaults.object(forKey: SettingsKey.autoStartNextSession) as? Bool ?? true
+  }
+  private var keepBreakScreenOpen: Bool {
+    defaults.object(forKey: SettingsKey.keepBreakScreenOpen) as? Bool ?? true
+  }
+  private var alarmSound: String {
+    defaults.object(forKey: SettingsKey.alarmSound) as? String ?? "Glass"
+  }
+  private var alarmVolume: Double {
+    defaults.object(forKey: SettingsKey.alarmVolume) as? Double ?? 1.0
+  }
+  private var notificationsEnabled: Bool {
+    defaults.object(forKey: SettingsKey.notificationsEnabled) as? Bool ?? true
+  }
 
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
   private var timer: AnyCancellable?
   private var totalDuration: Int = 0
+  /// When the latest tick fired, per `now`; lets tests verify the injected clock.
+  private(set) var lastTickAt: Date?
 
-  init() {
+  init(defaults: UserDefaults = .standard, now: @escaping () -> Date = { Date() }) {
+    self.defaults = defaults
+    self.now = now
     resetForCurrentSession()
 
     #if DEBUG
@@ -57,23 +86,32 @@ class PomodoroTimer: ObservableObject {
     timer = Timer.publish(every: 1, on: .main, in: .common)
       .autoconnect()
       .sink { [weak self] _ in
-        guard let self = self else { return }
-        if self.timeRemaining > 0 {
-          self.timeRemaining -= 1
-          self.progress = Double(self.timeRemaining) / Double(max(1, self.totalDuration))
-        } else {
-          self.timer?.cancel()
-          self.playSound(named: self.alarmSound)
-          self.sendNotification()
-          
-          if self.keepBreakScreenOpen && (self.currentSessionType == .shortBreak || self.currentSessionType == .longBreak) {
-            self.isWaitingToContinue = true
-            self.state = .idle
-          } else {
-            self.advanceToNextSession()
-          }
-        }
+        self?.handleTick()
       }
+  }
+
+  /// One tick of the state machine: count the session down and, at zero, finish
+  /// it. Internal so tests can drive ticks without waiting on real timers.
+  func handleTick() {
+    lastTickAt = now()
+
+    if timeRemaining > 0 {
+      timeRemaining -= 1
+      progress = Double(timeRemaining) / Double(max(1, totalDuration))
+    } else {
+      timer?.cancel()
+      playSound(named: alarmSound)
+      sendNotification()
+
+      if keepBreakScreenOpen,
+        currentSessionType == .shortBreak || currentSessionType == .longBreak
+      {
+        isWaitingToContinue = true
+        state = .idle
+      } else {
+        advanceToNextSession()
+      }
+    }
   }
 
   func pauseTimer() {
@@ -157,8 +195,6 @@ class PomodoroTimer: ObservableObject {
       systemSound.play()
     }
   }
-
-  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
 
   private func sendNotification() {
     guard notificationsEnabled else { return }

@@ -18,6 +18,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
   // MARK: - App Lifecycle
   func applicationDidFinishLaunching(_ notification: Notification) {
+    // Running as the test host: skip the app shell so tests drive the state
+    // machine without status items, popovers or notification prompts.
+    if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+      return
+    }
+
     self.setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
     self.setKeepAwake(enabled: UserDefaults.standard.keepAwake)
 

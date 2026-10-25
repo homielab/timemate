@@ -4,6 +4,13 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Unit test suite (`TimeMateTests`, 19 tests) for the Pomodoro state machine: session
+  progression and long-break cycles, auto-start, pause/resume, and the break screen's
+  "continue" flow. The timer now takes its `UserDefaults` and clock through its
+  initializer, and settings keys live in one shared `SettingsKey` enum.
+
 ### Fixed
 
 - "Start at Login" now actually registers the app as a login item

@@ -23,12 +23,22 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildForTesting = "YES"
-      buildForRunning = "YES"
-      buildForProfiling = "NO"
-      buildForArchiving = "NO"
-      buildForAnalyzing = "NO">
+      buildImplicitDependencies = "YES"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldAutocreateTestPlan = "YES">
       <Testables>
+         <TestableReference
+            skipped = "No">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B4A11CE52E6A25A000000004"
+               BuildableName = "TimeMateTests.xctest"
+               BlueprintName = "TimeMateTests"
+               ReferencedContainer = "container:TimeMate.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

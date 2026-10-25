@@ -59,6 +59,16 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
    ```
 3. Build and run the project (`Cmd + R`) in Xcode.
 
+### Running the Tests
+
+The Pomodoro state machine is covered by unit tests in the `TimeMateTests` target:
+
+```bash
+xcodebuild test -project src/TimeMate.xcodeproj -scheme TimeMate -derivedDataPath build/DerivedData
+```
+
+Or press `Cmd + U` in Xcode.
+
 ## Feedback & Contributions
 
 Contributions, bug reports, and feature requests are welcome. Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/homielab/timemate/issues).

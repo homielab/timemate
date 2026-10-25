@@ -14,9 +14,9 @@ struct ContentView: View {
   @AppStorage("backgroundColorHex") private var backgroundColorHex: String = ""
   @AppStorage("showProgressCircle") private var showProgressCircle = true
   @AppStorage("backgroundImagePath") private var backgroundImagePath: String = ""
-  @AppStorage("focusDuration") private var focusDuration = 25
-  @AppStorage("shortBreakDuration") private var shortBreakDuration = 5
-  @AppStorage("longBreakDuration") private var longBreakDuration = 15
+  @AppStorage(SettingsKey.focusDuration) private var focusDuration = 25
+  @AppStorage(SettingsKey.shortBreakDuration) private var shortBreakDuration = 5
+  @AppStorage(SettingsKey.longBreakDuration) private var longBreakDuration = 15
 
   var body: some View {
     VStack(spacing: 12) {
@@ -56,7 +56,7 @@ private struct TimerDisplayView: View {
   @Binding var settingsVisible: Bool
   @Binding var showProgressCircle: Bool
 
-  @AppStorage("longBreakInterval") private var longBreakInterval = 4
+  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval = 4
 
   private var accentColor: Color {
     switch timer.currentSessionType {
@@ -320,10 +320,10 @@ private struct SettingsToggleRow: View {
 // MARK: - Settings Sections
 
 private struct DurationSettingsSection: View {
-  @AppStorage("focusDuration") private var focusDuration = 25
-  @AppStorage("shortBreakDuration") private var shortBreakDuration = 5
-  @AppStorage("longBreakDuration") private var longBreakDuration = 15
-  @AppStorage("longBreakInterval") private var longBreakInterval = 4
+  @AppStorage(SettingsKey.focusDuration) private var focusDuration = 25
+  @AppStorage(SettingsKey.shortBreakDuration) private var shortBreakDuration = 5
+  @AppStorage(SettingsKey.longBreakDuration) private var longBreakDuration = 15
+  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval = 4
 
   var body: some View {
     SettingsSection(titleKey: "Durations", systemImage: "timer") {
@@ -363,8 +363,8 @@ private struct DurationRow: View {
 }
 
 private struct AutomationSettingsSection: View {
-  @AppStorage("autoStartNextSession") private var autoStartNextSession = true
-  @AppStorage("keepBreakScreenOpen") private var keepBreakScreenOpen = true
+  @AppStorage(SettingsKey.autoStartNextSession) private var autoStartNextSession = true
+  @AppStorage(SettingsKey.keepBreakScreenOpen) private var keepBreakScreenOpen = true
   @AppStorage("autoStartOnLaunch") private var autoStartOnLaunch = false
 
   var body: some View {
@@ -380,10 +380,10 @@ private struct AutomationSettingsSection: View {
 }
 
 private struct AlertsAndSoundSettingsSection: View {
-  @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+  @AppStorage(SettingsKey.notificationsEnabled) private var notificationsEnabled = true
   @AppStorage("overlayEnabled") private var overlayEnabled = true
-  @AppStorage("alarmSound") private var alarmSound = "Glass"
-  @AppStorage("alarmVolume") private var alarmVolume: Double = 1.0
+  @AppStorage(SettingsKey.alarmSound) private var alarmSound = "Glass"
+  @AppStorage(SettingsKey.alarmVolume) private var alarmVolume: Double = 1.0
 
   private let soundOptions = [
     "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr",
