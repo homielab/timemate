@@ -15,7 +15,8 @@
 "Restart" = "Bắt đầu lại";
 
 // Settings - Durations
-"minutes_format" = "%d phút";
+"min" = "phút";
+"Enter 1–180 minutes" = "Nhập từ 1 đến 180 phút";
 "Cycles" = "Chu kỳ";
 
 // Settings - Automation & Sound

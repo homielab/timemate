@@ -6,6 +6,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Any session length from 1 to 180 minutes (e.g. 50/10 or a 90-minute focus):
+  type the minutes in Settings → Durations or use the stepper; invalid entries
+  are shown in red and not saved.
 - Global keyboard shortcuts that work while another app is in front: ⌃⌥P starts or
   pauses the timer (and continues past a waiting break screen), ⌃⌥S skips to the next
   session. Change or turn off each one in Settings → Keyboard Shortcuts; a shortcut
@@ -20,6 +23,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The break screen no longer disappears when it is shown again right after being
+  hidden (it used to close at the end of the fade-out).
+- Changing the language or resetting all settings relaunches the app through Launch
+  Services instead of a shell command, so it works inside the App Sandbox.
+- Less CPU while the timer runs: the closed popover no longer redraws every
+  second, and the menu bar item updates in place when "Hide time" is toggled.
 - Default settings are now registered before they are read, so the Dock icon is
   hidden on a fresh install as intended.
 - "Keep Mac awake" now holds the Mac awake only while a focus session is running,

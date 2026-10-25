@@ -239,12 +239,13 @@ class PomodoroTimer: ObservableObject {
   }
 
   private func durationFor(session: SessionType) -> Int {
-    let minutes: Int
+    let stored: Int
     switch session {
-    case .focus: minutes = focusDurationMinutes
-    case .shortBreak: minutes = shortBreakDurationMinutes
-    case .longBreak: minutes = longBreakDurationMinutes
+    case .focus: stored = focusDurationMinutes
+    case .shortBreak: stored = shortBreakDurationMinutes
+    case .longBreak: stored = longBreakDurationMinutes
     }
+    let minutes = SessionDuration.sanitized(stored)
     #if DEBUG
       return minutes
     #else

@@ -5,13 +5,15 @@ import Combine
 import SwiftUI
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, ObservableObject {
 
   // MARK: - Properties
   private var statusItem: NSStatusItem!
   private var popover: NSPopover!
   private let timer = PomodoroTimer(history: AppDelegate.makeSessionHistory())
+  private lazy var popoverModel = PopoverTimerModel(timer: timer)
   private var hostingController: NSHostingController<AnyView>!
+  private var menuBarHostingView: PassThroughHostingView!
   private let sleepPreventer = SleepPreventer()
   private var breakOverlayController: BreakOverlayWindowController!
   private var escapeKeyMonitor: Any?
@@ -67,26 +69,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     NSColorPanel.shared.showsAlpha = true
 
-    let initialWidth = hideMenuBarTime ? 24.0 : 90.0
-    statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
-
-    let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = PassThroughHostingView(rootView: AnyView(menuBarView))
-    hostingView.frame = NSRect(
-      x: 0, y: 0, width: initialWidth, height: NSStatusBar.system.thickness)
-
+    statusItem = NSStatusBar.system.statusItem(
+      withLength: MenuBarView.width(hideTime: hideMenuBarTime))
+    menuBarHostingView = PassThroughHostingView(rootView: AnyView(EmptyView()))
     statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
-    statusItem.button?.addSubview(hostingView)
-    hostingView.frame = statusItem.button?.bounds ?? .zero
+    statusItem.button?.addSubview(menuBarHostingView)
+    layoutMenuBar(hideTime: hideMenuBarTime)
 
     statusItem.button?.target = self
     statusItem.button?.action = #selector(togglePopover)
 
     // --- Popover Setup ---
-    let contentView = ContentView().environmentObject(timer).environmentObject(self)
+    let contentView = ContentView().environmentObject(popoverModel).environmentObject(self)
       .environmentObject(hotKeyManager)
     hostingController = NSHostingController(rootView: AnyView(contentView))
     popover = NSPopover()
+    popover.delegate = self
     popover.behavior = Self.popoverBehavior(
       alwaysVisible: UserDefaults.standard.bool(forKey: SettingsKey.alwaysVisible))
     popover.contentViewController = hostingController
@@ -167,8 +165,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
   }
 
+  /// Sizes the status item and updates the menu bar view in place.
+  private func layoutMenuBar(hideTime: Bool) {
+    let width = MenuBarView.width(hideTime: hideTime)
+    statusItem.length = width
+    menuBarHostingView.rootView = AnyView(MenuBarView(timer: timer, hideTime: hideTime))
+    menuBarHostingView.frame = NSRect(
+      x: 0, y: 0, width: width, height: NSStatusBar.system.thickness)
+  }
+
   func updateMenuBarWidth(hideTime: Bool) {
-    let newWidth = hideTime ? 24.0 : 90.0
     let wasShown = popover.isShown
 
     // Close popover if shown to reposition it
@@ -176,16 +182,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       popover.performClose(nil)
     }
 
-    statusItem.length = newWidth
-
-    // Recreate the menu bar view to force immediate refresh
-    let menuBarView = MenuBarView(timer: timer, hideTime: $hideMenuBarTime)
-    let hostingView = PassThroughHostingView(rootView: AnyView(menuBarView))
-    hostingView.frame = NSRect(x: 0, y: 0, width: newWidth, height: NSStatusBar.system.thickness)
-
-    statusItem.button?.subviews.forEach { $0.removeFromSuperview() }
-    statusItem.button?.addSubview(hostingView)
-    hostingView.frame = statusItem.button?.bounds ?? .zero
+    layoutMenuBar(hideTime: hideTime)
 
     // Reopen popover if it was shown
     if wasShown {
@@ -204,6 +201,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
+  }
+
+  // MARK: - NSPopoverDelegate
+  // The countdown is only fed to the popover while it is open, so a closed
+  // popover doesn't re-render every second.
+  func popoverWillShow(_ notification: Notification) {
+    popoverModel.setPopoverVisible(true)
+  }
+
+  func popoverDidClose(_ notification: Notification) {
+    popoverModel.setPopoverVisible(false)
   }
 
   // MARK: - Reopen Window from Dock
@@ -228,7 +236,9 @@ private class PassThroughHostingView: NSHostingView<AnyView> {
 
 private struct MenuBarView: View {
   @ObservedObject var timer: PomodoroTimer
-  @Binding var hideTime: Bool
+  let hideTime: Bool
+
+  static func width(hideTime: Bool) -> CGFloat { hideTime ? 24 : 90 }
 
   private var iconName: String {
     switch timer.state {
@@ -278,6 +288,8 @@ private struct MenuBarView: View {
           .foregroundColor(foregroundColor)
       }
     }
-    .frame(width: hideTime ? 24 : 90, height: NSStatusBar.system.thickness, alignment: .center)
+    .frame(
+      width: Self.width(hideTime: hideTime), height: NSStatusBar.system.thickness,
+      alignment: .center)
   }
 }

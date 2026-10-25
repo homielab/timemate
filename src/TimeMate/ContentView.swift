@@ -8,7 +8,9 @@ import UserNotifications
 // MARK: - Main Content View
 
 struct ContentView: View {
-  @EnvironmentObject var timer: PomodoroTimer
+  // The popover observes the timer through `PopoverTimerModel`: only the
+  // countdown views re-render each second, and only while the popover is open.
+  @EnvironmentObject var model: PopoverTimerModel
   @EnvironmentObject var appDelegate: AppDelegate
   @State private var settingsVisible = false
 
@@ -40,8 +42,8 @@ struct ContentView: View {
     .background(Color(hex: backgroundColorHex) ?? .clear)
     .contentShape(Rectangle())
     .onChange(of: [focusDuration, shortBreakDuration, longBreakDuration]) { _ in
-      if timer.state == .idle {
-        timer.stopTimer()
+      if model.timer.state == .idle {
+        model.timer.stopTimer()
       }
     }
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
@@ -53,14 +55,14 @@ struct ContentView: View {
 // MARK: - Reusable Sub-views
 
 private struct TimerDisplayView: View {
-  @EnvironmentObject var timer: PomodoroTimer
+  @EnvironmentObject var model: PopoverTimerModel
   @Binding var settingsVisible: Bool
   @Binding var showProgressCircle: Bool
 
   @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval = 4
 
   private var accentColor: Color {
-    switch timer.currentSessionType {
+    switch model.currentSessionType {
     case .focus: return .accentColor
     case .shortBreak: return .green
     case .longBreak: return .teal
@@ -68,7 +70,7 @@ private struct TimerDisplayView: View {
   }
 
   private var sessionIcon: String {
-    switch timer.currentSessionType {
+    switch model.currentSessionType {
     case .focus: return "brain.head.profile"
     case .shortBreak: return "cup.and.saucer.fill"
     case .longBreak: return "chair.lounge.fill"
@@ -80,7 +82,7 @@ private struct TimerDisplayView: View {
       HStack {
         HStack(spacing: 6) {
           Image(systemName: sessionIcon)
-          Text(LocalizedStringKey(timer.currentSessionType.rawValue))
+          Text(LocalizedStringKey(model.currentSessionType.rawValue))
         }
         .font(.headline)
         .foregroundColor(.secondary)
@@ -90,43 +92,57 @@ private struct TimerDisplayView: View {
         SettingsButton(settingsVisible: $settingsVisible)
       }
 
-      if showProgressCircle {
-        ZStack {
-          Circle()
-            .stroke(lineWidth: 12)
-            .foregroundColor(Color(nsColor: .separatorColor))
-
-          Circle()
-            .stroke(lineWidth: 10)
-            .foregroundColor(.gray.opacity(0.15))
-
-          Circle().trim(from: 0.0, to: CGFloat(timer.progress))
-            .stroke(style: .init(lineWidth: 10, lineCap: .round, lineJoin: .round))
-            .foregroundColor(accentColor)
-            .rotationEffect(Angle(degrees: 270.0))
-            .animation(.linear, value: timer.progress)
-
-          VStack {
-            Text(timer.timeRemaining.toMinuteSecondString())
-              .font(.system(size: 32, weight: .bold, design: .monospaced))
-              .foregroundColor(accentColor)
-          }
-        }
-        .frame(width: 120, height: 120)
-      } else {
-        Text(timer.timeRemaining.toMinuteSecondString())
-          .font(.system(size: 32, weight: .bold, design: .monospaced))
-          .foregroundColor(accentColor)
-      }
+      CountdownView(
+        countdown: model.countdown, accentColor: accentColor,
+        showProgressCircle: showProgressCircle)
 
       CycleIndicatorView(
-        completed: timer.focusSessionsCompleted,
+        completed: model.focusSessionsCompleted,
         total: longBreakInterval,
-        isLongBreak: timer.currentSessionType == .longBreak
+        isLongBreak: model.currentSessionType == .longBreak
       )
 
-      TodayStatsView(history: timer.history)
+      TodayStatsView(history: model.timer.history)
     }
+  }
+}
+
+/// The remaining time and progress ring: the only part of the popover that
+/// re-renders every second.
+private struct CountdownView: View {
+  @ObservedObject var countdown: PopoverCountdown
+  let accentColor: Color
+  let showProgressCircle: Bool
+
+  var body: some View {
+    if showProgressCircle {
+      ZStack {
+        Circle()
+          .stroke(lineWidth: 12)
+          .foregroundColor(Color(nsColor: .separatorColor))
+
+        Circle()
+          .stroke(lineWidth: 10)
+          .foregroundColor(.gray.opacity(0.15))
+
+        Circle().trim(from: 0.0, to: CGFloat(countdown.progress))
+          .stroke(style: .init(lineWidth: 10, lineCap: .round, lineJoin: .round))
+          .foregroundColor(accentColor)
+          .rotationEffect(Angle(degrees: 270.0))
+          .animation(.linear, value: countdown.progress)
+
+        timeText
+      }
+      .frame(width: 120, height: 120)
+    } else {
+      timeText
+    }
+  }
+
+  private var timeText: some View {
+    Text(countdown.timeRemaining.toMinuteSecondString())
+      .font(.system(size: 32, weight: .bold, design: .monospaced))
+      .foregroundColor(accentColor)
   }
 }
 
@@ -203,24 +219,26 @@ private struct CycleIndicatorView: View {
 }
 
 private struct ControlButtonsView: View {
-  @EnvironmentObject var timer: PomodoroTimer
+  @EnvironmentObject var model: PopoverTimerModel
+
+  private var timer: PomodoroTimer { model.timer }
 
   private var mainButtonIconName: String {
-    switch timer.state {
+    switch model.state {
     case .active: return "pause.fill"
     case .paused, .idle: return "play.fill"
     }
   }
 
   private var mainButtonColor: Color {
-    switch timer.state {
+    switch model.state {
     case .active: return .orange
     case .paused, .idle: return .green
     }
   }
 
   private var mainButtonAccessibilityLabel: LocalizedStringKey {
-    switch timer.state {
+    switch model.state {
     case .active: return "Pause"
     case .paused: return "Resume"
     case .idle: return "Start"
@@ -228,7 +246,7 @@ private struct ControlButtonsView: View {
   }
 
   private var mainButtonAction: () -> Void {
-    switch timer.state {
+    switch model.state {
     case .active: return timer.pauseTimer
     case .paused, .idle: return timer.startTimer
     }
@@ -248,7 +266,7 @@ private struct ControlButtonsView: View {
       } label: {
         Image(systemName: "arrow.counterclockwise")
       }
-      .buttonStyle(.bordered).controlSize(.large).disabled(timer.state == .idle).accessibilityLabel(
+      .buttonStyle(.bordered).controlSize(.large).disabled(model.state == .idle).accessibilityLabel(
         "Reset")
 
       Button(action: mainButtonAction) {
@@ -350,9 +368,9 @@ private struct DurationSettingsSection: View {
 
   var body: some View {
     SettingsSection(titleKey: "Durations", systemImage: "timer") {
-      DurationRow(titleKey: "Focus", minutes: $focusDuration, range: 5...60, step: 5)
-      DurationRow(titleKey: "Short Break", minutes: $shortBreakDuration, range: 1...15, step: 1)
-      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, range: 10...60, step: 5)
+      DurationRow(titleKey: "Focus", minutes: $focusDuration, step: 5)
+      DurationRow(titleKey: "Short Break", minutes: $shortBreakDuration, step: 1)
+      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, step: 5)
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
@@ -366,22 +384,48 @@ private struct DurationSettingsSection: View {
   }
 }
 
+/// A session length: type any number of minutes (1–180) or use the stepper.
 private struct DurationRow: View {
   let titleKey: LocalizedStringKey
   @Binding var minutes: Int
-  let range: ClosedRange<Int>
   let step: Int
+
+  @State private var text = ""
+  @FocusState private var isEditing: Bool
+
+  private var isValid: Bool { SessionDuration.minutes(from: text) != nil }
 
   var body: some View {
     HStack {
       Text(titleKey)
       Spacer(minLength: 12)
-      Text(String(format: NSLocalizedString("minutes_format", comment: ""), minutes))
+      TextField("", text: $text)
+        .textFieldStyle(.roundedBorder)
+        .multilineTextAlignment(.trailing)
         .monospacedDigit()
+        .frame(width: 44)
+        .foregroundColor(isValid ? .primary : .red)
+        .focused($isEditing)
+        .onSubmit(commit)
+        .help("Enter 1–180 minutes")
+        .accessibilityLabel(Text(titleKey))
+      Text("min")
         .foregroundColor(.secondary)
-        .frame(width: 52, alignment: .trailing)
-      Stepper("", value: $minutes, in: range, step: step).labelsHidden()
+      Stepper("", value: $minutes, in: SessionDuration.minuteRange, step: step).labelsHidden()
     }
+    .onAppear { text = "\(minutes)" }
+    .onChange(of: minutes) { text = "\($0)" }
+    .onChange(of: isEditing) { editing in
+      if !editing { commit() }
+    }
+  }
+
+  /// Saves a valid entry; anything else goes back to the current value.
+  private func commit() {
+    if let value = SessionDuration.minutes(from: text) {
+      minutes = value
+    }
+    text = "\(minutes)"
   }
 }
 
@@ -766,7 +810,7 @@ private struct LanguageSettingsSection: View {
 }
 
 private struct StatisticsSettingsSection: View {
-  @EnvironmentObject var timer: PomodoroTimer
+  @EnvironmentObject var model: PopoverTimerModel
   @State private var showingResetAlert = false
 
   var body: some View {
@@ -776,7 +820,7 @@ private struct StatisticsSettingsSection: View {
       }
       .alert("Reset Statistics?", isPresented: $showingResetAlert) {
         Button("Reset", role: .destructive) {
-          timer.history.reset()
+          model.timer.history.reset()
         }
         Button("Cancel", role: .cancel) {
         }

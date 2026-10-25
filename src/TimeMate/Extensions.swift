@@ -38,12 +38,20 @@ extension Bundle {
   }
 }
 
+/// Relaunches the app through Launch Services (no shell, so it works in the
+/// sandbox), then quits this instance.
 func restartApp() {
-  let task = Process()
-  task.launchPath = "/bin/sh"
-  task.arguments = ["-c", "sleep 1 && open \"\(Bundle.main.bundlePath)\""]
-  task.launch()
-  NSApp.terminate(nil)
+  let configuration = NSWorkspace.OpenConfiguration()
+  // Without this, Launch Services would just bring the running instance forward.
+  configuration.createsNewApplicationInstance = true
+  NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) {
+    _, error in
+    DispatchQueue.main.async {
+      if error == nil {
+        NSApp.terminate(nil)
+      }
+    }
+  }
 }
 
 func resetAllSettings() {

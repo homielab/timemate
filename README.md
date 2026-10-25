@@ -26,7 +26,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 
 - **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter.
 - **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions.
-- **Custom Session Durations**: Easily adjust timer lengths to fit your personal workflow.
+- **Custom Session Durations**: Set any focus or break length from 1 to 180 minutes (e.g. 50/10 or 90-minute deep work) by typing it or with the stepper.
 - **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.
 - **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms.
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest.

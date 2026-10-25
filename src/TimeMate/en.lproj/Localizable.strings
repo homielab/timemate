@@ -15,7 +15,8 @@
 "Restart" = "Restart";
 
 // Settings - Durations
-"minutes_format" = "%d min";
+"min" = "min";
+"Enter 1–180 minutes" = "Enter 1–180 minutes";
 "Cycles" = "Cycles";
 
 // Settings - Automation & Sound

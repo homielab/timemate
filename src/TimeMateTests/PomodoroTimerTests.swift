@@ -384,6 +384,34 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertEqual(timer.timeRemaining, 6)
   }
 
+  // MARK: - Custom durations
+
+  func testNinetyMinuteFocusThenTenMinuteBreak() {
+    timer = makeTimer(focus: 90, short: 10)
+    XCTAssertEqual(timer.timeRemaining, 90)
+    timer.startTimer()
+    runTicks(timer, 89)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 1)
+    runTicks(timer, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.timeRemaining, 10)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testFiftyMinuteFocusUsesTheExactLength() {
+    timer = makeTimer(focus: 50, short: 10)
+    XCTAssertEqual(timer.timeRemaining, 50)
+  }
+
+  func testZeroStoredDurationRunsForOneMinute() {
+    timer = makeTimer(focus: 3, short: 0)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.timeRemaining, 1)
+  }
+
   // MARK: - Session history
 
   func testCompletedSessionsAreRecordedWithTheirKind() {
