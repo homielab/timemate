@@ -1,0 +1,6 @@
+"Start ${applicationName}" = "Bắt đầu ${applicationName}";
+"Start a focus session in ${applicationName}" = "Bắt đầu phiên tập trung trong ${applicationName}";
+"Pause ${applicationName}" = "Tạm dừng ${applicationName}";
+"Skip session in ${applicationName}" = "Bỏ qua phiên trong ${applicationName}";
+"How much time is left in ${applicationName}" = "${applicationName} còn bao nhiêu thời gian";
+"${applicationName} status" = "Trạng thái ${applicationName}";

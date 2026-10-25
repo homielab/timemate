@@ -149,3 +149,14 @@
 "TimeMate, %1$@, paused, %2$@ remaining" = "TimeMate, %1$@, tạm dừng, còn %2$@";
 "TimeMate, %1$@, ready, %2$@" = "TimeMate, %1$@, sẵn sàng, %2$@";
 "TimeMate, %@ finished" = "TimeMate, %@ đã xong";
+"Start Timer" = "Bắt đầu hẹn giờ";
+"Pause Timer" = "Tạm dừng hẹn giờ";
+"Get Timer Status" = "Xem trạng thái hẹn giờ";
+"Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
+"Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
+"Ends the current TimeMate session and moves to the next one." = "Kết thúc phiên TimeMate hiện tại và chuyển sang phiên tiếp theo.";
+"Returns the minutes left in the current TimeMate session and says which session it is." = "Trả về số phút còn lại của phiên TimeMate hiện tại và cho biết đó là phiên gì.";
+"%@ finished" = "%@ đã xong";
+"%1$@, running, %2$d min left" = "%1$@, đang chạy, còn %2$d phút";
+"%1$@, paused, %2$d min left" = "%1$@, tạm dừng, còn %2$d phút";
+"%1$@, not started, %2$d min" = "%1$@, chưa bắt đầu, %2$d phút";

@@ -32,6 +32,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest. The animation runs only on the screen you work on, stays still when Reduce Motion is on, and VoiceOver announces the break and reads its countdown. Need more rest? **+5 min** lengthens the break; not a good moment? **Postpone** it by 1, 3 or 5 minutes and it comes back on its own. The Skip button appears after a delay you set in Settings → Alerts & Sound (0–30 s, default 5 s).
 - **Today's Statistics**: See how many pomodoros and focus minutes you completed today. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
 - **Global Keyboard Shortcuts**: Start/pause with ⌃⌥P and skip the current session with ⌃⌥S from any app. Record your own combination (it must include ⌃ or ⌘) or turn each shortcut off in Settings → Keyboard Shortcuts. No Accessibility permission needed.
+- **Shortcuts & Siri**: Automate TimeMate with the Shortcuts app — **Start Timer**, **Pause Timer**, **Skip Session** and **Get Timer Status** (returns the minutes left and says which session is running, e.g. "Focus, running, 12 min left"). Use them to turn on a Focus mode when a session starts, or ask Siri "Start TimeMate".
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
 - **Multilingual Support**: Available in both English and Vietnamese.
@@ -82,6 +83,9 @@ Sources are in `src/TimeMate/`:
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
   building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`.
 - `BreakOverlay*.swift` — the full-screen break screen.
+- `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared
+  `PomodoroTimer.shared` through `TimerIntentActions` (unit-tested). Vietnamese phrases are in
+  `vi.lproj/AppShortcuts.strings`.
 
 ## Feedback & Contributions
 

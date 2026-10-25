@@ -6,6 +6,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Shortcuts actions: Start Timer, Pause Timer, Skip Session and Get Timer Status
+  (returns the minutes left and names the session), e.g. to turn on a Focus mode when a
+  session starts. Siri phrases such as "Start TimeMate" work too (English and Vietnamese).
 - Right-click (or Control-click) the menu bar item for a quick menu: Start / Pause
   (Resume, Continue Work), Skip, Reset, Settings… and Quit. A left click still opens
   the popover.

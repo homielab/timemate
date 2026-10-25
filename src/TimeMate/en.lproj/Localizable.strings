@@ -149,3 +149,14 @@
 "TimeMate, %1$@, paused, %2$@ remaining" = "TimeMate, %1$@, paused, %2$@ remaining";
 "TimeMate, %1$@, ready, %2$@" = "TimeMate, %1$@, ready, %2$@";
 "TimeMate, %@ finished" = "TimeMate, %@ finished";
+"Start Timer" = "Start Timer";
+"Pause Timer" = "Pause Timer";
+"Get Timer Status" = "Get Timer Status";
+"Starts or resumes the current TimeMate session." = "Starts or resumes the current TimeMate session.";
+"Pauses the running TimeMate session." = "Pauses the running TimeMate session.";
+"Ends the current TimeMate session and moves to the next one." = "Ends the current TimeMate session and moves to the next one.";
+"Returns the minutes left in the current TimeMate session and says which session it is." = "Returns the minutes left in the current TimeMate session and says which session it is.";
+"%@ finished" = "%@ finished";
+"%1$@, running, %2$d min left" = "%1$@, running, %2$d min left";
+"%1$@, paused, %2$d min left" = "%1$@, paused, %2$d min left";
+"%1$@, not started, %2$d min" = "%1$@, not started, %2$d min";

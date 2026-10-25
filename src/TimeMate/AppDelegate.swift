@@ -12,7 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   // MARK: - Properties
   private var statusItem: NSStatusItem!
   private var popover: NSPopover!
-  private let timer = PomodoroTimer(history: AppDelegate.makeSessionHistory())
+  private let timer = PomodoroTimer.shared
   private lazy var popoverModel = PopoverTimerModel(timer: timer)
   private var hostingController: NSHostingController<AnyView>!
   private var menuBarHostingView: PassThroughHostingView!
@@ -32,13 +32,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   let openSettingsRequests = PassthroughSubject<Void, Never>()
   @AppStorage(SettingsKey.hideMenuBarTime) private var hideMenuBarTime = false
 
-  private static var isRunningTests: Bool {
+  fileprivate static var isRunningTests: Bool {
     ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
   }
 
   /// The saved session history, or an in-memory one when hosting tests so they
   /// never touch the user's statistics.
-  private static func makeSessionHistory() -> SessionHistory {
+  fileprivate static func makeSessionHistory() -> SessionHistory {
     SessionHistory(fileURL: isRunningTests ? nil : SessionHistory.defaultFileURL())
   }
 
@@ -435,4 +435,10 @@ private struct MenuBarView: View {
       alignment: .center)
     .accessibilityHidden(true)
   }
+}
+
+extension PomodoroTimer {
+  /// The app's one timer, shared by the menu bar, the popover and the
+  /// Shortcuts actions (which may run before the app shell is set up).
+  static let shared = PomodoroTimer(history: AppDelegate.makeSessionHistory())
 }
