@@ -155,10 +155,12 @@
 "Start Timer" = "Start Timer";
 "Pause Timer" = "Pause Timer";
 "Get Timer Status" = "Get Timer Status";
+"Get Today's Progress" = "Get Today's Progress";
 "Starts or resumes the current TimeMate session." = "Starts or resumes the current TimeMate session.";
 "Pauses the running TimeMate session." = "Pauses the running TimeMate session.";
 "Ends the current TimeMate session and moves to the next one." = "Ends the current TimeMate session and moves to the next one.";
 "Returns the minutes left in the current TimeMate session and says which session it is." = "Returns the minutes left in the current TimeMate session and says which session it is.";
+"Returns the pomodoros completed today and says how that compares with the daily goal." = "Returns the pomodoros completed today and says how that compares with the daily goal.";
 "%@ finished" = "%@ finished";
 "%1$@, running, %2$d min left" = "%1$@, running, %2$d min left";
 "%1$@, paused, %2$d min left" = "%1$@, paused, %2$d min left";

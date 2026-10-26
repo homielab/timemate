@@ -25,6 +25,9 @@ All notable changes to TimeMate will be documented in this file.
   Settings → Keyboard Shortcuts) and a **Reset Timer** Shortcuts action ("Reset TimeMate").
   Key names such as Space now show in the app's language.
 
+- A **Get Today's Progress** Shortcuts action (Siri: "Today's progress in TimeMate") that
+  returns the pomodoros completed today and says e.g. "Today: 3 of 8 pomodoros, 75 minutes";
+  use it to turn off a Focus mode once the daily goal is reached.
 - Shortcuts actions: Start Timer, Pause Timer, Skip Session and Get Timer Status
   (returns the minutes left and names the session), e.g. to turn on a Focus mode when a
   session starts. Siri phrases such as "Start TimeMate" work too (English and Vietnamese).

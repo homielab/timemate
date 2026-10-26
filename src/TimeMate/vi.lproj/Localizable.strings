@@ -155,10 +155,12 @@
 "Start Timer" = "Bắt đầu hẹn giờ";
 "Pause Timer" = "Tạm dừng hẹn giờ";
 "Get Timer Status" = "Xem trạng thái hẹn giờ";
+"Get Today's Progress" = "Xem tiến độ hôm nay";
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
 "Ends the current TimeMate session and moves to the next one." = "Kết thúc phiên TimeMate hiện tại và chuyển sang phiên tiếp theo.";
 "Returns the minutes left in the current TimeMate session and says which session it is." = "Trả về số phút còn lại của phiên TimeMate hiện tại và cho biết đó là phiên gì.";
+"Returns the pomodoros completed today and says how that compares with the daily goal." = "Trả về số pomodoro hoàn thành hôm nay và cho biết so với mục tiêu hằng ngày.";
 "%@ finished" = "%@ đã xong";
 "%1$@, running, %2$d min left" = "%1$@, đang chạy, còn %2$d phút";
 "%1$@, paused, %2$d min left" = "%1$@, tạm dừng, còn %2$d phút";

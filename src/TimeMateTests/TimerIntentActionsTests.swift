@@ -116,4 +116,58 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(TimerIntentActions.statusText(timer), "Short Break finished")
     XCTAssertEqual(TimerIntentActions.minutesRemaining(timer), 0)
   }
+
+  // MARK: - Today's progress
+
+  private func makeHistory() -> SessionHistory {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
+    return SessionHistory(
+      fileURL: nil, now: { [unowned self] in self.currentTime }, calendar: calendar,
+      notificationCenter: NotificationCenter())
+  }
+
+  func testProgressWithNoSessions() {
+    let progress = TimerIntentActions.todayProgress(history: makeHistory(), goal: 0)
+    XCTAssertEqual(progress, .init(completed: 0, goal: nil, focusMinutes: 0))
+    XCTAssertFalse(progress.goalReached)
+    XCTAssertEqual(TimerIntentActions.progressText(progress), "Today: 0 pomodoros · 0 min")
+  }
+
+  func testProgressWithoutAGoalCountsOnlyTodaysFocusSessions() {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 25 * 60, end: currentTime)
+    history.recordCompletedSession(.focus, duration: 25 * 60, end: currentTime)
+    history.recordCompletedSession(.shortBreak, duration: 5 * 60, end: currentTime)
+    history.recordCompletedSession(
+      .focus, duration: 25 * 60, end: currentTime.addingTimeInterval(-2 * 86_400))
+
+    let progress = TimerIntentActions.todayProgress(history: history, goal: DailyGoal.off)
+
+    XCTAssertEqual(progress, .init(completed: 2, goal: nil, focusMinutes: 50))
+    XCTAssertFalse(progress.goalReached)
+    XCTAssertEqual(TimerIntentActions.progressText(progress), "Today: 2 pomodoros · 50 min")
+  }
+
+  func testProgressBelowTheGoal() {
+    let history = makeHistory()
+    for _ in 0..<3 { history.recordCompletedSession(.focus, duration: 25 * 60, end: currentTime) }
+
+    let progress = TimerIntentActions.todayProgress(history: history, goal: 8)
+
+    XCTAssertEqual(progress, .init(completed: 3, goal: 8, focusMinutes: 75))
+    XCTAssertFalse(progress.goalReached)
+    XCTAssertEqual(
+      TimerIntentActions.progressText(progress), "Today: 3 of 8 pomodoros, 75 minutes")
+  }
+
+  func testReachingTheGoalSetsGoalReached() {
+    let history = makeHistory()
+    for _ in 0..<2 { history.recordCompletedSession(.focus, duration: 25 * 60, end: currentTime) }
+
+    XCTAssertTrue(TimerIntentActions.todayProgress(history: history, goal: 2).goalReached)
+    history.recordCompletedSession(.focus, duration: 25 * 60, end: currentTime)
+    XCTAssertTrue(TimerIntentActions.todayProgress(history: history, goal: 2).goalReached)
+    XCTAssertFalse(TimerIntentActions.todayProgress(history: history, goal: 4).goalReached)
+  }
 }

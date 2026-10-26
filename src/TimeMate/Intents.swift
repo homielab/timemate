@@ -40,6 +40,36 @@ enum TimerIntentActions {
     return (max(0, timer.secondsRemaining) + 59) / 60
   }
 
+  /// What "Get Today's Progress" reports.
+  struct TodayProgress: Equatable {
+    /// Focus sessions completed today.
+    let completed: Int
+    /// The daily goal; nil when none is set.
+    let goal: Int?
+    /// Focus time done today, in whole minutes.
+    let focusMinutes: Int
+    /// True once a goal is set and `completed` has reached it.
+    var goalReached: Bool { goal.map { completed >= $0 } ?? false }
+  }
+
+  /// Today's completed pomodoros and focus minutes from `history`, measured
+  /// against `goal` (`DailyGoal.off` or less means no goal).
+  static func todayProgress(history: SessionHistory, goal: Int) -> TodayProgress {
+    let totals = history.todayTotals()
+    return TodayProgress(
+      completed: totals.pomodoros, goal: goal > DailyGoal.off ? goal : nil,
+      focusMinutes: totals.focusMinutes)
+  }
+
+  /// Spoken / shown answer of "Get Today's Progress", e.g. "Today: 3 of 8 pomodoros, 75 minutes".
+  static func progressText(_ progress: TodayProgress) -> String {
+    if let goal = progress.goal {
+      return StatisticsText.spokenToday(
+        pomodoros: progress.completed, goal: goal, minutes: progress.focusMinutes)
+    }
+    return StatisticsText.today(pomodoros: progress.completed, minutes: progress.focusMinutes)
+  }
+
   /// Spoken / shown answer of "Get Timer Status", e.g. "Focus, running, 12 min left".
   static func statusText(_ timer: PomodoroTimer) -> String {
     let session = NSLocalizedString(
@@ -119,6 +149,21 @@ struct GetTimerStatusIntent: AppIntent {
   }
 }
 
+struct GetTodayProgressIntent: AppIntent {
+  static var title: LocalizedStringResource = "Get Today's Progress"
+  static var description = IntentDescription(
+    "Returns the pomodoros completed today and says how that compares with the daily goal.")
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
+    let timer = PomodoroTimer.shared
+    let progress = TimerIntentActions.todayProgress(history: timer.history, goal: timer.dailyGoal)
+    return .result(
+      value: progress.completed,
+      dialog: IntentDialog(stringLiteral: TimerIntentActions.progressText(progress)))
+  }
+}
+
 struct TimeMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
@@ -130,5 +175,8 @@ struct TimeMateShortcuts: AppShortcutsProvider {
     AppShortcut(
       intent: GetTimerStatusIntent(),
       phrases: ["How much time is left in \(.applicationName)", "\(.applicationName) status"])
+    AppShortcut(
+      intent: GetTodayProgressIntent(),
+      phrases: ["Today's progress in \(.applicationName)", "\(.applicationName) progress today"])
   }
 }

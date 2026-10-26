@@ -5,3 +5,5 @@
 "How much time is left in ${applicationName}" = "${applicationName} còn bao nhiêu thời gian";
 "${applicationName} status" = "Trạng thái ${applicationName}";
 "Reset ${applicationName}" = "Đặt lại ${applicationName}";
+"Today's progress in ${applicationName}" = "Tiến độ hôm nay trong ${applicationName}";
+"${applicationName} progress today" = "${applicationName} hôm nay được bao nhiêu";
