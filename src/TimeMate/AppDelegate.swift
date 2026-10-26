@@ -68,6 +68,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       SettingsKey.autoStartOnLaunch: false,
       SettingsKey.showTimerAtLogin: false,
       SettingsKey.keepBreakScreenOpen: true,
+      SettingsKey.dailyGoal: DailyGoal.off,
     ])
 
     // Defaults must be registered before the first read of any setting.

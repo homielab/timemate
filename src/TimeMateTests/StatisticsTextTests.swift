@@ -52,6 +52,44 @@ final class StatisticsTextTests: XCTestCase {
       "Monday, October 20: 2 pomodoros, 50 minutes")
   }
 
+  func testEnglishDailyGoalTexts() throws {
+    let en = try bundle("en")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 3, goal: 8, minutes: 75, bundle: en),
+      "Today: 3/8 pomodoros · 75 min")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 1, goal: 1, minutes: 25, bundle: en),
+      "Today: 1/1 pomodoro · 25 min")
+    XCTAssertEqual(
+      StatisticsText.spokenToday(pomodoros: 3, goal: 8, minutes: 75, bundle: en),
+      "Today: 3 of 8 pomodoros, 75 minutes")
+    XCTAssertEqual(
+      StatisticsText.goalReached(goal: 1, bundle: en), "Daily goal reached: 1 pomodoro today")
+    XCTAssertEqual(
+      StatisticsText.goalDays(reached: 4, of: 7, bundle: en), "Goal reached on 4 of 7 days")
+    XCTAssertEqual(
+      StatisticsText.spokenDay(
+        "Monday, October 20", pomodoros: 2, minutes: 50, goalReached: true, bundle: en),
+      "Monday, October 20: 2 pomodoros, 50 minutes, goal reached")
+  }
+
+  func testVietnameseDailyGoalTexts() throws {
+    let vi = try bundle("vi")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 3, goal: 8, minutes: 75, bundle: vi),
+      "Hôm nay: 3/8 pomodoro · 75 phút")
+    XCTAssertEqual(
+      StatisticsText.spokenToday(pomodoros: 3, goal: 8, minutes: 75, bundle: vi),
+      "Hôm nay: 3 trên 8 pomodoro, 75 phút")
+    XCTAssertEqual(
+      StatisticsText.goalReached(goal: 8, bundle: vi), "Đã đạt mục tiêu hôm nay: 8 pomodoro")
+    XCTAssertEqual(
+      StatisticsText.goalDays(reached: 4, of: 7, bundle: vi), "Đạt mục tiêu 4/7 ngày")
+    XCTAssertEqual(
+      StatisticsText.spokenDay("Thứ Hai", pomodoros: 2, minutes: 50, goalReached: true, bundle: vi),
+      "Thứ Hai: 2 pomodoro, 50 phút, đạt mục tiêu")
+  }
+
   func testVietnameseKeepsOneForm() throws {
     let vi = try bundle("vi")
     XCTAssertEqual(

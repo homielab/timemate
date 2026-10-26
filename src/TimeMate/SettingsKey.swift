@@ -33,6 +33,10 @@ enum SettingsKey {
   static let hotKeySkipKeyCode = "hotKeySkipKeyCode"
   static let hotKeySkipModifiers = "hotKeySkipModifiers"
   static let hotKeySkipEnabled = "hotKeySkipEnabled"
+  /// Pomodoros to finish per day (`DailyGoal`); 0 = no goal.
+  static let dailyGoal = "dailyGoal"
+  /// When the "daily goal reached" notification last went out, so it shows once a day.
+  static let dailyGoalNotifiedAt = "dailyGoalNotifiedAt"
   /// The timer's saved session (`TimerSnapshot` as JSON), restored at launch.
   static let timerSnapshot = "timerSnapshot"
 }

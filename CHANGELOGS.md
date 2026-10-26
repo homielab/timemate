@@ -49,6 +49,10 @@ All notable changes to TimeMate will be documented in this file.
 - Privacy manifest (`PrivacyInfo.xcprivacy`) as the App Store requires: no tracking, no
   data collected; declares user defaults (CA92.1, the app's own settings) and the system
   uptime used to time sessions (35F9.1). The Lottie package brings its own manifest.
+- Daily goal: set how many pomodoros you want each day (Settings → Statistics, 1–24, off
+  by default). The popover shows "Today: 3/8 pomodoros" with a progress bar, the last 7 days
+  mark the days you met it, the CSV export gets a `goal_reached` column, and a notification
+  tells you once a day when you reach it.
 
 ### Changed
 

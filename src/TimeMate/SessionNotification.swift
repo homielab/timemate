@@ -59,6 +59,28 @@ enum SessionNotification {
     return content
   }
 
+  /// Identifier of the "daily goal reached" notification; a new one replaces the old.
+  static let dailyGoalIdentifier = "com.homielab.timemate.dailyGoalReached"
+
+  /// "Daily goal reached: 8 pomodoros today." It has no buttons and no sound
+  /// (the session-complete alarm has just played) and is not time-sensitive.
+  static func dailyGoalContent(goal: Int, bundle: Bundle = .main)
+    -> UNMutableNotificationContent
+  {
+    let content = UNMutableNotificationContent()
+    content.title = "TimeMate"
+    content.subtitle = StatisticsText.goalReached(goal: goal, bundle: bundle)
+    content.sound = nil
+    content.threadIdentifier = threadIdentifier
+    content.interruptionLevel = .active
+    return content
+  }
+
+  static func dailyGoalRequest(goal: Int) -> UNNotificationRequest {
+    UNNotificationRequest(
+      identifier: dailyGoalIdentifier, content: dailyGoalContent(goal: goal), trigger: nil)
+  }
+
   /// The request that shows the notification right away.
   static func request(
     forCompleted sessionType: SessionType, breakThroughFocus: Bool,

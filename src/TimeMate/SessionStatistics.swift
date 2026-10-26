@@ -89,15 +89,26 @@ enum SessionStatistics {
     return days(from: records, endingOn: today, count: count, calendar: calendar)
   }
 
+  /// How many of `days` met a daily goal (0 with no goal).
+  static func daysReachingGoal(_ days: [Day], goal: Int) -> Int {
+    days.filter { DailyGoal.isReached(completed: $0.pomodoros, goal: goal) }.count
+  }
+
   /// `date,pomodoros,minutes` with one row per day, dates as `yyyy-MM-dd` in the
-  /// calendar's time zone, lines ending in CRLF (RFC 4180).
-  static func csv(for days: [Day], calendar: Calendar) -> String {
-    var lines = ["date,pomodoros,minutes"]
+  /// calendar's time zone, lines ending in CRLF (RFC 4180). With a daily goal
+  /// (`goal` > 0) a `goal_reached` column says 1 or 0 for each day.
+  static func csv(for days: [Day], calendar: Calendar, goal: Int = DailyGoal.off) -> String {
+    let withGoal = goal > DailyGoal.off
+    var lines = [withGoal ? "date,pomodoros,minutes,goal_reached" : "date,pomodoros,minutes"]
     for day in days {
       let parts = calendar.dateComponents([.year, .month, .day], from: day.date)
       let date = String(
         format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
-      lines.append("\(date),\(day.pomodoros),\(day.focusMinutes)")
+      var line = "\(date),\(day.pomodoros),\(day.focusMinutes)"
+      if withGoal {
+        line += DailyGoal.isReached(completed: day.pomodoros, goal: goal) ? ",1" : ",0"
+      }
+      lines.append(line)
     }
     return lines.joined(separator: "\r\n") + "\r\n"
   }
@@ -116,10 +127,11 @@ extension SessionHistory {
     SessionStatistics.week(from: records, today: currentDate, calendar: calendar)
   }
 
-  /// The CSV export of every kept day (at least `retentionDays`).
-  func statisticsCSV() -> String {
+  /// The CSV export of every kept day (at least `retentionDays`), with the
+  /// `goal_reached` column when `goal` is set.
+  func statisticsCSV(goal: Int = DailyGoal.off) -> String {
     let days = SessionStatistics.allDays(
       from: records, today: currentDate, minimumDays: Self.retentionDays, calendar: calendar)
-    return SessionStatistics.csv(for: days, calendar: calendar)
+    return SessionStatistics.csv(for: days, calendar: calendar, goal: goal)
   }
 }

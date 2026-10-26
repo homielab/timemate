@@ -6,14 +6,18 @@ import UniformTypeIdentifiers
 
 struct StatisticsSection: View {
   @EnvironmentObject var model: PopoverTimerModel
+  @AppStorage(SettingsKey.dailyGoal) private var dailyGoal = DailyGoal.off
   @State private var showingResetAlert = false
 
   var body: some View {
     SettingsSection(titleKey: "Statistics", systemImage: "chart.bar.fill") {
-      WeekStatisticsView(history: model.timer.history)
+      DailyGoalRow(goal: $dailyGoal)
+
+      WeekStatisticsView(history: model.timer.history, goal: DailyGoal.sanitized(dailyGoal))
 
       MenuItemButton(title: "Export CSV…", systemImage: "square.and.arrow.up") {
-        StatisticsExporter.export(model.timer.history.statisticsCSV())
+        StatisticsExporter.export(
+          model.timer.history.statisticsCSV(goal: DailyGoal.sanitized(dailyGoal)))
       }
 
       MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
@@ -32,10 +36,38 @@ struct StatisticsSection: View {
   }
 }
 
+/// Daily goal: "Off" or 1–24 pomodoros, set with a stepper.
+private struct DailyGoalRow: View {
+  @Binding var goal: Int
+
+  private var valueText: Text {
+    let value = DailyGoal.sanitized(goal)
+    return value == DailyGoal.off ? Text("Off") : Text(verbatim: "\(value)")
+  }
+
+  var body: some View {
+    HStack {
+      Text("Daily goal")
+      Spacer(minLength: 12)
+      valueText
+        .monospacedDigit()
+        .foregroundColor(.secondary)
+        .frame(width: 52, alignment: .trailing)
+      Stepper("", value: $goal, in: DailyGoal.off...DailyGoal.range.upperBound)
+        .labelsHidden()
+        .accessibilityLabel(Text("Daily goal"))
+        .accessibilityValue(valueText)
+    }
+    .help("Pomodoros to finish each day. TimeMate tells you once when you reach it.")
+  }
+}
+
 /// One row per day of the last seven days, then the week's totals and the change
-/// against the seven days before.
+/// against the seven days before. With a daily goal, days that met it get a
+/// check mark and the week shows on how many days it was met.
 private struct WeekStatisticsView: View {
   @ObservedObject var history: SessionHistory
+  let goal: Int
 
   var body: some View {
     let week = history.weekStatistics()
@@ -50,7 +82,7 @@ private struct WeekStatisticsView: View {
 
       ForEach(week.days, id: \.date) { day in
         DayRow(
-          day: day, fraction: Double(day.pomodoros) / Double(maxPomodoros),
+          day: day, fraction: Double(day.pomodoros) / Double(maxPomodoros), goal: goal,
           calendar: history.calendar)
       }
 
@@ -68,6 +100,17 @@ private struct WeekStatisticsView: View {
       .font(.caption)
       .foregroundColor(.secondary)
       .monospacedDigit()
+
+      if goal > DailyGoal.off {
+        Text(
+          StatisticsText.goalDays(
+            reached: SessionStatistics.daysReachingGoal(week.days, goal: goal),
+            of: week.days.count)
+        )
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+      }
     }
   }
 }
@@ -75,7 +118,10 @@ private struct WeekStatisticsView: View {
 private struct DayRow: View {
   let day: SessionStatistics.Day
   let fraction: Double
+  let goal: Int
   let calendar: Calendar
+
+  private var goalReached: Bool { DailyGoal.isReached(completed: day.pomodoros, goal: goal) }
 
   var body: some View {
     HStack(spacing: 8) {
@@ -92,6 +138,12 @@ private struct DayRow: View {
 
       Text(verbatim: "\(day.pomodoros)")
         .frame(width: 24, alignment: .trailing)
+      if goal > DailyGoal.off {
+        Image(systemName: "checkmark.circle.fill")
+          .foregroundColor(.green)
+          .opacity(goalReached ? 1 : 0)
+          .help(goalReached ? Text("Goal reached") : Text(verbatim: ""))
+      }
       Text(
         String(
           format: NSLocalizedString("%lld min", comment: "Focus minutes of one day"),
@@ -107,7 +159,7 @@ private struct DayRow: View {
       Text(
         StatisticsText.spokenDay(
           StatisticsFormat.spokenDay(day.date, calendar: calendar), pomodoros: day.pomodoros,
-          minutes: day.focusMinutes)))
+          minutes: day.focusMinutes, goalReached: goalReached)))
   }
 }
 

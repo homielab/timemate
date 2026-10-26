@@ -39,6 +39,71 @@
 			<string>%lld pomodoro</string>
 		</dict>
 	</dict>
+	<key>Daily goal reached: %lld pomodoros today</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Đã đạt mục tiêu hôm nay: %#@pomodoros@</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+	<key>Goal reached on %1$lld of %2$lld days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Đạt mục tiêu %1$lld/%2$#@days@</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld ngày</string>
+		</dict>
+	</dict>
+	<key>Today: %1$lld of %2$lld pomodoros, %3$lld minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Hôm nay: %1$lld trên %2$#@pomodoros@, %3$#@minutes@</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld phút</string>
+		</dict>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+	<key>Today: %1$lld/%2$lld pomodoros · %3$lld min</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Hôm nay: %1$lld/%2$#@pomodoros@ · %3$lld phút</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
 	<key>Today: %lld pomodoros · %lld min</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

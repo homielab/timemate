@@ -173,3 +173,10 @@
 "Long break minutes" = "Long break minutes";
 "%1$lld of %2$lld focus sessions done" = "%1$lld of %2$lld focus sessions done";
 "%lld%% remaining" = "%lld%% remaining";
+
+// Daily goal (Settings → Statistics, popover, statistics rows)
+"Daily goal" = "Daily goal";
+"Off" = "Off";
+"Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Pomodoros to finish each day. TimeMate tells you once when you reach it.";
+"%@, goal reached" = "%@, goal reached";
+"Goal reached" = "Goal reached";

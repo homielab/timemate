@@ -161,6 +161,46 @@ final class SessionStatisticsTests: XCTestCase {
       "date,pomodoros,minutes\r\n2026-03-08,0,0\r\n2026-03-09,0,0\r\n2026-03-10,2,75\r\n")
   }
 
+  func testCSVAddsGoalReachedColumnOnlyWithAGoal() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      focus(end: date(2026, 3, 9, 9, in: utc)),
+      focus(end: date(2026, 3, 10, 9, in: utc)),
+      focus(end: date(2026, 3, 10, 10, in: utc)),
+    ]
+    let days = SessionStatistics.days(from: records, endingOn: today, count: 3, calendar: utc)
+
+    XCTAssertEqual(
+      SessionStatistics.csv(for: days, calendar: utc, goal: 2),
+      "date,pomodoros,minutes,goal_reached\r\n2026-03-08,0,0,0\r\n2026-03-09,1,25,0\r\n"
+        + "2026-03-10,2,50,1\r\n")
+    XCTAssertEqual(
+      SessionStatistics.csv(for: days, calendar: utc, goal: 0),
+      SessionStatistics.csv(for: days, calendar: utc))
+    XCTAssertTrue(
+      SessionStatistics.csv(for: days, calendar: utc).hasPrefix("date,pomodoros,minutes\r\n"))
+  }
+
+  func testDaysReachingGoal() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      focus(end: date(2026, 3, 8, 9, in: utc)),
+      focus(end: date(2026, 3, 9, 9, in: utc)),
+      focus(end: date(2026, 3, 9, 10, in: utc)),
+      focus(end: date(2026, 3, 10, 9, in: utc)),
+      focus(end: date(2026, 3, 10, 10, in: utc)),
+      focus(end: date(2026, 3, 10, 11, in: utc)),
+    ]
+    let week = SessionStatistics.week(from: records, today: today, calendar: utc)
+
+    XCTAssertEqual(SessionStatistics.daysReachingGoal(week.days, goal: 1), 3)
+    XCTAssertEqual(SessionStatistics.daysReachingGoal(week.days, goal: 2), 2)
+    XCTAssertEqual(SessionStatistics.daysReachingGoal(week.days, goal: 4), 0)
+    XCTAssertEqual(SessionStatistics.daysReachingGoal(week.days, goal: 0), 0)
+  }
+
   func testCSVDatesUseTheLocalDay() {
     let saigon = calendar("Asia/Ho_Chi_Minh")
     let days = SessionStatistics.days(

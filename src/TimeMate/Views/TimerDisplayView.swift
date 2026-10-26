@@ -88,16 +88,53 @@ private struct CountdownView: View {
   }
 }
 
-/// "Today: N pomodoros · X min" from the saved session history.
+/// "Today: N pomodoros · X min" from the saved session history; with a daily
+/// goal "Today: N/G pomodoros · X min" above a small progress bar.
 private struct TodayStatsView: View {
   @ObservedObject var history: SessionHistory
+  @AppStorage(SettingsKey.dailyGoal) private var storedGoal = DailyGoal.off
 
   var body: some View {
     let totals = history.todayTotals()
-    Text(StatisticsText.today(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
-      .font(.caption)
-      .foregroundColor(.secondary)
-      .monospacedDigit()
+    let goal = DailyGoal.sanitized(storedGoal)
+    if goal == DailyGoal.off {
+      Text(StatisticsText.today(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+    } else {
+      let reached = DailyGoal.isReached(completed: totals.pomodoros, goal: goal)
+      let spoken = StatisticsText.spokenToday(
+        pomodoros: totals.pomodoros, goal: goal, minutes: totals.focusMinutes)
+      VStack(spacing: 4) {
+        HStack(spacing: 4) {
+          if reached {
+            Image(systemName: "checkmark.circle.fill")
+              .foregroundColor(.green)
+          }
+          Text(
+            StatisticsText.today(
+              pomodoros: totals.pomodoros, goal: goal, minutes: totals.focusMinutes))
+        }
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+
+        ProgressView(value: DailyGoal.progress(completed: totals.pomodoros, goal: goal))
+          .progressViewStyle(.linear)
+          .tint(reached ? .green : .accentColor)
+          .controlSize(.small)
+          .frame(width: 140)
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(
+        Text(
+          reached
+            ? String(
+              format: NSLocalizedString("%@, goal reached", comment: "Day that met the goal"),
+              spoken)
+            : spoken))
+    }
   }
 }
 

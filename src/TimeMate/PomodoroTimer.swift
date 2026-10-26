@@ -72,6 +72,9 @@ class PomodoroTimer: ObservableObject {
   private var breakThroughFocus: Bool {
     defaults.object(forKey: SettingsKey.breakThroughFocus) as? Bool ?? true
   }
+  private var dailyGoal: Int {
+    DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)
+  }
 
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
@@ -216,10 +219,12 @@ class PomodoroTimer: ObservableObject {
       self.endDate = nil
       timer?.cancel()
       // Only sessions that run to the end count; skipping never reaches here.
+      let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(totalDuration), end: endDate)
       playSound(named: alarmSound)
       sendNotification()
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
       if keepBreakScreenOpen,
         currentSessionType == .shortBreak || currentSessionType == .longBreak
@@ -489,6 +494,22 @@ class PomodoroTimer: ObservableObject {
     postNotification(
       SessionNotification.request(
         forCompleted: currentSessionType, breakThroughFocus: breakThroughFocus))
+  }
+
+  /// Tells the user once a day when the session that just ended took today's
+  /// pomodoros up to the daily goal.
+  private func sendDailyGoalNotificationIfReached(pomodorosBefore: Int) {
+    let goal = dailyGoal
+    let pomodoros = history.todayTotals().pomodoros
+    guard DailyGoal.justReached(before: pomodorosBefore, after: pomodoros, goal: goal)
+    else { return }
+    let today = history.currentDate
+    let lastNotified = defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date
+    guard !DailyGoal.wasNotified(on: lastNotified, today: today, calendar: history.calendar)
+    else { return }
+    defaults.set(today, forKey: SettingsKey.dailyGoalNotifiedAt)
+    guard notificationsEnabled else { return }
+    postNotification(SessionNotification.dailyGoalRequest(goal: goal))
   }
 
   /// Runs a button tapped on the "session complete" notification.
