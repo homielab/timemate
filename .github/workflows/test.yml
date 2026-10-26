@@ -1,0 +1,42 @@
+name: test
+
+# Build, unit tests and code-style check for every pull request and push to main.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Xcode 26 is needed for the Icon Composer app icon (AppIcon.icon).
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Lint (swift-format)
+        # Not strict yet: a few files still have style findings (see README).
+        run: swift format lint -r src/TimeMate src/TimeMateTests
+
+      - name: Build and test
+        # Signed ad hoc: CI has no Apple Development certificate.
+        run: >
+          xcodebuild build test
+          -project src/TimeMate.xcodeproj
+          -scheme TimeMate
+          -configuration Debug
+          -destination 'platform=macOS'
+          -derivedDataPath build/DerivedData
+          CODE_SIGN_IDENTITY="-"
+          CODE_SIGNING_REQUIRED=NO

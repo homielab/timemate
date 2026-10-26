@@ -48,7 +48,7 @@ class BreakOverlayWindowController: NSObject {
   private var timer: PomodoroTimer
   private var cancellables = Set<AnyCancellable>()
   private var eventMonitor: Any?
-  private var lastEscPressTime: Date?
+  private var escDetector = DoubleEscDetector()
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
   init(timer: PomodoroTimer) {
@@ -144,18 +144,12 @@ class BreakOverlayWindowController: NSObject {
       let isOverlayVisible = self.windows.contains { $0.isVisible }
       guard isOverlayVisible else { return event }
 
-      if event.keyCode == 53 {  // Esc key
-        let now = Date()
-        if let lastPress = self.lastEscPressTime, now.timeIntervalSince(lastPress) < 0.5 {
-          // Double press detected
-          if self.timer.isWaitingToContinue {
-            self.timer.continueWork()
-          } else {
-            self.timer.skipSession()
+      if event.keyCode == DoubleEscDetector.escKeyCode {
+        if self.escDetector.registerPress() {
+          switch BreakOverlayRules.escAction(isWaitingToContinue: self.timer.isWaitingToContinue) {
+          case .continueWork: self.timer.continueWork()
+          case .skipSession: self.timer.skipSession()
           }
-          self.lastEscPressTime = nil
-        } else {
-          self.lastEscPressTime = now
         }
         return nil  // Consume event
       }
@@ -167,13 +161,12 @@ class BreakOverlayWindowController: NSObject {
     state: PomodoroState, sessionType: SessionType, isWaitingToContinue: Bool,
     isBreakPostponed: Bool
   ) {
-    let isBreak = sessionType == .shortBreak || sessionType == .longBreak
-    let shouldShow = (state == .active && isBreak && !isBreakPostponed) || isWaitingToContinue
+    let shouldShow = BreakOverlayRules.shouldShowOverlay(
+      state: state, sessionType: sessionType, isWaiting: isWaitingToContinue,
+      isPostponed: isBreakPostponed,
+      enabled: UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled))
 
-    // Check user setting
-    let overlayEnabled = UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled)
-
-    if shouldShow && overlayEnabled {
+    if shouldShow {
       // Not when the overlay only comes back during its fade-out.
       let isNewlyShown = windows.isEmpty
       if windows.isEmpty {

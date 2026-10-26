@@ -42,6 +42,10 @@ All notable changes to TimeMate will be documented in this file.
   or Do Not Disturb; Settings → Alerts & Sound → "Break through Focus" (on by default).
 - VoiceOver names the duration and cycle steppers, reads the cycle dots as "2 of 4 focus
   sessions done" and the progress ring as the percentage of the session left.
+- Continuous integration on GitHub Actions: every pull request and push to `main` is
+  built and tested on macOS with Xcode 26 and checked with swift-format. New tests
+  cover when the break screen shows, the double-Esc shortcut on it, and that the
+  English and Vietnamese strings have the same keys and format specifiers.
 
 ### Changed
 

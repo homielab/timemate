@@ -82,6 +82,26 @@ Or press `Cmd + U` in Xcode.
 
 Debug builds sign with `src/TimeMate/TimeMateDebug.entitlements` (no extra capabilities), so they build with any development team. Release builds use `src/TimeMate/TimeMate.entitlements`, which adds the Time Sensitive Notifications entitlement: the App ID needs that capability enabled in the Apple Developer portal.
 
+### Code Style
+
+The code is formatted with [swift-format](https://github.com/swiftlang/swift-format) (settings in
+`.swift-format`: 2-space indent, 100 columns). Check it with:
+
+```bash
+swift format lint -r src/TimeMate src/TimeMateTests
+```
+
+A few older files still have warnings, so the check doesn't fail the build yet.
+
+### Continuous Integration
+
+`.github/workflows/test.yml` runs on every pull request and push to `main` (GitHub's `macos-26`
+runner with Xcode 26): the swift-format check above, then the build and the unit tests with the
+same `xcodebuild` command as in [Running the Tests](#running-the-tests), signed ad hoc
+(`CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO`) because CI has no Apple Development
+certificate. The tests include a check that `en.lproj` and `vi.lproj` have the same strings with the
+same format specifiers (`%@`, `%d`, `%lld`…), so a new string must be added to both languages.
+
 ### Project Layout
 
 Sources are in `src/TimeMate/`:
@@ -95,7 +115,8 @@ Sources are in `src/TimeMate/`:
   `ControlButtonsView`).
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
   building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`.
-- `BreakOverlay*.swift` — the full-screen break screen.
+- `BreakOverlay*.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
+  shows and what a double Esc does (unit-tested).
 - `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared
   `PomodoroTimer.shared` through `TimerIntentActions` (unit-tested). Vietnamese phrases are in
   `vi.lproj/AppShortcuts.strings`.
