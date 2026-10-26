@@ -38,6 +38,10 @@ All notable changes to TimeMate will be documented in this file.
   "continue" flow. The timer now takes its `UserDefaults` and clock through its
   initializer, and settings keys live in one shared `SettingsKey` enum.
 - Settings → System → "Show timer when started at login" (off by default).
+- Session-complete notifications are time-sensitive, so they still show during a Focus mode
+  or Do Not Disturb; Settings → Alerts & Sound → "Break through Focus" (on by default).
+- VoiceOver names the duration and cycle steppers, reads the cycle dots as "2 of 4 focus
+  sessions done" and the progress ring as the percentage of the session left.
 
 ### Changed
 
@@ -57,6 +61,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- A broken "Cycles" value in the preferences (below 1 or above 8) no longer crashes the
+  popover; it is treated as 1–8.
 - "Today" in the popover and the Statistics week roll over at midnight and after a change of
   the system time or time zone; setting the clock no longer cuts short or stretches a running
   session.

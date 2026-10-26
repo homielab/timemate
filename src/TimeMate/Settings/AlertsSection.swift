@@ -6,6 +6,7 @@ import UserNotifications
 
 struct AlertsSection: View {
   @AppStorage(SettingsKey.notificationsEnabled) private var notificationsEnabled = true
+  @AppStorage(SettingsKey.breakThroughFocus) private var breakThroughFocus = true
   @AppStorage(SettingsKey.overlayEnabled) private var overlayEnabled = true
   @AppStorage(SettingsKey.overlaySkipDelay) private var skipDelay =
     BreakOverlayAccessibility.defaultSkipDelay
@@ -21,6 +22,11 @@ struct AlertsSection: View {
   var body: some View {
     SettingsSection(titleKey: "Alerts & Sound", systemImage: "bell.fill") {
       SettingsToggleRow(titleKey: "Enable Notifications", isOn: $notificationsEnabled)
+      SettingsToggleRow(titleKey: "Break through Focus", isOn: $breakThroughFocus)
+        .disabled(!notificationsEnabled)
+        .help(
+          "Show the session-complete notification even while a Focus mode or Do Not Disturb is on."
+        )
       if notificationsDenied {
         HStack {
           Text("Notifications denied in System Settings.")

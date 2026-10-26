@@ -12,6 +12,8 @@ enum SettingsKey {
   static let alarmSound = "alarmSound"
   static let alarmVolume = "alarmVolume"
   static let notificationsEnabled = "notificationsEnabled"
+  /// Mark session notifications time-sensitive so they show during a Focus mode.
+  static let breakThroughFocus = "breakThroughFocus"
   static let alwaysVisible = "alwaysVisible"
   static let overlaySkipDelay = "overlaySkipDelay"
   static let backgroundColorHex = "backgroundColorHex"

@@ -170,3 +170,10 @@
 "%lld min" = "%lld min";
 "%1$@: %2$lld pomodoros, %3$lld minutes" = "%1$@: %2$lld pomodoros, %3$lld minutes";
 "Export CSV…" = "Export CSV…";
+"Break through Focus" = "Break through Focus";
+"Show the session-complete notification even while a Focus mode or Do Not Disturb is on." = "Show the session-complete notification even while a Focus mode or Do Not Disturb is on.";
+"Focus minutes" = "Focus minutes";
+"Short break minutes" = "Short break minutes";
+"Long break minutes" = "Long break minutes";
+"%1$lld of %2$lld focus sessions done" = "%1$lld of %2$lld focus sessions done";
+"%lld%% remaining" = "%lld%% remaining";

@@ -37,7 +37,13 @@ enum SessionNotification {
 
   /// Content for the end of a session of `sessionType`. It carries no sound: the
   /// app already plays the alarm chosen in Settings, so the user hears it once.
-  static func content(forCompleted sessionType: SessionType) -> UNMutableNotificationContent {
+  ///
+  /// With `breakThroughFocus` the notification is time-sensitive, so a Focus
+  /// mode (or Do Not Disturb) still shows it unless the user turned that off
+  /// for TimeMate in System Settings.
+  static func content(
+    forCompleted sessionType: SessionType, breakThroughFocus: Bool = true
+  ) -> UNMutableNotificationContent {
     let content = UNMutableNotificationContent()
     content.title = "TimeMate"
     let localizedSessionTitle = NSLocalizedString(
@@ -49,6 +55,18 @@ enum SessionNotification {
     content.sound = nil
     content.categoryIdentifier = categoryIdentifier
     content.threadIdentifier = threadIdentifier
+    content.interruptionLevel = breakThroughFocus ? .timeSensitive : .active
     return content
+  }
+
+  /// The request that shows the notification right away.
+  static func request(
+    forCompleted sessionType: SessionType, breakThroughFocus: Bool,
+    identifier: String = UUID().uuidString
+  ) -> UNNotificationRequest {
+    UNNotificationRequest(
+      identifier: identifier,
+      content: content(forCompleted: sessionType, breakThroughFocus: breakThroughFocus),
+      trigger: nil)
   }
 }

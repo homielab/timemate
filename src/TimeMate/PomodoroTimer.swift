@@ -39,6 +39,8 @@ class PomodoroTimer: ObservableObject {
   private let uptime: () -> TimeInterval
   /// Log of completed sessions behind the "Today" statistics.
   let history: SessionHistory
+  /// Hands a "session complete" notification to the system; tests capture it.
+  private let postNotification: (UNNotificationRequest) -> Void
 
   private var focusDurationMinutes: Int {
     defaults.object(forKey: SettingsKey.focusDuration) as? Int ?? 25
@@ -50,7 +52,7 @@ class PomodoroTimer: ObservableObject {
     defaults.object(forKey: SettingsKey.longBreakDuration) as? Int ?? 15
   }
   private var longBreakInterval: Int {
-    defaults.object(forKey: SettingsKey.longBreakInterval) as? Int ?? 4
+    SessionCycle.sanitizedInterval(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int)
   }
   private var autoStartNextSession: Bool {
     defaults.object(forKey: SettingsKey.autoStartNextSession) as? Bool ?? true
@@ -66,6 +68,9 @@ class PomodoroTimer: ObservableObject {
   }
   private var notificationsEnabled: Bool {
     defaults.object(forKey: SettingsKey.notificationsEnabled) as? Bool ?? true
+  }
+  private var breakThroughFocus: Bool {
+    defaults.object(forKey: SettingsKey.breakThroughFocus) as? Bool ?? true
   }
 
   // MARK: - Private Properties
@@ -102,9 +107,13 @@ class PomodoroTimer: ObservableObject {
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
     history: SessionHistory = SessionHistory(fileURL: nil),
     notificationCenter: NotificationCenter = .default,
-    uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime
+    uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime,
+    postNotification: @escaping (UNNotificationRequest) -> Void = {
+      UNUserNotificationCenter.current().add($0)
+    }
   ) {
     self.defaults = defaults
+    self.postNotification = postNotification
     self.now = now
     self.uptime = uptime
     self.history = history
@@ -477,10 +486,9 @@ class PomodoroTimer: ObservableObject {
   private func sendNotification() {
     guard notificationsEnabled else { return }
 
-    let content = SessionNotification.content(forCompleted: currentSessionType)
-    let request = UNNotificationRequest(
-      identifier: UUID().uuidString, content: content, trigger: nil)
-    UNUserNotificationCenter.current().add(request)
+    postNotification(
+      SessionNotification.request(
+        forCompleted: currentSessionType, breakThroughFocus: breakThroughFocus))
   }
 
   /// Runs a button tapped on the "session complete" notification.

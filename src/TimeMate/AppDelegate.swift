@@ -57,6 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     UserDefaults.standard.register(defaults: [
       SettingsKey.overlayEnabled: true,
       SettingsKey.notificationsEnabled: true,
+      SettingsKey.breakThroughFocus: true,
       SettingsKey.keepAwake: false,
       SettingsKey.hideDockIcon: true,
       SettingsKey.alwaysVisible: false,

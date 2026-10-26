@@ -6,13 +6,19 @@ struct DurationsSection: View {
   @AppStorage(SettingsKey.focusDuration) private var focusDuration = 25
   @AppStorage(SettingsKey.shortBreakDuration) private var shortBreakDuration = 5
   @AppStorage(SettingsKey.longBreakDuration) private var longBreakDuration = 15
-  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval = 4
+  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval =
+    SessionCycle.defaultInterval
 
   var body: some View {
     SettingsSection(titleKey: "Durations", systemImage: "timer") {
-      DurationRow(titleKey: "Focus", minutes: $focusDuration, step: 5)
-      DurationRow(titleKey: "Short Break", minutes: $shortBreakDuration, step: 1)
-      DurationRow(titleKey: "Long Break", minutes: $longBreakDuration, step: 5)
+      DurationRow(
+        titleKey: "Focus", stepperLabelKey: "Focus minutes", minutes: $focusDuration, step: 5)
+      DurationRow(
+        titleKey: "Short Break", stepperLabelKey: "Short break minutes",
+        minutes: $shortBreakDuration, step: 1)
+      DurationRow(
+        titleKey: "Long Break", stepperLabelKey: "Long break minutes",
+        minutes: $longBreakDuration, step: 5)
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
@@ -20,7 +26,10 @@ struct DurationsSection: View {
           .monospacedDigit()
           .foregroundColor(.secondary)
           .frame(width: 52, alignment: .trailing)
-        Stepper("", value: $longBreakInterval, in: 2...8).labelsHidden()
+        Stepper("", value: $longBreakInterval, in: SessionCycle.settingsRange)
+          .labelsHidden()
+          .accessibilityLabel(Text("Cycles"))
+          .accessibilityValue(Text(verbatim: "\(longBreakInterval)"))
       }
     }
   }
@@ -29,6 +38,8 @@ struct DurationsSection: View {
 /// A session length: type any number of minutes (1–180) or use the stepper.
 private struct DurationRow: View {
   let titleKey: LocalizedStringKey
+  /// VoiceOver name of the stepper, e.g. "Focus minutes".
+  let stepperLabelKey: LocalizedStringKey
   @Binding var minutes: Int
   let step: Int
 
@@ -53,7 +64,10 @@ private struct DurationRow: View {
         .accessibilityLabel(Text(titleKey))
       Text("min")
         .foregroundColor(.secondary)
-      Stepper("", value: $minutes, in: SessionDuration.minuteRange, step: step).labelsHidden()
+      Stepper("", value: $minutes, in: SessionDuration.minuteRange, step: step)
+        .labelsHidden()
+        .accessibilityLabel(Text(stepperLabelKey))
+        .accessibilityValue(Text(verbatim: "\(minutes)"))
     }
     .onAppear { text = "\(minutes)" }
     .onChange(of: minutes) { text = "\($0)" }

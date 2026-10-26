@@ -9,7 +9,8 @@ struct TimerDisplayView: View {
   @Binding var settingsVisible: Bool
   @Binding var showProgressCircle: Bool
 
-  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval = 4
+  @AppStorage(SettingsKey.longBreakInterval) private var longBreakInterval =
+    SessionCycle.defaultInterval
 
   private var style: SessionStyle { model.currentSessionType.style }
 
@@ -36,7 +37,7 @@ struct TimerDisplayView: View {
 
       CycleIndicatorView(
         completed: model.focusSessionsCompleted,
-        total: longBreakInterval,
+        total: SessionCycle.sanitizedInterval(longBreakInterval),
         isLongBreak: model.currentSessionType == .longBreak
       )
 
@@ -72,6 +73,9 @@ private struct CountdownView: View {
         timeText
       }
       .frame(width: 120, height: 120)
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(Text(countdown.timeRemaining.toMinuteSecondString()))
+      .accessibilityValue(Text(SessionCycle.progressAccessibilityValue(countdown.progress)))
     } else {
       timeText
     }
@@ -152,5 +156,10 @@ private struct CycleIndicatorView: View {
     }
     .frame(height: 20, alignment: .center)
     .animation(.easeInOut(duration: 0.2), value: isLongBreak)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      Text(
+        SessionCycle.accessibilityLabel(
+          completed: completed, total: total, isLongBreak: isLongBreak)))
   }
 }

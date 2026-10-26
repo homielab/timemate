@@ -71,6 +71,63 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertNil(SessionNotificationAction(rawValue: UNNotificationDismissActionIdentifier))
   }
 
+  // MARK: - Focus modes
+
+  func testContentIsTimeSensitiveWhenBreakingThroughFocus() {
+    XCTAssertEqual(
+      SessionNotification.content(forCompleted: .focus, breakThroughFocus: true)
+        .interruptionLevel, .timeSensitive)
+    XCTAssertEqual(
+      SessionNotification.content(forCompleted: .focus, breakThroughFocus: false)
+        .interruptionLevel, .active)
+  }
+
+  func testRequestShowsRightAway() {
+    let request = SessionNotification.request(
+      forCompleted: .shortBreak, breakThroughFocus: true, identifier: "id")
+    XCTAssertEqual(request.identifier, "id")
+    XCTAssertNil(request.trigger)
+    XCTAssertEqual(request.content.categoryIdentifier, SessionNotification.categoryIdentifier)
+  }
+
+  private func postedRequests(breakThroughFocus: Bool?, notificationsEnabled: Bool = true)
+    -> [UNNotificationRequest]
+  {
+    var posted: [UNNotificationRequest] = []
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(false, forKey: SettingsKey.autoStartNextSession)
+    defaults.set(notificationsEnabled, forKey: SettingsKey.notificationsEnabled)
+    defaults.set(0.0, forKey: SettingsKey.alarmVolume)
+    if let breakThroughFocus {
+      defaults.set(breakThroughFocus, forKey: SettingsKey.breakThroughFocus)
+    }
+    let timer = PomodoroTimer(
+      defaults: defaults,
+      now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(),
+      history: SessionHistory(fileURL: nil),
+      notificationCenter: NotificationCenter(),
+      postNotification: { posted.append($0) })
+    timer.startTimer()
+    finishSession(timer)
+    return posted
+  }
+
+  func testTimerPostsATimeSensitiveNotificationByDefault() {
+    let posted = postedRequests(breakThroughFocus: nil)
+    XCTAssertEqual(posted.count, 1)
+    XCTAssertEqual(posted.first?.content.interruptionLevel, .timeSensitive)
+  }
+
+  func testTimerFollowsTheBreakThroughFocusSetting() {
+    XCTAssertEqual(
+      postedRequests(breakThroughFocus: false).first?.content.interruptionLevel, .active)
+  }
+
+  func testTimerPostsNothingWithNotificationsOff() {
+    XCTAssertTrue(postedRequests(breakThroughFocus: true, notificationsEnabled: false).isEmpty)
+  }
+
   // MARK: - Actions
 
   func testStartNextStartsTheWaitingSessionWithoutAutoStart() {

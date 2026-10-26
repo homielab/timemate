@@ -28,7 +28,8 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions. A long break comes after every 2–8 focus sessions (default 4); "Auto-start next session" and "Auto-start on launch" keep the timer going without clicks.
 - **Custom Session Durations**: Set any focus or break length from 1 to 180 minutes (e.g. 50/10 or 90-minute deep work) by typing it or with the stepper.
 - **Automatic Transitions**: Automatically switches to breaks to keep you in the flow state.
-- **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms. The banner shows even while TimeMate is in front, plays only your chosen alarm sound, and has **Start Next** / **Skip** buttons.
+- **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms. The banner shows even while TimeMate is in front, plays only your chosen alarm sound, and has **Start Next** / **Skip** buttons. It is time-sensitive, so it still shows while a Focus mode or Do Not Disturb is on; turn off "Break through Focus" in Settings → Alerts & Sound to let Focus hide it.
+- **VoiceOver**: The duration and cycle steppers are named ("Focus minutes", "Cycles"…), the cycle dots read as "2 of 4 focus sessions done" and the progress ring says how much of the session is left.
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest. The animation runs only on the screen you work on, stays still when Reduce Motion is on, and VoiceOver announces the break and reads its countdown. Need more rest? **+5 min** lengthens the break; not a good moment? **Postpone** it by 1, 3 or 5 minutes and it comes back on its own. The Skip button appears after a delay you set in Settings → Alerts & Sound (0–30 s, default 5 s).
 - **Statistics**: See how many pomodoros and focus minutes you completed today. Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day, read day by day by VoiceOver), the week's total and the change against the 7 days before; **Export CSV…** saves every kept day as `date,pomodoros,minutes`. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
 - **Global Keyboard Shortcuts**: Start/pause with ⌃⌥P and skip the current session with ⌃⌥S from any app. Record your own combination (it must include ⌃ or ⌘) or turn each shortcut off in Settings → Keyboard Shortcuts. No Accessibility permission needed.
@@ -78,6 +79,8 @@ xcodebuild -project src/TimeMate.xcodeproj -scheme TimeMate -configuration Debug
 ```
 
 Or press `Cmd + U` in Xcode.
+
+Debug builds sign with `src/TimeMate/TimeMateDebug.entitlements` (no extra capabilities), so they build with any development team. Release builds use `src/TimeMate/TimeMate.entitlements`, which adds the Time Sensitive Notifications entitlement: the App ID needs that capability enabled in the Apple Developer portal.
 
 ### Project Layout
 
