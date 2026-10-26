@@ -111,7 +111,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     }
 
     // --- Auto-start Timer ---
-    if UserDefaults.standard.bool(forKey: SettingsKey.autoStartOnLaunch) {
+    // A session restored from the last run (running or paused) is left as is.
+    if UserDefaults.standard.bool(forKey: SettingsKey.autoStartOnLaunch), timer.state == .idle {
       timer.startTimer()
     }
 

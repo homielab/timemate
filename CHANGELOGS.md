@@ -52,6 +52,11 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Quitting, updating or a crash no longer loses the session: a running timer keeps
+  counting down after relaunch, a paused one stays paused, and the pomodoro count is
+  kept. A session that ended while TimeMate was closed is added to the statistics on
+  the day it ended and the next session follows (started only if "Auto-start next
+  session" is on), without a late alarm or notification.
 - "Review on App Store" now opens TimeMate's review page in the App Store, and
   the unused push-notification entitlement was removed.
 - The "session complete" notification now shows as a banner even when TimeMate is

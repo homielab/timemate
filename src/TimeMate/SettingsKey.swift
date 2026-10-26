@@ -27,4 +27,6 @@ enum SettingsKey {
   static let hotKeySkipKeyCode = "hotKeySkipKeyCode"
   static let hotKeySkipModifiers = "hotKeySkipModifiers"
   static let hotKeySkipEnabled = "hotKeySkipEnabled"
+  /// The timer's saved session (`TimerSnapshot` as JSON), restored at launch.
+  static let timerSnapshot = "timerSnapshot"
 }

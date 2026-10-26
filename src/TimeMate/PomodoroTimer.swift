@@ -6,13 +6,13 @@ import Combine
 import SwiftUI
 import UserNotifications
 
-enum SessionType: String, CaseIterable {
+enum SessionType: String, CaseIterable, Codable {
   case focus = "Focus"
   case shortBreak = "Short Break"
   case longBreak = "Long Break"
 }
 
-enum PomodoroState {
+enum PomodoroState: String, Codable {
   case idle, active, paused
 }
 
@@ -86,6 +86,10 @@ class PomodoroTimer: ObservableObject {
     self.now = now
     self.history = history
     resetForCurrentSession()
+    if let snapshot = TimerSnapshot.load(from: defaults) {
+      restore(snapshot)
+    }
+    saveSnapshot()
 
     workspaceNotificationCenter.publisher(for: NSWorkspace.willSleepNotification)
       .sink { [weak self] _ in self?.handleWillSleep() }
@@ -100,6 +104,7 @@ class PomodoroTimer: ObservableObject {
   }
 
   func startTimer() {
+    defer { saveSnapshot() }
     if state != .paused {
       resetForCurrentSession()
     }
@@ -130,6 +135,7 @@ class PomodoroTimer: ObservableObject {
       // The postponed break comes back at its full length.
       resetForCurrentSession()
       self.endDate = tickTime.addingTimeInterval(TimeInterval(timeRemaining))
+      saveSnapshot()
       return
     }
 
@@ -156,6 +162,7 @@ class PomodoroTimer: ObservableObject {
       } else {
         advanceToNextSession()
       }
+      saveSnapshot()
     }
   }
 
@@ -187,9 +194,11 @@ class PomodoroTimer: ObservableObject {
     state = .paused
     endDate = nil
     timer?.cancel()
+    saveSnapshot()
   }
 
   func stopTimer() {
+    defer { saveSnapshot() }
     isWaitingToContinue = false
     state = .idle
     endDate = nil
@@ -198,6 +207,7 @@ class PomodoroTimer: ObservableObject {
   }
 
   func skipSession() {
+    defer { saveSnapshot() }
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
@@ -205,6 +215,7 @@ class PomodoroTimer: ObservableObject {
   }
 
   func restartCycle() {
+    defer { saveSnapshot() }
     isWaitingToContinue = false
     state = .idle
     focusSessionsCompleted = 0
@@ -215,6 +226,7 @@ class PomodoroTimer: ObservableObject {
   }
 
   func continueWork() {
+    defer { saveSnapshot() }
     isWaitingToContinue = false
     advanceToNextSession()
     if !autoStartNextSession {
@@ -222,7 +234,9 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
-  private func advanceToNextSession() {
+  /// Moves on to the session after the current one and starts it when
+  /// `start` (by default the "Auto-start next session" setting) is on.
+  private func advanceToNextSession(start: Bool? = nil) {
     if currentSessionType == .focus {
       focusSessionsCompleted += 1
       if focusSessionsCompleted >= longBreakInterval {
@@ -235,7 +249,7 @@ class PomodoroTimer: ObservableObject {
       currentSessionType = .focus
     }
     resetForCurrentSession()
-    if autoStartNextSession {
+    if start ?? autoStartNextSession {
       startTimer()
     } else {
       state = .idle
@@ -252,6 +266,7 @@ class PomodoroTimer: ObservableObject {
   /// `minutes`. Does nothing during focus or a postponed break.
   func extend(by minutes: Int) {
     guard minutes > 0, isBreak, !isBreakPostponed else { return }
+    defer { saveSnapshot() }
     let extra = Self.seconds(forMinutes: minutes)
     if isWaitingToContinue {
       isWaitingToContinue = false
@@ -283,6 +298,7 @@ class PomodoroTimer: ObservableObject {
   /// the break starts again, at its full length, once they have passed.
   func postponeBreak(minutes: Int) {
     guard minutes > 0, isBreak, state == .active, !isBreakPostponed else { return }
+    defer { saveSnapshot() }
     let delay = Self.seconds(forMinutes: minutes)
     isBreakPostponed = true
     totalDuration = delay
@@ -300,6 +316,67 @@ class PomodoroTimer: ObservableObject {
     #else
       return minutes * 60
     #endif
+  }
+
+  // MARK: - Saved state
+
+  /// Saves what is needed to pick the session up again after a relaunch.
+  private func saveSnapshot() {
+    TimerSnapshot(
+      state: state, sessionType: currentSessionType, endDate: endDate,
+      remaining: timeRemaining, totalDuration: totalDuration,
+      focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
+      isWaitingToContinue: isWaitingToContinue
+    ).save(to: defaults)
+  }
+
+  /// Picks up the session saved before the app quit. A running session keeps
+  /// counting from its end date and a paused one stays paused. A session that
+  /// ended while the app was closed is recorded in the history on the day it
+  /// ended and the next session follows, without the alarm or a late
+  /// notification. A waiting break screen or a postponed break that is due
+  /// is not shown at launch: the timer waits on the next session instead.
+  private func restore(_ snapshot: TimerSnapshot) {
+    currentSessionType = snapshot.sessionType
+    focusSessionsCompleted = snapshot.focusSessionsCompleted
+    resetForCurrentSession()
+    let launchTime = now()
+
+    switch snapshot.state {
+    case .idle:
+      if snapshot.isWaitingToContinue {
+        advanceToNextSession(start: false)
+      }
+    case .paused:
+      isBreakPostponed = snapshot.isBreakPostponed
+      totalDuration = snapshot.totalDuration
+      timeRemaining = min(snapshot.remaining, totalDuration)
+      progress = Double(timeRemaining) / Double(max(1, totalDuration))
+      state = .paused
+    case .active:
+      guard var savedEndDate = snapshot.endDate else { return }
+      if savedEndDate > launchTime {
+        isBreakPostponed = snapshot.isBreakPostponed
+        totalDuration = snapshot.totalDuration
+        // A clock set back while the app was closed cannot stretch the session.
+        let latestEnd = launchTime.addingTimeInterval(TimeInterval(totalDuration))
+        savedEndDate = min(savedEndDate, latestEnd)
+        endDate = savedEndDate
+        timeRemaining = max(0, Int(savedEndDate.timeIntervalSince(launchTime).rounded()))
+        progress = Double(timeRemaining) / Double(max(1, totalDuration))
+        state = .active
+        startTicking()
+      } else if snapshot.isBreakPostponed {
+        // The postponed break is due; it waits at full length for Start.
+        state = .idle
+      } else {
+        history.recordCompletedSession(
+          currentSessionType, duration: TimeInterval(snapshot.totalDuration),
+          end: savedEndDate)
+        let waitsOnBreakScreen = isBreak && keepBreakScreenOpen
+        advanceToNextSession(start: autoStartNextSession && !waitsOnBreakScreen)
+      }
+    }
   }
 
   private func resetForCurrentSession() {

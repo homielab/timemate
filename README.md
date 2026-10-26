@@ -33,6 +33,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Statistics**: See how many pomodoros and focus minutes you completed today. Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day, read day by day by VoiceOver), the week's total and the change against the 7 days before; **Export CSV…** saves every kept day as `date,pomodoros,minutes`. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
 - **Global Keyboard Shortcuts**: Start/pause with ⌃⌥P and skip the current session with ⌃⌥S from any app. Record your own combination (it must include ⌃ or ⌘) or turn each shortcut off in Settings → Keyboard Shortcuts. No Accessibility permission needed.
 - **Shortcuts & Siri**: Automate TimeMate with the Shortcuts app — **Start Timer**, **Pause Timer**, **Skip Session** and **Get Timer Status** (returns the minutes left and says which session is running, e.g. "Focus, running, 12 min left"). Use them to turn on a Focus mode when a session starts, or ask Siri "Start TimeMate".
+- **Survives Quit & Updates**: Quit, update or restart your Mac and the session picks up where it was — a running timer keeps counting from when it should end, a paused one stays paused, and the pomodoro count is kept. A session that ended while TimeMate was closed still counts in your statistics.
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
 - **Multilingual Support**: Available in both English and Vietnamese.
@@ -82,7 +83,8 @@ Or press `Cmd + U` in Xcode.
 
 Sources are in `src/TimeMate/`:
 
-- `PomodoroTimer.swift` — the timer state machine; `SettingsKey.swift` — all user-defaults keys.
+- `PomodoroTimer.swift` — the timer state machine; `TimerSnapshot.swift` — the session it saves in
+  user defaults to restore after a relaunch; `SettingsKey.swift` — all user-defaults keys.
 - `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
 - `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,
   `ControlButtonsView`).
