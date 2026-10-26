@@ -271,6 +271,20 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertTrue(timer.isWaitingToContinue)
   }
 
+  func testWaitingBreakScreenStaysWhenFocusOrLongBreakDurationChanges() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    defaults.set(40, forKey: SettingsKey.focusDuration)
+    defaults.set(20, forKey: SettingsKey.longBreakDuration)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.timeRemaining, 0)
+    timer.continueWork()
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+  }
+
   // MARK: - Continue work
 
   func testContinueWorkStartsTimerOnceWhenAutoStartOff() {

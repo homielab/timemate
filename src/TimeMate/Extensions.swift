@@ -48,11 +48,24 @@ func restartApp() {
   NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) {
     _, error in
     DispatchQueue.main.async {
-      if error == nil {
+      if let error {
+        Logger.app.error("Could not relaunch the app: \(error.localizedDescription)")
+        showRestartFailedAlert()
+      } else {
         NSApp.terminate(nil)
       }
     }
   }
+}
+
+private func showRestartFailedAlert() {
+  let alert = NSAlert()
+  alert.alertStyle = .warning
+  alert.messageText = NSLocalizedString("TimeMate couldn't restart", comment: "")
+  alert.informativeText = NSLocalizedString(
+    "Quit TimeMate and open it again to apply the change.", comment: "")
+  NSApp.activate(ignoringOtherApps: true)
+  alert.runModal()
 }
 
 /// Defaults keys that hold app state rather than settings; a reset keeps them.

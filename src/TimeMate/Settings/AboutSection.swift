@@ -10,7 +10,9 @@ struct AboutSection: View {
     SettingsSection(titleKey: "About & Support", systemImage: "info.circle") {
       VStack(alignment: .leading) {
         MenuItemButton(title: "About", systemImage: "info.circle") {
-          if let url = URL(string: "https://homielab.com/page/timemate") {
+          if let url = AppLanguage.aboutURL(
+            preferredLocalizations: Bundle.main.preferredLocalizations)
+          {
             NSWorkspace.shared.open(url)
           }
         }

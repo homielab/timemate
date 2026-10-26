@@ -96,6 +96,15 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Changing a session length while the break screen is held open (Continue Work) no longer
+  makes the Continue Work button disappear.
+- Settings → Language now shows "System Default" when you have not picked a language, and the
+  picker is named for VoiceOver.
+- If TimeMate cannot relaunch itself after a language change or Reset All Settings, it now
+  tells you to reopen it instead of failing silently; a failed notification permission request
+  is logged.
+- About opens the TimeMate page in your language (Vietnamese or English); the Keep Mac awake
+  help text now says it applies during a focus session.
 - Reset All Settings no longer drops the running session or the daily-goal notification
   state: the session carries on after the restart and the goal notification isn't sent twice.
 - The break screen's clock stops when the screen is hidden, and the Esc and screen-change

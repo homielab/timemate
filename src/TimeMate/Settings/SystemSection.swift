@@ -45,7 +45,7 @@ struct SystemSection: View {
           appDelegate.setDockIcon(hidden: newValue)
         }
       SettingsToggleRow(titleKey: "Keep Mac awake", isOn: $keepAwake)
-        .help("Prevent your Mac from going to sleep.")
+        .help("Prevent your Mac from going to sleep during a focus session.")
         .onChange(of: keepAwake) { newValue in
           appDelegate.setKeepAwake(enabled: newValue)
         }

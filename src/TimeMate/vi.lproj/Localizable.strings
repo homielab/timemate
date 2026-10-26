@@ -51,7 +51,7 @@
 "Preview Alarm Sound" = "Nghe thử âm báo";
 "Start the next session automatically when the current one ends." = "Tự động bắt đầu phiên tiếp theo khi phiên hiện tại kết thúc.";
 "Start a focus session automatically when the app opens." = "Tự động bắt đầu phiên tập trung khi mở ứng dụng.";
-"Prevent your Mac from going to sleep." = "Ngăn Mac của bạn chuyển sang chế độ ngủ.";
+"Prevent your Mac from going to sleep during a focus session." = "Ngăn Mac chuyển sang chế độ ngủ khi đang trong phiên tập trung.";
 
 // Settings - Language
 "Language" = "Ngôn ngữ";
@@ -200,3 +200,7 @@
 
 "Don't interrupt full-screen apps" = "Không làm gián đoạn ứng dụng toàn màn hình";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "Khi ứng dụng đang dùng ở toàn màn hình (thuyết trình, video…), màn hình nghỉ ngơi chờ đến khi bạn thoát ra. Thông báo vẫn hiện.";
+
+// Restart failure
+"TimeMate couldn't restart" = "TimeMate không khởi động lại được";
+"Quit TimeMate and open it again to apply the change." = "Hãy thoát TimeMate rồi mở lại để áp dụng thay đổi.";

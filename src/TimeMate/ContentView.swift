@@ -13,9 +13,6 @@ struct ContentView: View {
 
   @AppStorage(SettingsKey.backgroundColorHex) private var backgroundColorHex: String = ""
   @AppStorage(SettingsKey.showProgressCircle) private var showProgressCircle = true
-  @AppStorage(SettingsKey.focusDuration) private var focusDuration = 25
-  @AppStorage(SettingsKey.shortBreakDuration) private var shortBreakDuration = 5
-  @AppStorage(SettingsKey.longBreakDuration) private var longBreakDuration = 15
 
   var body: some View {
     VStack(spacing: 12) {
@@ -37,11 +34,6 @@ struct ContentView: View {
     .frame(minWidth: 280)
     .background(Color(hex: backgroundColorHex) ?? .clear)
     .contentShape(Rectangle())
-    .onChange(of: [focusDuration, shortBreakDuration, longBreakDuration]) { _ in
-      if model.timer.state == .idle {
-        model.timer.stopTimer()
-      }
-    }
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
       appDelegate.updatePopoverSize()
     }

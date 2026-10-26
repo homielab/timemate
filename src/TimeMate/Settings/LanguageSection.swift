@@ -6,12 +6,7 @@ struct LanguageSection: View {
   @State private var selectedLanguage: String = "system"
 
   private var savedLanguageCode: String {
-    guard let languages = UserDefaults.standard.stringArray(forKey: "AppleLanguages"),
-      let lang = languages.first
-    else { return "system" }
-    if lang.hasPrefix("en") { return "en" }
-    if lang.hasPrefix("vi") { return "vi" }
-    return "system"
+    AppLanguage.savedCode(domain: Bundle.main.bundleIdentifier)
   }
 
   var body: some View {
@@ -24,15 +19,16 @@ struct LanguageSection: View {
           Text("Vietnamese").tag("vi")
         }
         .labelsHidden()
+        .accessibilityLabel("Language")
         .fixedSize()
       }
       .onAppear { self.selectedLanguage = savedLanguageCode }
       .onChange(of: selectedLanguage) { newValue in
         guard newValue != savedLanguageCode else { return }
         if newValue == "system" {
-          UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+          UserDefaults.standard.removeObject(forKey: AppLanguage.defaultsKey)
         } else {
-          UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
+          UserDefaults.standard.set([newValue], forKey: AppLanguage.defaultsKey)
         }
         restartApp()
       }

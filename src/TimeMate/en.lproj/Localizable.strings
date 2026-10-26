@@ -51,7 +51,7 @@
 "Preview Alarm Sound" = "Preview Alarm Sound";
 "Start the next session automatically when the current one ends." = "Start the next session automatically when the current one ends.";
 "Start a focus session automatically when the app opens." = "Start a focus session automatically when the app opens.";
-"Prevent your Mac from going to sleep." = "Prevent your Mac from going to sleep.";
+"Prevent your Mac from going to sleep during a focus session." = "Prevent your Mac from going to sleep during a focus session.";
 
 // Settings - Language
 "Language" = "Language";
@@ -200,3 +200,7 @@
 
 "Don't interrupt full-screen apps" = "Don't interrupt full-screen apps";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives.";
+
+// Restart failure
+"TimeMate couldn't restart" = "TimeMate couldn't restart";
+"Quit TimeMate and open it again to apply the change." = "Quit TimeMate and open it again to apply the change.";

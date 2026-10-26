@@ -4,6 +4,7 @@ import AppKit
 import Combine
 import SwiftUI
 import UserNotifications
+import os
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   UNUserNotificationCenterDelegate, ObservableObject
@@ -82,7 +83,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     notificationCenter.delegate = self
     notificationCenter.setNotificationCategories([SessionNotification.category()])
     notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) {
-      _, _ in
+      _, error in
+      if let error {
+        Logger.app.error("Notification authorization failed: \(error.localizedDescription)")
+      }
     }
 
     NSColorPanel.shared.showsAlpha = true
