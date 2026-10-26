@@ -9,7 +9,10 @@ enum SettingsKey {
   static let longBreakInterval = "longBreakInterval"
   static let autoStartNextSession = "autoStartNextSession"
   static let keepBreakScreenOpen = "keepBreakScreenOpen"
+  /// Sound after a focus session (`AlarmSound`); "None" plays nothing.
   static let alarmSound = "alarmSound"
+  /// Sound after a break; unset = the same as `alarmSound`.
+  static let breakEndSound = "breakEndSound"
   static let alarmVolume = "alarmVolume"
   static let notificationsEnabled = "notificationsEnabled"
   /// Mark session notifications time-sensitive so they show during a Focus mode.
@@ -33,6 +36,10 @@ enum SettingsKey {
   static let hotKeySkipKeyCode = "hotKeySkipKeyCode"
   static let hotKeySkipModifiers = "hotKeySkipModifiers"
   static let hotKeySkipEnabled = "hotKeySkipEnabled"
+  static let hotKeyResetKeyCode = "hotKeyResetKeyCode"
+  static let hotKeyResetModifiers = "hotKeyResetModifiers"
+  /// The Reset shortcut is off until the user turns it on.
+  static let hotKeyResetEnabled = "hotKeyResetEnabled"
   /// Pomodoros to finish per day (`DailyGoal`); 0 = no goal.
   static let dailyGoal = "dailyGoal"
   /// When the "daily goal reached" notification last went out, so it shows once a day.

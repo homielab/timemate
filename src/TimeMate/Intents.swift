@@ -27,6 +27,12 @@ enum TimerIntentActions {
     timer.skipSession()
   }
 
+  /// Stops the timer and starts the current session over, like Reset in the
+  /// popover and the menu bar item's menu. Nothing is recorded.
+  static func reset(_ timer: PomodoroTimer) {
+    timer.stopTimer()
+  }
+
   /// Whole minutes left in the current session, rounded up so "0" only means
   /// the session is over.
   static func minutesRemaining(_ timer: PomodoroTimer) -> Int {
@@ -87,6 +93,18 @@ struct SkipSessionIntent: AppIntent {
   }
 }
 
+struct ResetTimerIntent: AppIntent {
+  static var title: LocalizedStringResource = "Reset Timer"
+  static var description = IntentDescription(
+    "Stops the TimeMate timer and starts the current session over.")
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    TimerIntentActions.reset(.shared)
+    return .result()
+  }
+}
+
 struct GetTimerStatusIntent: AppIntent {
   static var title: LocalizedStringResource = "Get Timer Status"
   static var description = IntentDescription(
@@ -108,6 +126,7 @@ struct TimeMateShortcuts: AppShortcutsProvider {
       phrases: ["Start \(.applicationName)", "Start a focus session in \(.applicationName)"])
     AppShortcut(intent: PauseTimerIntent(), phrases: ["Pause \(.applicationName)"])
     AppShortcut(intent: SkipSessionIntent(), phrases: ["Skip session in \(.applicationName)"])
+    AppShortcut(intent: ResetTimerIntent(), phrases: ["Reset \(.applicationName)"])
     AppShortcut(
       intent: GetTimerStatusIntent(),
       phrases: ["How much time is left in \(.applicationName)", "\(.applicationName) status"])

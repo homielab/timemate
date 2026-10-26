@@ -41,6 +41,8 @@ class PomodoroTimer: ObservableObject {
   let history: SessionHistory
   /// Hands a "session complete" notification to the system; tests capture it.
   private let postNotification: (UNNotificationRequest) -> Void
+  /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
+  private let playSound: (String, Float) -> Void
 
   private var focusDurationMinutes: Int {
     defaults.object(forKey: SettingsKey.focusDuration) as? Int ?? 25
@@ -59,9 +61,6 @@ class PomodoroTimer: ObservableObject {
   }
   private var keepBreakScreenOpen: Bool {
     defaults.object(forKey: SettingsKey.keepBreakScreenOpen) as? Bool ?? true
-  }
-  private var alarmSound: String {
-    defaults.object(forKey: SettingsKey.alarmSound) as? String ?? "Glass"
   }
   private var alarmVolume: Double {
     defaults.object(forKey: SettingsKey.alarmVolume) as? Double ?? 1.0
@@ -113,10 +112,12 @@ class PomodoroTimer: ObservableObject {
     uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime,
     postNotification: @escaping (UNNotificationRequest) -> Void = {
       UNUserNotificationCenter.current().add($0)
-    }
+    },
+    playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) }
   ) {
     self.defaults = defaults
     self.postNotification = postNotification
+    self.playSound = playSound
     self.now = now
     self.uptime = uptime
     self.history = history
@@ -233,7 +234,8 @@ class PomodoroTimer: ObservableObject {
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(totalDuration), end: endDate)
-      playSound(named: alarmSound)
+      playSound(
+        AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
       sendNotification()
       sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
@@ -500,13 +502,6 @@ class PomodoroTimer: ObservableObject {
     case .longBreak: stored = longBreakDurationMinutes
     }
     return Self.seconds(forMinutes: SessionDuration.sanitized(stored))
-  }
-
-  private func playSound(named soundName: String) {
-    if let systemSound = NSSound(named: soundName) {
-      systemSound.volume = Float(self.alarmVolume)
-      systemSound.play()
-    }
   }
 
   private func sendNotification() {

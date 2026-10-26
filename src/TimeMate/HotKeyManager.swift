@@ -11,6 +11,7 @@ import SwiftUI
 enum HotKeyAction: UInt32, CaseIterable, Identifiable {
   case startPause = 1
   case skip = 2
+  case reset = 3
 
   var id: UInt32 { rawValue }
 
@@ -19,10 +20,17 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     switch self {
     case .startPause: return "Start / Pause"
     case .skip: return "Skip Session"
+    case .reset: return "Reset Timer"
     }
   }
 
-  /// ⌃⌥P and ⌃⌥S: free in macOS and the common apps, easy to press.
+  /// Start/pause and skip are on from the start; reset only once the user
+  /// turns it on, so a stray press can't throw away a running session.
+  var isEnabledByDefault: Bool {
+    self != .reset
+  }
+
+  /// ⌃⌥P, ⌃⌥S and ⌃⌥R: free in macOS and the common apps, easy to press.
   var defaultShortcut: HotKeyShortcut {
     switch self {
     case .startPause:
@@ -31,6 +39,9 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .skip:
       return HotKeyShortcut(
         keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(controlKey | optionKey))
+    case .reset:
+      return HotKeyShortcut(
+        keyCode: UInt32(kVK_ANSI_R), modifiers: UInt32(controlKey | optionKey))
     }
   }
 
@@ -38,6 +49,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     switch self {
     case .startPause: return SettingsKey.hotKeyStartPauseKeyCode
     case .skip: return SettingsKey.hotKeySkipKeyCode
+    case .reset: return SettingsKey.hotKeyResetKeyCode
     }
   }
 
@@ -45,6 +57,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     switch self {
     case .startPause: return SettingsKey.hotKeyStartPauseModifiers
     case .skip: return SettingsKey.hotKeySkipModifiers
+    case .reset: return SettingsKey.hotKeyResetModifiers
     }
   }
 
@@ -52,13 +65,16 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     switch self {
     case .startPause: return SettingsKey.hotKeyStartPauseEnabled
     case .skip: return SettingsKey.hotKeySkipEnabled
+    case .reset: return SettingsKey.hotKeyResetEnabled
     }
   }
 }
 
 extension PomodoroTimer {
   /// Runs a global shortcut: start/pause toggles the timer (and continues past
-  /// a break screen waiting for the user); skip moves to the next session.
+  /// a break screen waiting for the user); skip moves to the next session;
+  /// reset stops the timer and starts the current session over, like Reset in
+  /// the popover and the menu bar item's menu.
   func perform(_ action: HotKeyAction) {
     switch action {
     case .startPause:
@@ -71,6 +87,8 @@ extension PomodoroTimer {
       }
     case .skip:
       skipSession()
+    case .reset:
+      stopTimer()
     }
   }
 }
@@ -107,12 +125,15 @@ struct HotKeyShortcut: Equatable {
   }
 
   /// "⌃⌥P", in the system's modifier order.
-  var displayString: String {
+  var displayString: String { displayString(bundle: .main) }
+
+  /// `displayString` with key names in the language of `bundle`.
+  func displayString(bundle: Bundle) -> String {
     let symbols: [(Int, String)] = [
       (controlKey, "⌃"), (optionKey, "⌥"), (shiftKey, "⇧"), (cmdKey, "⌘"),
     ]
     let prefix = symbols.compactMap { modifiers & UInt32($0.0) != 0 ? $0.1 : nil }.joined()
-    return prefix + Self.keyLabel(for: keyCode)
+    return prefix + Self.keyLabel(for: keyCode, bundle: bundle)
   }
 
   private static let keyLabels: [Int: String] = [
@@ -126,7 +147,7 @@ struct HotKeyShortcut: Equatable {
     kVK_ANSI_9: "9", kVK_ANSI_Minus: "-", kVK_ANSI_Equal: "=", kVK_ANSI_LeftBracket: "[",
     kVK_ANSI_RightBracket: "]", kVK_ANSI_Backslash: "\\", kVK_ANSI_Semicolon: ";",
     kVK_ANSI_Quote: "'", kVK_ANSI_Comma: ",", kVK_ANSI_Period: ".", kVK_ANSI_Slash: "/",
-    kVK_ANSI_Grave: "`", kVK_Return: "↩", kVK_Tab: "⇥", kVK_Space: "Space",
+    kVK_ANSI_Grave: "`", kVK_Return: "↩", kVK_Tab: "⇥",
     kVK_Delete: "⌫", kVK_ForwardDelete: "⌦", kVK_Escape: "⎋", kVK_LeftArrow: "←",
     kVK_RightArrow: "→", kVK_UpArrow: "↑", kVK_DownArrow: "↓", kVK_Home: "↖", kVK_End: "↘",
     kVK_PageUp: "⇞", kVK_PageDown: "⇟", kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3",
@@ -134,8 +155,16 @@ struct HotKeyShortcut: Equatable {
     kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
   ]
 
-  static func keyLabel(for keyCode: UInt32) -> String {
-    keyLabels[Int(keyCode)] ?? "#\(keyCode)"
+  /// Keys shown by name rather than a symbol; the name is looked up in
+  /// Localizable.strings ("Space" → "Dấu cách").
+  private static let namedKeys: [Int: String] = [kVK_Space: "Space"]
+
+  /// Label of a key in the app's language (`bundle` picks the language in tests).
+  static func keyLabel(for keyCode: UInt32, bundle: Bundle = .main) -> String {
+    if let name = namedKeys[Int(keyCode)] {
+      return bundle.localizedString(forKey: name, value: name, table: nil)
+    }
+    return keyLabels[Int(keyCode)] ?? "#\(keyCode)"
   }
 }
 
@@ -197,7 +226,7 @@ final class HotKeyManager: ObservableObject {
   }
 
   static func loadEnabled(for action: HotKeyAction, from defaults: UserDefaults) -> Bool {
-    defaults.object(forKey: action.enabledKey) as? Bool ?? true
+    defaults.object(forKey: action.enabledKey) as? Bool ?? action.isEnabledByDefault
   }
 
   func shortcut(for action: HotKeyAction) -> HotKeyShortcut {
@@ -205,7 +234,7 @@ final class HotKeyManager: ObservableObject {
   }
 
   func isEnabled(_ action: HotKeyAction) -> Bool {
-    enabled[action] ?? true
+    enabled[action] ?? action.isEnabledByDefault
   }
 
   /// Saves a new combination and applies it right away. Combinations without

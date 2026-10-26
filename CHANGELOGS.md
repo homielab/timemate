@@ -6,6 +6,13 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Alerts & Sound: choose **None** for a silent alarm, and a separate sound for
+  the end of a break (it follows the alarm sound until you pick one). Both pickers and
+  their preview buttons are named for VoiceOver.
+- A **Reset** keyboard shortcut (⌃⌥R, off by default; turn it on or record your own in
+  Settings → Keyboard Shortcuts) and a **Reset Timer** Shortcuts action ("Reset TimeMate").
+  Key names such as Space now show in the app's language.
+
 - Shortcuts actions: Start Timer, Pause Timer, Skip Session and Get Timer Status
   (returns the minutes left and names the session), e.g. to turn on a Focus mode when a
   session starts. Siri phrases such as "Start TimeMate" work too (English and Vietnamese).

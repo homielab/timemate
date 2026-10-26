@@ -4,3 +4,4 @@
 "Skip session in ${applicationName}" = "Bỏ qua phiên trong ${applicationName}";
 "How much time is left in ${applicationName}" = "${applicationName} còn bao nhiêu thời gian";
 "${applicationName} status" = "Trạng thái ${applicationName}";
+"Reset ${applicationName}" = "Đặt lại ${applicationName}";

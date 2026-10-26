@@ -26,6 +26,7 @@ final class HotKeyTests: XCTestCase {
   func testDefaultShortcutsAreControlOptionPAndS() {
     XCTAssertEqual(HotKeyAction.startPause.defaultShortcut.displayString, "⌃⌥P")
     XCTAssertEqual(HotKeyAction.skip.defaultShortcut.displayString, "⌃⌥S")
+    XCTAssertEqual(HotKeyAction.reset.defaultShortcut.displayString, "⌃⌥R")
     XCTAssertEqual(HotKeyAction.startPause.defaultShortcut.keyCode, UInt32(kVK_ANSI_P))
     XCTAssertEqual(
       HotKeyAction.skip.defaultShortcut.modifiers, UInt32(controlKey | optionKey))
@@ -53,12 +54,48 @@ final class HotKeyTests: XCTestCase {
 
   // MARK: - Persistence
 
-  func testMissingDefaultsGiveDefaultShortcutsEnabled() {
+  func testMissingDefaultsGiveDefaultShortcutsAndOnlyResetOff() {
     let manager = HotKeyManager(defaults: defaults)
     for action in HotKeyAction.allCases {
       XCTAssertEqual(manager.shortcut(for: action), action.defaultShortcut)
-      XCTAssertTrue(manager.isEnabled(action))
     }
+    XCTAssertTrue(manager.isEnabled(.startPause))
+    XCTAssertTrue(manager.isEnabled(.skip))
+    XCTAssertFalse(manager.isEnabled(.reset))
+  }
+
+  func testResetShortcutCanBeTurnedOnAndRecorded() {
+    let manager = HotKeyManager(defaults: defaults)
+    manager.setEnabled(true, for: .reset)
+    let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(cmdKey))
+    XCTAssertTrue(manager.setShortcut(shortcut, for: .reset))
+
+    let reloaded = HotKeyManager(defaults: defaults)
+    XCTAssertTrue(reloaded.isEnabled(.reset))
+    XCTAssertEqual(reloaded.shortcut(for: .reset), shortcut)
+    XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeyResetKeyCode), kVK_Space)
+  }
+
+  // MARK: - Key names
+
+  private func bundle(_ localization: String) throws -> Bundle {
+    let path = try XCTUnwrap(
+      Bundle(for: PomodoroTimer.self).path(forResource: localization, ofType: "lproj"))
+    return try XCTUnwrap(Bundle(path: path))
+  }
+
+  func testSpaceKeyIsNamedInTheAppLanguage() throws {
+    let space = UInt32(kVK_Space)
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: space, bundle: try bundle("en")), "Space")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: space, bundle: try bundle("vi")), "Dấu cách")
+    let shortcut = HotKeyShortcut(keyCode: space, modifiers: UInt32(controlKey | optionKey))
+    XCTAssertEqual(shortcut.displayString(bundle: try bundle("vi")), "⌃⌥Dấu cách")
+  }
+
+  func testSymbolKeysStayTheSameInEveryLanguage() throws {
+    XCTAssertEqual(
+      HotKeyShortcut.keyLabel(for: UInt32(kVK_Return), bundle: try bundle("vi")), "↩")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_ANSI_P), bundle: try bundle("vi")), "P")
   }
 
   func testShortcutIsSavedAsKeyCodeAndModifiersAndReloaded() {
@@ -140,6 +177,16 @@ final class HotKeyTests: XCTestCase {
     XCTAssertFalse(timer.isWaitingToContinue)
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertEqual(timer.state, .active)
+  }
+
+  func testResetStopsTheTimerAndRestartsTheSession() {
+    let timer = makeTimer()
+    timer.perform(.startPause)
+    timer.perform(.reset)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 3)
+    XCTAssertEqual(timer.progress, 1.0)
   }
 
   func testSkipMovesToNextSession() {

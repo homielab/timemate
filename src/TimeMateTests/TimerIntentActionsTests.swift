@@ -67,6 +67,26 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
   }
 
+  func testResetStopsTheTimerAndRestartsTheSession() {
+    TimerIntentActions.start(timer)
+    currentTime += 20
+    timer.handleTick()
+
+    TimerIntentActions.reset(timer)
+
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 125)
+  }
+
+  func testResetClearsAWaitingBreakScreen() {
+    timer.currentSessionType = .shortBreak
+    timer.isWaitingToContinue = true
+    TimerIntentActions.reset(timer)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.state, .idle)
+  }
+
   func testStartContinuesPastAFinishedBreak() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true

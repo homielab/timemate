@@ -180,3 +180,12 @@
 "Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Số pomodoro cần hoàn thành mỗi ngày. TimeMate báo một lần khi bạn đạt mục tiêu.";
 "%@, goal reached" = "%@, đạt mục tiêu";
 "Goal reached" = "Đạt mục tiêu";
+
+// Sounds, Reset shortcut and key names
+"None" = "Không có";
+"Break End Sound" = "Âm hết giờ nghỉ";
+"Preview Break End Sound" = "Nghe thử âm hết giờ nghỉ";
+"Plays when a break ends. Until you pick one, it is the same as the alarm sound." = "Phát khi hết giờ nghỉ. Khi chưa chọn, dùng giống âm báo.";
+"Reset Timer" = "Đặt lại hẹn giờ";
+"Stops the TimeMate timer and starts the current session over." = "Dừng hẹn giờ TimeMate và bắt đầu lại phiên hiện tại.";
+"Space" = "Dấu cách";
