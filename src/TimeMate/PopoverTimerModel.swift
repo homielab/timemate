@@ -15,6 +15,8 @@ final class PopoverTimerModel: ObservableObject {
   @Published private(set) var currentSessionType: SessionType
   @Published private(set) var focusSessionsCompleted: Int
   @Published private(set) var isBreakPostponed: Bool
+  /// A finished break waits on the break screen for "Continue Work".
+  @Published private(set) var isWaitingToContinue: Bool
 
   /// The timer itself, for actions and the session history (not observed).
   let timer: PomodoroTimer
@@ -27,6 +29,7 @@ final class PopoverTimerModel: ObservableObject {
     currentSessionType = timer.currentSessionType
     focusSessionsCompleted = timer.focusSessionsCompleted
     isBreakPostponed = timer.isBreakPostponed
+    isWaitingToContinue = timer.isWaitingToContinue
     countdown = PopoverCountdown(timer: timer)
 
     timer.$state.removeDuplicates()
@@ -41,11 +44,46 @@ final class PopoverTimerModel: ObservableObject {
     timer.$isBreakPostponed.removeDuplicates()
       .sink { [weak self] in self?.isBreakPostponed = $0 }
       .store(in: &cancellables)
+    timer.$isWaitingToContinue.removeDuplicates()
+      .sink { [weak self] in self?.isWaitingToContinue = $0 }
+      .store(in: &cancellables)
+  }
+
+  /// What the big button under the countdown does right now.
+  var mainAction: PopoverMainAction {
+    PopoverMainAction(state: state, isWaitingToContinue: isWaitingToContinue)
+  }
+
+  /// Runs the big button: a finished break waiting on the break screen moves
+  /// on to focus instead of running the break again.
+  func performMainAction() {
+    switch mainAction {
+    case .start, .resume: timer.startTimer()
+    case .pause: timer.pauseTimer()
+    case .continueWork: timer.continueWork()
+    }
   }
 
   /// Called when the popover opens or closes.
   func setPopoverVisible(_ visible: Bool) {
     countdown.setLive(visible)
+  }
+}
+
+/// The popover's main button: Start, Pause, Resume or Continue Work.
+enum PopoverMainAction: Equatable {
+  case start, pause, resume, continueWork
+
+  init(state: PomodoroState, isWaitingToContinue: Bool) {
+    if isWaitingToContinue {
+      self = .continueWork
+      return
+    }
+    switch state {
+    case .active: self = .pause
+    case .paused: self = .resume
+    case .idle: self = .start
+    }
   }
 }
 

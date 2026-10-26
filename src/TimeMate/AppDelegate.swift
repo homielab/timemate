@@ -375,10 +375,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    let action = SessionNotificationAction(rawValue: response.actionIdentifier)
+    let response = NotificationResponse(actionIdentifier: response.actionIdentifier)
     DispatchQueue.main.async { [weak self] in
-      if let action {
+      switch response {
+      case .timerAction(let action):
         self?.timer.handleNotificationAction(action)
+      case .openPopover:
+        if let self, !self.popover.isShown {
+          self.togglePopover()
+        }
+      case .ignore:
+        break
       }
       completionHandler()
     }

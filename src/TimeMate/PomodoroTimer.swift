@@ -132,6 +132,17 @@ class PomodoroTimer: ObservableObject {
     workspaceNotificationCenter.publisher(for: NSWorkspace.didWakeNotification)
       .sink { [weak self] _ in self?.handleDidWake() }
       .store(in: &cancellables)
+    // Settings → Durations writes to these defaults; an idle timer shows the
+    // new length right away instead of on the next Start.
+    NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: defaults)
+      .sink { [weak self] _ in
+        if Thread.isMainThread {
+          self?.handleDefaultsChange()
+        } else {
+          DispatchQueue.main.async { self?.handleDefaultsChange() }
+        }
+      }
+      .store(in: &cancellables)
     notificationCenter.publisher(for: .NSSystemClockDidChange)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.handleSystemClockChange() }
@@ -267,6 +278,16 @@ class PomodoroTimer: ObservableObject {
       startTicking()
     }
     saveSnapshot()
+  }
+
+  /// The defaults changed: an idle timer that isn't waiting on the break
+  /// screen picks up a new length for its session. Only the display changes;
+  /// nothing is recorded and a running or paused session keeps its length.
+  func handleDefaultsChange() {
+    guard state == .idle, !isWaitingToContinue,
+      durationFor(session: currentSessionType) != totalDuration
+    else { return }
+    resetForCurrentSession()
   }
 
   func pauseTimer() {

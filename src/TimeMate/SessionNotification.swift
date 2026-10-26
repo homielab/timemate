@@ -17,6 +17,26 @@ enum SessionNotificationAction: String, CaseIterable {
   }
 }
 
+/// What the app does when the user answers one of its notifications.
+enum NotificationResponse: Equatable {
+  /// A button on the "session complete" notification.
+  case timerAction(SessionNotificationAction)
+  /// The body of the banner was clicked: show the timer.
+  case openPopover
+  /// Dismissed, or an action the app doesn't know.
+  case ignore
+
+  init(actionIdentifier: String) {
+    if let action = SessionNotificationAction(rawValue: actionIdentifier) {
+      self = .timerAction(action)
+    } else if actionIdentifier == UNNotificationDefaultActionIdentifier {
+      self = .openPopover
+    } else {
+      self = .ignore
+    }
+  }
+}
+
 /// Builds the "session complete" notification and its category.
 enum SessionNotification {
   static let categoryIdentifier = "com.homielab.timemate.category.sessionComplete"

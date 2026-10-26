@@ -71,6 +71,26 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertNil(SessionNotificationAction(rawValue: UNNotificationDismissActionIdentifier))
   }
 
+  func testResponseMapsButtonsToTimerActions() {
+    XCTAssertEqual(
+      NotificationResponse(actionIdentifier: SessionNotificationAction.startNext.rawValue),
+      .timerAction(.startNext))
+    XCTAssertEqual(
+      NotificationResponse(actionIdentifier: SessionNotificationAction.skip.rawValue),
+      .timerAction(.skip))
+  }
+
+  func testClickingTheBannerBodyOpensThePopover() {
+    XCTAssertEqual(
+      NotificationResponse(actionIdentifier: UNNotificationDefaultActionIdentifier), .openPopover)
+  }
+
+  func testDismissAndUnknownResponsesAreIgnored() {
+    XCTAssertEqual(
+      NotificationResponse(actionIdentifier: UNNotificationDismissActionIdentifier), .ignore)
+    XCTAssertEqual(NotificationResponse(actionIdentifier: "something.else"), .ignore)
+  }
+
   // MARK: - Focus modes
 
   func testContentIsTimeSensitiveWhenBreakingThroughFocus() {

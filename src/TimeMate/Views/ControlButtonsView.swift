@@ -9,31 +9,26 @@ struct ControlButtonsView: View {
   private var timer: PomodoroTimer { model.timer }
 
   private var mainButtonIconName: String {
-    switch model.state {
-    case .active: return "pause.fill"
-    case .paused, .idle: return "play.fill"
+    switch model.mainAction {
+    case .pause: return "pause.fill"
+    case .start, .resume: return "play.fill"
+    case .continueWork: return "arrow.right"
     }
   }
 
   private var mainButtonColor: Color {
-    switch model.state {
-    case .active: return .orange
-    case .paused, .idle: return .green
+    switch model.mainAction {
+    case .pause: return .orange
+    case .start, .resume, .continueWork: return .green
     }
   }
 
   private var mainButtonAccessibilityLabel: LocalizedStringKey {
-    switch model.state {
-    case .active: return "Pause"
-    case .paused: return "Resume"
-    case .idle: return "Start"
-    }
-  }
-
-  private var mainButtonAction: () -> Void {
-    switch model.state {
-    case .active: return timer.pauseTimer
-    case .paused, .idle: return timer.startTimer
+    switch model.mainAction {
+    case .pause: return "Pause"
+    case .resume: return "Resume"
+    case .start: return "Start"
+    case .continueWork: return "Continue Work"
     }
   }
 
@@ -54,10 +49,11 @@ struct ControlButtonsView: View {
       .buttonStyle(.bordered).controlSize(.large).disabled(model.state == .idle).accessibilityLabel(
         "Reset")
 
-      Button(action: mainButtonAction) {
+      Button(action: model.performMainAction) {
         Image(systemName: mainButtonIconName)
       }
       .buttonStyle(.borderedProminent).tint(mainButtonColor).controlSize(.large)
+      .help(mainButtonAccessibilityLabel)
       .accessibilityLabel(mainButtonAccessibilityLabel)
 
       Button {

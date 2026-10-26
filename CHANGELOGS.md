@@ -72,6 +72,11 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- When a break has ended and waits on the break screen, the popover's main button now
+  reads "Continue Work" and starts the next focus session instead of running the break
+  again.
+- Changing a session length in Settings → Durations updates the idle timer right away
+  instead of on the next Start. Clicking a TimeMate notification opens the popover.
 - English statistics use singular and plural forms: "Today: 1 pomodoro" instead of
   "1 pomodoros" (also the week total, the change against the previous week and VoiceOver's
   "1 minute"). Vietnamese is unchanged.

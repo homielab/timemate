@@ -198,6 +198,76 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertEqual(timer.state, .active)
   }
 
+  // MARK: - Popover main button
+
+  func testPopoverMainButtonContinuesWorkAfterAWaitingBreak() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    let model = PopoverTimerModel(timer: timer)
+    XCTAssertEqual(model.mainAction, .continueWork)
+    model.performMainAction()
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 3)
+    XCTAssertEqual(model.mainAction, .pause)
+  }
+
+  func testPopoverMainButtonStartsPausesAndResumes() {
+    let model = PopoverTimerModel(timer: timer)
+    XCTAssertEqual(model.mainAction, .start)
+    model.performMainAction()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(model.mainAction, .pause)
+    model.performMainAction()
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(model.mainAction, .resume)
+    model.performMainAction()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+  }
+
+  // MARK: - Durations changed in Settings
+
+  func testIdleTimerShowsANewDurationRightAway() {
+    XCTAssertEqual(timer.secondsRemaining, 3)
+    defaults.set(50, forKey: SettingsKey.focusDuration)
+    XCTAssertEqual(timer.secondsRemaining, 50)
+    XCTAssertEqual(timer.progress, 1.0)
+    XCTAssertTrue(history.records.isEmpty)
+    timer.startTimer()
+    XCTAssertEqual(timer.secondsRemaining, 50)
+  }
+
+  func testOtherSessionDurationsDoNotTouchTheIdleTimer() {
+    defaults.set(9, forKey: SettingsKey.shortBreakDuration)
+    XCTAssertEqual(timer.secondsRemaining, 3)
+  }
+
+  func testRunningAndPausedSessionsKeepTheirLength() {
+    timer.startTimer()
+    defaults.set(50, forKey: SettingsKey.focusDuration)
+    XCTAssertEqual(timer.secondsRemaining, 3)
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    defaults.set(60, forKey: SettingsKey.focusDuration)
+    XCTAssertEqual(timer.secondsRemaining, 2)
+  }
+
+  func testWaitingBreakScreenKeepsItsStateWhenDurationsChange() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    defaults.set(7, forKey: SettingsKey.shortBreakDuration)
+    XCTAssertEqual(timer.timeRemaining, 0)
+    XCTAssertTrue(timer.isWaitingToContinue)
+  }
+
   // MARK: - Continue work
 
   func testContinueWorkStartsTimerOnceWhenAutoStartOff() {
