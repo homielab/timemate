@@ -117,8 +117,7 @@
 "Give your brain a hug." = "Ôm bộ não của bạn một cái.";
 "Silence is golden. Enjoy it." = "Im lặng là vàng. Tận hưởng đi.";
 
-// Session statistics
-"Today: %lld pomodoros · %lld min" = "Hôm nay: %lld pomodoro · %lld phút";
+// Session statistics (texts with a pomodoro or minute count are in Localizable.stringsdict)
 "Statistics" = "Thống kê";
 "Reset Statistics" = "Đặt lại Thống kê";
 "Reset Statistics?" = "Đặt lại Thống kê?";
@@ -165,10 +164,7 @@
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "7 ngày qua";
-"Week: %lld pomodoros · %lld min" = "Tuần: %lld pomodoro · %lld phút";
-"%1$@ pomodoros, %2$@ min vs the previous 7 days" = "%1$@ pomodoro, %2$@ phút so với 7 ngày trước đó";
 "%lld min" = "%lld phút";
-"%1$@: %2$lld pomodoros, %3$lld minutes" = "%1$@: %2$lld pomodoro, %3$lld phút";
 "Export CSV…" = "Xuất CSV…";
 "Break through Focus" = "Hiện cả khi đang Tập trung";
 "Show the session-complete notification even while a Focus mode or Do Not Disturb is on." = "Vẫn hiện thông báo hết phiên khi đang bật chế độ Tập trung hoặc Không làm phiền.";

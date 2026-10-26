@@ -46,6 +46,9 @@ All notable changes to TimeMate will be documented in this file.
   built and tested on macOS with Xcode 26 and checked with swift-format. New tests
   cover when the break screen shows, the double-Esc shortcut on it, and that the
   English and Vietnamese strings have the same keys and format specifiers.
+- Privacy manifest (`PrivacyInfo.xcprivacy`) as the App Store requires: no tracking, no
+  data collected; declares user defaults (CA92.1, the app's own settings) and the system
+  uptime used to time sessions (35F9.1). The Lottie package brings its own manifest.
 
 ### Changed
 
@@ -65,6 +68,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- English statistics use singular and plural forms: "Today: 1 pomodoro" instead of
+  "1 pomodoros" (also the week total, the change against the previous week and VoiceOver's
+  "1 minute"). Vietnamese is unchanged.
+- An unreadable statistics file no longer gets overwritten and lose its sessions: it is
+  kept as `session-history.corrupt-<date>.json` next to it (the latest one only) and
+  statistics start over.
 - A broken "Cycles" value in the preferences (below 1 or above 8) no longer crashes the
   popover; it is treated as 1–8.
 - "Today" in the popover and the Statistics week roll over at midnight and after a change of

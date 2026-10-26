@@ -1,0 +1,70 @@
+//  Created by homielab.com
+
+import XCTest
+
+@testable import TimeMate
+
+/// Singular and plural forms of the statistics texts (Localizable.stringsdict).
+final class StatisticsTextTests: XCTestCase {
+  private func bundle(_ localization: String) throws -> Bundle {
+    let path = try XCTUnwrap(
+      Bundle(for: PomodoroTimer.self).path(forResource: localization, ofType: "lproj"))
+    return try XCTUnwrap(Bundle(path: path))
+  }
+
+  func testEnglishTodayUsesSingularForOnePomodoro() throws {
+    let en = try bundle("en")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 0, minutes: 0, bundle: en), "Today: 0 pomodoros · 0 min")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 1, minutes: 25, bundle: en), "Today: 1 pomodoro · 25 min")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 2, minutes: 50, bundle: en), "Today: 2 pomodoros · 50 min")
+  }
+
+  func testEnglishWeekAndChange() throws {
+    let en = try bundle("en")
+    XCTAssertEqual(
+      StatisticsText.week(pomodoros: 1, minutes: 25, bundle: en), "Week: 1 pomodoro · 25 min")
+    XCTAssertEqual(
+      StatisticsText.week(pomodoros: 12, minutes: 300, bundle: en), "Week: 12 pomodoros · 300 min")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: 1, minutes: 25, bundle: en),
+      "+1 pomodoro, +25 min vs the previous 7 days")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: -1, minutes: -25, bundle: en),
+      "\u{2212}1 pomodoro, \u{2212}25 min vs the previous 7 days")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: -3, minutes: 0, bundle: en),
+      "\u{2212}3 pomodoros, 0 min vs the previous 7 days")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: 0, minutes: 0, bundle: en),
+      "0 pomodoros, 0 min vs the previous 7 days")
+  }
+
+  func testEnglishSpokenDay() throws {
+    let en = try bundle("en")
+    XCTAssertEqual(
+      StatisticsText.spokenDay("Monday, October 20", pomodoros: 1, minutes: 1, bundle: en),
+      "Monday, October 20: 1 pomodoro, 1 minute")
+    XCTAssertEqual(
+      StatisticsText.spokenDay("Monday, October 20", pomodoros: 2, minutes: 50, bundle: en),
+      "Monday, October 20: 2 pomodoros, 50 minutes")
+  }
+
+  func testVietnameseKeepsOneForm() throws {
+    let vi = try bundle("vi")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 1, minutes: 25, bundle: vi), "Hôm nay: 1 pomodoro · 25 phút")
+    XCTAssertEqual(
+      StatisticsText.today(pomodoros: 3, minutes: 75, bundle: vi), "Hôm nay: 3 pomodoro · 75 phút")
+    XCTAssertEqual(
+      StatisticsText.week(pomodoros: 2, minutes: 50, bundle: vi), "Tuần: 2 pomodoro · 50 phút")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: 2, minutes: -20, bundle: vi),
+      "+2 pomodoro, \u{2212}20 phút so với 7 ngày trước đó")
+    XCTAssertEqual(
+      StatisticsText.spokenDay("Thứ Hai", pomodoros: 1, minutes: 1, bundle: vi),
+      "Thứ Hai: 1 pomodoro, 1 phút")
+  }
+}

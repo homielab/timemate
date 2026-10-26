@@ -2,6 +2,7 @@
 
 import ServiceManagement
 import SwiftUI
+import os
 
 struct SystemSection: View {
   @EnvironmentObject var appDelegate: AppDelegate
@@ -59,7 +60,8 @@ struct SystemSection: View {
         try SMAppService.mainApp.unregister()
       }
     } catch {
-      print("Failed to update Start at Login setting: \(error)")
+      Logger.app.error(
+        "Could not update Start at Login: \(error.localizedDescription, privacy: .public)")
     }
     syncStartAtLoginStatus()
   }

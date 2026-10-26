@@ -2,6 +2,7 @@
 
 import Foundation
 import SwiftUI
+import os
 
 extension Int {
   func toMinuteSecondString() -> String {
@@ -55,13 +56,12 @@ func restartApp() {
 }
 
 func resetAllSettings() {
-  print("Resetting all user settings...")
   if let bundleID = Bundle.main.bundleIdentifier {
     UserDefaults.standard.removePersistentDomain(forName: bundleID)
-    print("All settings have been reset. Restarting app.")
+    Logger.app.notice("All settings have been reset, restarting")
     restartApp()
   } else {
-    print("Could not find bundle identifier to reset settings.")
+    Logger.app.error("Could not reset settings: no bundle identifier")
   }
 }
 

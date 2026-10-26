@@ -45,6 +45,89 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  // MARK: - Plurals (Localizable.stringsdict)
+
+  private func pluralRules(_ localization: String) throws -> [String: [String: Any]] {
+    let bundle = Bundle(for: PomodoroTimer.self)
+    let path = try XCTUnwrap(
+      bundle.path(
+        forResource: "Localizable", ofType: "stringsdict", inDirectory: nil,
+        forLocalization: localization),
+      "\(localization).lproj/Localizable.stringsdict is missing")
+    return try XCTUnwrap(NSDictionary(contentsOfFile: path) as? [String: [String: Any]])
+  }
+
+  func testPluralRulesExistInBothLanguages() throws {
+    let english = try pluralRules("en")
+    let vietnamese = try pluralRules("vi")
+    XCTAssertFalse(english.isEmpty)
+    XCTAssertEqual(Set(english.keys), Set(vietnamese.keys))
+  }
+
+  func testPluralRulesUseTheSameArguments() throws {
+    let english = try pluralRules("en")
+    let vietnamese = try pluralRules("vi")
+    for (key, rule) in english {
+      let translation = try XCTUnwrap(vietnamese[key], "missing in vi.lproj: \(key)")
+      let format = try XCTUnwrap(rule["NSStringLocalizedFormatKey"] as? String, key)
+      let translatedFormat = try XCTUnwrap(
+        translation["NSStringLocalizedFormatKey"] as? String, key)
+      XCTAssertEqual(
+        Self.formatSpecifiers(in: translatedFormat), Self.formatSpecifiers(in: format),
+        "format specifiers differ for \"\(key)\"")
+      XCTAssertEqual(
+        Set(Self.pluralVariables(in: translatedFormat)), Set(Self.pluralVariables(in: format)),
+        "plural variables differ for \"\(key)\"")
+
+      for (localization, entry) in [("en", rule), ("vi", translation)] {
+        for name in Self.pluralVariables(in: entry["NSStringLocalizedFormatKey"] as? String ?? "") {
+          let variable = try XCTUnwrap(
+            entry[name] as? [String: String], "\(localization): no rule for \(name) in \(key)")
+          XCTAssertEqual(variable["NSStringFormatSpecTypeKey"], "NSStringPluralRuleType")
+          let valueType = try XCTUnwrap(variable["NSStringFormatValueTypeKey"], key)
+          XCTAssertNotNil(variable["other"], "\(localization): no 'other' form in \(key)")
+          for category in ["zero", "one", "two", "few", "many", "other"] {
+            guard let form = variable[category] else { continue }
+            let specifiers = Self.formatSpecifiers(in: form)
+            XCTAssertTrue(
+              specifiers.isEmpty || specifiers == [valueType],
+              "\(localization): '\(category)' of \(name) in \(key) reads \(specifiers)")
+          }
+        }
+      }
+      // Vietnamese has no plural forms: one "other" form says it all.
+      for name in Self.pluralVariables(in: translatedFormat) {
+        let variable = try XCTUnwrap(translation[name] as? [String: String])
+        XCTAssertNil(variable["one"], "vi: unneeded 'one' form of \(name) in \(key)")
+      }
+    }
+  }
+
+  func testPluralKeysAreNotAlsoPlainStrings() throws {
+    for localization in ["en", "vi"] {
+      let plain = try strings("Localizable", localization)
+      let plurals = try pluralRules(localization)
+      XCTAssertEqual(
+        Set(plain.keys).intersection(plurals.keys).sorted(), [],
+        "\(localization): keep each key in one file")
+    }
+  }
+
+  /// Names of `%#@name@` plural variables in a format.
+  static func pluralVariables(in format: String) -> [String] {
+    let regex = try! NSRegularExpression(pattern: #"%(?:\d+\$)?#@(\w+)@"#)
+    let range = NSRange(format.startIndex..., in: format)
+    return regex.matches(in: format, range: range).compactMap {
+      Range($0.range(at: 1), in: format).map { String(format[$0]) }
+    }
+  }
+
+  func testPluralVariableParsing() {
+    XCTAssertEqual(
+      Self.pluralVariables(in: "%1$@: %2$#@pomodoros@, %3$#@minutes@"), ["pomodoros", "minutes"])
+    XCTAssertEqual(Self.formatSpecifiers(in: "Today: %1$#@pomodoros@ · %2$lld min"), ["@", "lld"])
+  }
+
   func testFormatSpecifierParsing() {
     XCTAssertEqual(Self.formatSpecifiers(in: "Cycle %d / %d"), ["d", "d"])
     XCTAssertEqual(Self.formatSpecifiers(in: "%@ · %lld min · 100%%"), ["@", "lld"])

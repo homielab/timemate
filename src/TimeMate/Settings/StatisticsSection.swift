@@ -56,22 +56,14 @@ private struct WeekStatisticsView: View {
 
       Divider().padding(.vertical, 2)
 
-      Text(
-        String(
-          format: NSLocalizedString(
-            "Week: %lld pomodoros · %lld min", comment: "Totals of the last 7 days"),
-          totals.pomodoros, totals.focusMinutes)
-      )
-      .font(.callout.weight(.semibold))
-      .monospacedDigit()
+      Text(StatisticsText.week(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
+        .font(.callout.weight(.semibold))
+        .monospacedDigit()
 
       Text(
-        String(
-          format: NSLocalizedString(
-            "%1$@ pomodoros, %2$@ min vs the previous 7 days",
-            comment: "Change against the 7 days before, e.g. +3 / −20"),
-          SessionStatistics.signedChange(totals.pomodoros - previous.pomodoros),
-          SessionStatistics.signedChange(totals.focusMinutes - previous.focusMinutes))
+        StatisticsText.change(
+          pomodoros: totals.pomodoros - previous.pomodoros,
+          minutes: totals.focusMinutes - previous.focusMinutes)
       )
       .font(.caption)
       .foregroundColor(.secondary)
@@ -98,7 +90,7 @@ private struct DayRow: View {
       }
       .frame(height: 8)
 
-      Text("\(day.pomodoros)")
+      Text(verbatim: "\(day.pomodoros)")
         .frame(width: 24, alignment: .trailing)
       Text(
         String(
@@ -113,12 +105,9 @@ private struct DayRow: View {
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
       Text(
-        String(
-          format: NSLocalizedString(
-            "%1$@: %2$lld pomodoros, %3$lld minutes",
-            comment: "VoiceOver: one day of the weekly statistics"),
-          StatisticsFormat.spokenDay(day.date, calendar: calendar), day.pomodoros,
-          day.focusMinutes)))
+        StatisticsText.spokenDay(
+          StatisticsFormat.spokenDay(day.date, calendar: calendar), pomodoros: day.pomodoros,
+          minutes: day.focusMinutes)))
   }
 }
 

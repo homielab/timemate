@@ -22,7 +22,7 @@ struct DurationsSection: View {
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
-        Text("\(longBreakInterval)")
+        Text(verbatim: "\(longBreakInterval)")
           .monospacedDigit()
           .foregroundColor(.secondary)
           .frame(width: 52, alignment: .trailing)

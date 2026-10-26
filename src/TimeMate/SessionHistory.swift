@@ -2,6 +2,7 @@
 
 import Combine
 import Foundation
+import os
 
 /// Persistent log of completed Pomodoro sessions, stored as JSON in the app's
 /// Application Support folder and kept for `retentionDays` days.
@@ -64,7 +65,7 @@ final class SessionHistory: ObservableObject {
     self.fileURL = fileURL
     self.now = now
     self.calendar = calendar
-    records = trimmed(Self.load(from: fileURL))
+    records = trimmed(Self.load(from: fileURL, now: now()))
 
     // Views of today's or this week's totals redraw for the new day.
     for name in Self.dayChangeNotifications {
@@ -142,10 +143,57 @@ final class SessionHistory: ObservableObject {
     return decoder
   }
 
-  /// A missing or unreadable file starts an empty history.
-  private static func load(from url: URL?) -> [Record] {
-    guard let url, let data = try? Data(contentsOf: url) else { return [] }
-    return (try? makeDecoder().decode([Record].self, from: data)) ?? []
+  /// A missing or empty file starts an empty history. A file that can't be
+  /// read is first moved aside (see `backUpUnreadableFile`), so the next save
+  /// doesn't overwrite the sessions it may still hold.
+  private static func load(from url: URL?, now: Date) -> [Record] {
+    guard let url, FileManager.default.fileExists(atPath: url.path) else { return [] }
+    do {
+      let data = try Data(contentsOf: url)
+      if data.isEmpty { return [] }
+      return try makeDecoder().decode([Record].self, from: data)
+    } catch {
+      Logger.history.error(
+        "Could not read the session history: \(error.localizedDescription, privacy: .public)")
+      backUpUnreadableFile(at: url, now: now)
+      return []
+    }
+  }
+
+  /// `session-history.corrupt-<yyyyMMdd-HHmmss>.json` next to the history file.
+  static func corruptBackupName(for date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.dateFormat = "yyyyMMdd-HHmmss"
+    return "session-history.corrupt-\(formatter.string(from: date)).json"
+  }
+
+  /// The backups of unreadable history files in `folder` (at most one is kept).
+  static func corruptBackups(in folder: URL, fileManager: FileManager = .default) -> [URL] {
+    let names = (try? fileManager.contentsOfDirectory(atPath: folder.path)) ?? []
+    return names.filter { $0.hasPrefix("session-history.corrupt-") && $0.hasSuffix(".json") }
+      .sorted()
+      .map { folder.appendingPathComponent($0) }
+  }
+
+  /// Renames the unreadable file to `corruptBackupName(for: now)`, replacing an
+  /// older backup so only the latest one is kept.
+  private static func backUpUnreadableFile(at url: URL, now: Date) {
+    let fileManager = FileManager.default
+    let folder = url.deletingLastPathComponent()
+    for old in corruptBackups(in: folder, fileManager: fileManager) {
+      try? fileManager.removeItem(at: old)
+    }
+    let backup = folder.appendingPathComponent(corruptBackupName(for: now))
+    do {
+      try fileManager.moveItem(at: url, to: backup)
+      Logger.history.notice(
+        "Moved the unreadable session history to \(backup.lastPathComponent, privacy: .public)")
+    } catch {
+      Logger.history.error(
+        "Could not back up the session history: \(error.localizedDescription, privacy: .public)")
+    }
   }
 
   private func save() {
@@ -156,9 +204,8 @@ final class SessionHistory: ObservableObject {
       let data = try Self.makeEncoder().encode(records)
       try data.write(to: fileURL, options: .atomic)
     } catch {
-      #if DEBUG
-        print("TimeMate: could not save session history: \(error)")
-      #endif
+      Logger.history.error(
+        "Could not save the session history: \(error.localizedDescription, privacy: .public)")
     }
   }
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>%1$@ pomodoros, %2$@ min vs the previous 7 days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$@ %3$#@pomodoros@, %2$@ phút so với 7 ngày trước đó</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>pomodoro</string>
+		</dict>
+	</dict>
+	<key>%1$@: %2$lld pomodoros, %3$lld minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$@: %2$#@pomodoros@, %3$#@minutes@</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld phút</string>
+		</dict>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+	<key>Today: %lld pomodoros · %lld min</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Hôm nay: %1$#@pomodoros@ · %2$lld phút</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+	<key>Week: %lld pomodoros · %lld min</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Tuần: %1$#@pomodoros@ · %2$lld phút</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

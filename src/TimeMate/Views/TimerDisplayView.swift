@@ -94,15 +94,10 @@ private struct TodayStatsView: View {
 
   var body: some View {
     let totals = history.todayTotals()
-    Text(
-      String(
-        format: NSLocalizedString(
-          "Today: %lld pomodoros · %lld min", comment: "Completed focus sessions and minutes today"),
-        totals.pomodoros, totals.focusMinutes)
-    )
-    .font(.caption)
-    .foregroundColor(.secondary)
-    .monospacedDigit()
+    Text(StatisticsText.today(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
+      .font(.caption)
+      .foregroundColor(.secondary)
+      .monospacedDigit()
   }
 }
 

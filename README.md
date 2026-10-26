@@ -31,7 +31,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Subtle Notifications**: Receive gentle alerts when sessions complete without disruptive alarms. The banner shows even while TimeMate is in front, plays only your chosen alarm sound, and has **Start Next** / **Skip** buttons. It is time-sensitive, so it still shows while a Focus mode or Do Not Disturb is on; turn off "Break through Focus" in Settings → Alerts & Sound to let Focus hide it.
 - **VoiceOver**: The duration and cycle steppers are named ("Focus minutes", "Cycles"…), the cycle dots read as "2 of 4 focus sessions done" and the progress ring says how much of the session is left.
 - **Full-Screen Break Overlay**: Optional immersive break screen that encourages taking genuine rest. The animation runs only on the screen you work on, stays still when Reduce Motion is on, and VoiceOver announces the break and reads its countdown. Need more rest? **+5 min** lengthens the break; not a good moment? **Postpone** it by 1, 3 or 5 minutes and it comes back on its own. The Skip button appears after a delay you set in Settings → Alerts & Sound (0–30 s, default 5 s).
-- **Statistics**: See how many pomodoros and focus minutes you completed today. Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day, read day by day by VoiceOver), the week's total and the change against the 7 days before; **Export CSV…** saves every kept day as `date,pomodoros,minutes`. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics.
+- **Statistics**: See how many pomodoros and focus minutes you completed today. Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day, read day by day by VoiceOver), the week's total and the change against the 7 days before; **Export CSV…** saves every kept day as `date,pomodoros,minutes`. Completed sessions are kept for 90 days in a local JSON file (`~/Library/Containers/<bundle id>/Data/Library/Application Support/<bundle id>/session-history.json`) and can be cleared from Settings → Statistics. If that file can't be read, it is kept as `session-history.corrupt-<date>.json` (the latest one only) instead of being overwritten.
 - **Global Keyboard Shortcuts**: Start/pause with ⌃⌥P and skip the current session with ⌃⌥S from any app. Record your own combination (it must include ⌃ or ⌘) or turn each shortcut off in Settings → Keyboard Shortcuts. No Accessibility permission needed.
 - **Shortcuts & Siri**: Automate TimeMate with the Shortcuts app — **Start Timer**, **Pause Timer**, **Skip Session** and **Get Timer Status** (returns the minutes left and says which session is running, e.g. "Focus, running, 12 min left"). Use them to turn on a Focus mode when a session starts, or ask Siri "Start TimeMate".
 - **Survives Quit & Updates**: Quit, update or restart your Mac and the session picks up where it was — a running timer keeps counting from when it should end, a paused one stays paused, and the pomodoro count is kept. A session that ended while TimeMate was closed still counts in your statistics.
@@ -101,6 +101,9 @@ same `xcodebuild` command as in [Running the Tests](#running-the-tests), signed 
 (`CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO`) because CI has no Apple Development
 certificate. The tests include a check that `en.lproj` and `vi.lproj` have the same strings with the
 same format specifiers (`%@`, `%d`, `%lld`…), so a new string must be added to both languages.
+Texts with a count that needs singular and plural forms ("1 pomodoro" / "2 pomodoros") go in
+`Localizable.stringsdict` of both languages instead of `Localizable.strings` (Vietnamese only
+needs the `other` form); the same check covers them.
 
 ### Project Layout
 
@@ -120,6 +123,9 @@ Sources are in `src/TimeMate/`:
 - `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared
   `PomodoroTimer.shared` through `TimerIntentActions` (unit-tested). Vietnamese phrases are in
   `vi.lproj/AppShortcuts.strings`.
+- `PrivacyInfo.xcprivacy` — the App Store privacy manifest (no tracking or collected data;
+  required-reason APIs: user defaults, system uptime). Declare any new required-reason API there.
+- `Log.swift` — `os.Logger` categories (`app`, `history`); use them instead of `print`.
 
 ## Feedback & Contributions
 

@@ -72,13 +72,57 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(json[0]["completed"] as? Bool, true)
   }
 
-  func testMissingOrCorruptFileStartsEmpty() throws {
+  func testMissingOrEmptyFileStartsEmpty() throws {
     XCTAssertEqual(makeHistory().records, [])
 
     try FileManager.default.createDirectory(
       at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-    try Data("not json".utf8).write(to: fileURL)
+    try Data().write(to: fileURL)
     XCTAssertEqual(makeHistory().records, [])
+    XCTAssertEqual(SessionHistory.corruptBackups(in: fileURL.deletingLastPathComponent()), [])
+  }
+
+  func testCorruptFileIsMovedAsideInsteadOfOverwritten() throws {
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let garbage = Data("not json {".utf8)
+    try garbage.write(to: fileURL)
+
+    let history = makeHistory()
+    XCTAssertEqual(history.records, [])
+    XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    let backups = SessionHistory.corruptBackups(in: folder)
+    XCTAssertEqual(
+      backups.map(\.lastPathComponent), [SessionHistory.corruptBackupName(for: currentTime)])
+    XCTAssertEqual(try Data(contentsOf: backups[0]), garbage)
+
+    // New sessions go to a fresh file; the backup is left alone.
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
+    XCTAssertEqual(makeHistory().records.count, 1)
+    XCTAssertEqual(try Data(contentsOf: backups[0]), garbage)
+  }
+
+  func testOnlyTheLatestCorruptBackupIsKept() throws {
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data("first".utf8).write(to: fileURL)
+    _ = makeHistory()
+
+    currentTime = currentTime.addingTimeInterval(3600)
+    try Data("second".utf8).write(to: fileURL)
+    _ = makeHistory()
+
+    let backups = SessionHistory.corruptBackups(in: folder)
+    XCTAssertEqual(
+      backups.map(\.lastPathComponent), [SessionHistory.corruptBackupName(for: currentTime)])
+    XCTAssertEqual(try Data(contentsOf: backups[0]), Data("second".utf8))
+  }
+
+  func testCorruptBackupNameUsesTheDate() {
+    let name = SessionHistory.corruptBackupName(for: currentTime)
+    XCTAssertTrue(name.hasPrefix("session-history.corrupt-2026"), name)
+    XCTAssertTrue(name.hasSuffix(".json"), name)
+    XCTAssertEqual(name.count, "session-history.corrupt-yyyyMMdd-HHmmss.json".count)
   }
 
   func testInMemoryHistoryWritesNothing() {

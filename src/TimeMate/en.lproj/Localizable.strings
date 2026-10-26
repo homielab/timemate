@@ -117,8 +117,7 @@
 "Give your brain a hug." = "Give your brain a hug.";
 "Silence is golden. Enjoy it." = "Silence is golden. Enjoy it.";
 
-// Session statistics
-"Today: %lld pomodoros · %lld min" = "Today: %lld pomodoros · %lld min";
+// Session statistics (texts with a pomodoro or minute count are in Localizable.stringsdict)
 "Statistics" = "Statistics";
 "Reset Statistics" = "Reset Statistics";
 "Reset Statistics?" = "Reset Statistics?";
@@ -165,10 +164,7 @@
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "Last 7 days";
-"Week: %lld pomodoros · %lld min" = "Week: %lld pomodoros · %lld min";
-"%1$@ pomodoros, %2$@ min vs the previous 7 days" = "%1$@ pomodoros, %2$@ min vs the previous 7 days";
 "%lld min" = "%lld min";
-"%1$@: %2$lld pomodoros, %3$lld minutes" = "%1$@: %2$lld pomodoros, %3$lld minutes";
 "Export CSV…" = "Export CSV…";
 "Break through Focus" = "Break through Focus";
 "Show the session-complete notification even while a Focus mode or Do Not Disturb is on." = "Show the session-complete notification even while a Focus mode or Do Not Disturb is on.";
