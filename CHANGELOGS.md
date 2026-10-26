@@ -75,6 +75,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- Under the hood: the session order, break extend/postpone and restore-after-relaunch rules moved
+  out of the timer into small tested pieces; behaviour is unchanged.
 - TimeMate no longer opens its popover and takes focus when it starts at login; it still
   opens on the first launch and when you open the app yourself. No Dock icon flashes at launch.
 - Uses less energy: the countdown ticks every second only while you can see it (time in the

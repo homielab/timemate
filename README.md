@@ -114,6 +114,9 @@ Sources are in `src/TimeMate/`:
 
 - `PomodoroTimer.swift` — the timer state machine; `TimerSnapshot.swift` — the session it saves in
   user defaults to restore after a relaunch; `SettingsKey.swift` — all user-defaults keys.
+  The rules that need no timer are pure and unit-tested: `SessionSequence.swift` (next session,
+  long-break count, what happens when a session ends, "+5 min" and "Postpone") and
+  `TimerRestorePlan.swift` (what to do with the saved session at launch).
 - `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
   `LaunchBehavior.swift` decides whether the popover opens at launch (not at login);
   `TickMode.swift` decides whether the timer ticks every second or only at the session's end.

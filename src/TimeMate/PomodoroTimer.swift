@@ -6,16 +6,6 @@ import Combine
 import SwiftUI
 import UserNotifications
 
-enum SessionType: String, CaseIterable, Codable {
-  case focus = "Focus"
-  case shortBreak = "Short Break"
-  case longBreak = "Long Break"
-}
-
-enum PomodoroState: String, Codable {
-  case idle, active, paused
-}
-
 class PomodoroTimer: ObservableObject {
   // MARK: - Published Properties for UI
   @Published var timeRemaining: Int = 0
@@ -31,7 +21,7 @@ class PomodoroTimer: ObservableObject {
   // MARK: - Settings
   // Settings are read live from the injected defaults on every use, so changes
   // made in the settings UI apply to the running timer just like @AppStorage did.
-  private let defaults: UserDefaults
+  let defaults: UserDefaults
   /// Source of wall-clock time; tests inject a fixed clock.
   private let now: () -> Date
   /// Seconds on a clock that keeps running during sleep and ignores changes to
@@ -40,40 +30,9 @@ class PomodoroTimer: ObservableObject {
   /// Log of completed sessions behind the "Today" statistics.
   let history: SessionHistory
   /// Hands a "session complete" notification to the system; tests capture it.
-  private let postNotification: (UNNotificationRequest) -> Void
+  let postNotification: (UNNotificationRequest) -> Void
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
-
-  private var focusDurationMinutes: Int {
-    defaults.object(forKey: SettingsKey.focusDuration) as? Int ?? 25
-  }
-  private var shortBreakDurationMinutes: Int {
-    defaults.object(forKey: SettingsKey.shortBreakDuration) as? Int ?? 5
-  }
-  private var longBreakDurationMinutes: Int {
-    defaults.object(forKey: SettingsKey.longBreakDuration) as? Int ?? 15
-  }
-  private var longBreakInterval: Int {
-    SessionCycle.sanitizedInterval(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int)
-  }
-  private var autoStartNextSession: Bool {
-    defaults.object(forKey: SettingsKey.autoStartNextSession) as? Bool ?? true
-  }
-  private var keepBreakScreenOpen: Bool {
-    defaults.object(forKey: SettingsKey.keepBreakScreenOpen) as? Bool ?? true
-  }
-  private var alarmVolume: Double {
-    defaults.object(forKey: SettingsKey.alarmVolume) as? Double ?? 1.0
-  }
-  private var notificationsEnabled: Bool {
-    defaults.object(forKey: SettingsKey.notificationsEnabled) as? Bool ?? true
-  }
-  private var breakThroughFocus: Bool {
-    defaults.object(forKey: SettingsKey.breakThroughFocus) as? Bool ?? true
-  }
-  private var dailyGoal: Int {
-    DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)
-  }
 
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
@@ -249,12 +208,13 @@ class PomodoroTimer: ObservableObject {
       sendNotification()
       sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
-      if keepBreakScreenOpen,
-        currentSessionType == .shortBreak || currentSessionType == .longBreak
+      switch SessionSequence.completion(
+        of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)
       {
+      case .waitOnBreakScreen:
         isWaitingToContinue = true
         state = .idle
-      } else {
+      case .advance:
         advanceToNextSession()
       }
       saveSnapshot()
@@ -272,16 +232,6 @@ class PomodoroTimer: ObservableObject {
     handleTick()
     timer?.cancel()
   }
-
-  /// The display went to sleep or the screen was locked. Only acts when
-  /// `pauseOnSleep` is on; the session stays paused until the user resumes it.
-  func handleScreenInactive() {
-    guard defaults.bool(forKey: SettingsKey.pauseOnSleep) else { return }
-    pauseTimer()
-  }
-
-  /// Posted by the system to the distributed center when the screen locks.
-  static let screenLockedNotificationName = "com.apple.screenIsLocked"
 
   /// The Mac woke up: catch up with the wall clock right away. A session whose
   /// end passed during sleep finishes once, then ticking resumes if active.
@@ -369,17 +319,12 @@ class PomodoroTimer: ObservableObject {
   /// Moves on to the session after the current one and starts it when
   /// `start` (by default the "Auto-start next session" setting) is on.
   private func advanceToNextSession(start: Bool? = nil) {
-    if currentSessionType == .focus {
-      focusSessionsCompleted += 1
-      if focusSessionsCompleted >= longBreakInterval {
-        currentSessionType = .longBreak
-        focusSessionsCompleted = 0
-      } else {
-        currentSessionType = .shortBreak
-      }
-    } else {
-      currentSessionType = .focus
-    }
+    let next = SessionSequence.next(
+      after: .init(
+        sessionType: currentSessionType, focusSessionsCompleted: focusSessionsCompleted),
+      interval: longBreakInterval)
+    currentSessionType = next.sessionType
+    focusSessionsCompleted = next.focusSessionsCompleted
     resetForCurrentSession()
     if start ?? autoStartNextSession {
       startTimer()
@@ -390,64 +335,50 @@ class PomodoroTimer: ObservableObject {
 
   /// Whether the current session is a break.
   var isBreak: Bool {
-    currentSessionType == .shortBreak || currentSessionType == .longBreak
+    SessionSequence.isBreak(currentSessionType)
   }
 
   /// Adds `minutes` to the running break ("+5 min" on the break screen). A
   /// break that already ended and waits on the break screen starts again for
   /// `minutes`. Does nothing during focus or a postponed break.
   func extend(by minutes: Int) {
-    guard minutes > 0, isBreak, !isBreakPostponed else { return }
-    defer { saveSnapshot() }
-    let extra = Self.seconds(forMinutes: minutes)
-    if isWaitingToContinue {
-      isWaitingToContinue = false
-      totalDuration = extra
-      timeRemaining = extra
-      progress = 1.0
-      state = .active
-      endDate = now().addingTimeInterval(TimeInterval(extra))
-      startTicking()
-      return
-    }
-    switch state {
-    case .active:
-      guard let endDate else { return }
-      let newEndDate = endDate.addingTimeInterval(TimeInterval(extra))
-      self.endDate = newEndDate
-      totalDuration += extra
-      timeRemaining = max(0, Int(newEndDate.timeIntervalSince(now()).rounded()))
-    case .paused:
-      totalDuration += extra
-      timeRemaining += extra
-    case .idle:
-      return
-    }
-    progress = Double(timeRemaining) / Double(max(1, totalDuration))
+    guard
+      let adjustment = SessionSequence.extend(
+        countdown, by: Self.seconds(forMinutes: minutes), now: now())
+    else { return }
+    let wasWaiting = isWaitingToContinue
+    isWaitingToContinue = false
+    apply(adjustment)
+    if wasWaiting { startTicking() }
+    saveSnapshot()
   }
 
   /// Puts off the running break by `minutes`: the break screen goes away and
   /// the break starts again, at its full length, once they have passed.
   func postponeBreak(minutes: Int) {
-    guard minutes > 0, isBreak, state == .active, !isBreakPostponed else { return }
-    defer { saveSnapshot() }
-    let delay = Self.seconds(forMinutes: minutes)
+    guard
+      let adjustment = SessionSequence.postpone(
+        countdown, delay: Self.seconds(forMinutes: minutes), now: now())
+    else { return }
     isBreakPostponed = true
-    totalDuration = delay
-    timeRemaining = delay
-    progress = 1.0
-    endDate = now().addingTimeInterval(TimeInterval(delay))
+    apply(adjustment)
     startTicking()
+    saveSnapshot()
   }
 
-  /// Seconds in `minutes` of session time. Debug builds treat minutes as
-  /// seconds so sessions can be tried out quickly.
-  static func seconds(forMinutes minutes: Int) -> Int {
-    #if DEBUG
-      return minutes
-    #else
-      return minutes * 60
-    #endif
+  private var countdown: SessionSequence.Countdown {
+    SessionSequence.Countdown(
+      sessionType: currentSessionType, state: state, totalDuration: totalDuration,
+      timeRemaining: timeRemaining, endDate: endDate, isBreakPostponed: isBreakPostponed,
+      isWaitingToContinue: isWaitingToContinue)
+  }
+
+  private func apply(_ adjustment: SessionSequence.Adjustment) {
+    state = adjustment.state
+    totalDuration = adjustment.totalDuration
+    timeRemaining = adjustment.timeRemaining
+    endDate = adjustment.endDate
+    progress = adjustment.progress
   }
 
   // MARK: - Saved state
@@ -472,42 +403,35 @@ class PomodoroTimer: ObservableObject {
     currentSessionType = snapshot.sessionType
     focusSessionsCompleted = snapshot.focusSessionsCompleted
     resetForCurrentSession()
-    let launchTime = now()
 
-    switch snapshot.state {
+    switch TimerRestorePlan.make(
+      from: snapshot, now: now(), autoStartNextSession: autoStartNextSession,
+      keepBreakScreenOpen: keepBreakScreenOpen)
+    {
     case .idle:
-      if snapshot.isWaitingToContinue {
-        advanceToNextSession(start: false)
-      }
-    case .paused:
-      isBreakPostponed = snapshot.isBreakPostponed
-      totalDuration = snapshot.totalDuration
-      timeRemaining = min(snapshot.remaining, totalDuration)
+      break
+    case .advanceFromWaitingBreak:
+      advanceToNextSession(start: false)
+    case .paused(let remaining, let total, let postponed):
+      isBreakPostponed = postponed
+      totalDuration = total
+      timeRemaining = remaining
       progress = Double(timeRemaining) / Double(max(1, totalDuration))
       state = .paused
-    case .active:
-      guard var savedEndDate = snapshot.endDate else { return }
-      if savedEndDate > launchTime {
-        isBreakPostponed = snapshot.isBreakPostponed
-        totalDuration = snapshot.totalDuration
-        // A clock set back while the app was closed cannot stretch the session.
-        let latestEnd = launchTime.addingTimeInterval(TimeInterval(totalDuration))
-        savedEndDate = min(savedEndDate, latestEnd)
-        endDate = savedEndDate
-        timeRemaining = max(0, Int(savedEndDate.timeIntervalSince(launchTime).rounded()))
-        progress = Double(timeRemaining) / Double(max(1, totalDuration))
-        state = .active
-        startTicking()
-      } else if snapshot.isBreakPostponed {
-        // The postponed break is due; it waits at full length for Start.
-        state = .idle
-      } else {
-        history.recordCompletedSession(
-          currentSessionType, duration: TimeInterval(snapshot.totalDuration),
-          end: savedEndDate)
-        let waitsOnBreakScreen = isBreak && keepBreakScreenOpen
-        advanceToNextSession(start: autoStartNextSession && !waitsOnBreakScreen)
-      }
+    case .resume(let end, let remaining, let total, let postponed):
+      isBreakPostponed = postponed
+      totalDuration = total
+      endDate = end
+      timeRemaining = remaining
+      progress = Double(timeRemaining) / Double(max(1, totalDuration))
+      state = .active
+      startTicking()
+    case .postponedBreakDue:
+      state = .idle
+    case .expired(let end, let duration, let startNext):
+      history.recordCompletedSession(
+        currentSessionType, duration: TimeInterval(duration), end: end)
+      advanceToNextSession(start: startNext)
     }
   }
 
@@ -518,53 +442,4 @@ class PomodoroTimer: ObservableObject {
     self.progress = 1.0
   }
 
-  private func durationFor(session: SessionType) -> Int {
-    let stored: Int
-    switch session {
-    case .focus: stored = focusDurationMinutes
-    case .shortBreak: stored = shortBreakDurationMinutes
-    case .longBreak: stored = longBreakDurationMinutes
-    }
-    return Self.seconds(forMinutes: SessionDuration.sanitized(stored))
-  }
-
-  private func sendNotification() {
-    guard notificationsEnabled else { return }
-
-    postNotification(
-      SessionNotification.request(
-        forCompleted: currentSessionType, breakThroughFocus: breakThroughFocus))
-  }
-
-  /// Tells the user once a day when the session that just ended took today's
-  /// pomodoros up to the daily goal.
-  private func sendDailyGoalNotificationIfReached(pomodorosBefore: Int) {
-    let goal = dailyGoal
-    let pomodoros = history.todayTotals().pomodoros
-    guard DailyGoal.justReached(before: pomodorosBefore, after: pomodoros, goal: goal)
-    else { return }
-    let today = history.currentDate
-    let lastNotified = defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date
-    guard !DailyGoal.wasNotified(on: lastNotified, today: today, calendar: history.calendar)
-    else { return }
-    defaults.set(today, forKey: SettingsKey.dailyGoalNotifiedAt)
-    guard notificationsEnabled else { return }
-    postNotification(SessionNotification.dailyGoalRequest(goal: goal))
-  }
-
-  /// Runs a button tapped on the "session complete" notification.
-  /// "Start Next" starts the session that follows unless it is already running
-  /// (auto-start); "Skip" skips it.
-  func handleNotificationAction(_ action: SessionNotificationAction) {
-    switch action {
-    case .startNext:
-      if isWaitingToContinue {
-        continueWork()
-      } else if state != .active {
-        startTimer()
-      }
-    case .skip:
-      skipSession()
-    }
-  }
 }
