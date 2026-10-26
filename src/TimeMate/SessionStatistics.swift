@@ -32,16 +32,27 @@ enum SessionStatistics {
     }
   }
 
-  /// The last seven days (oldest first, today last) and the seven days before.
-  struct Week: Equatable {
+  /// The last `length` days (oldest first, today last) and the same number of
+  /// days before them.
+  struct Period: Equatable {
     let days: [Day]
     let previousDays: [Day]
 
+    var length: Int { days.count }
     var totals: Totals { Totals(days) }
     var previousTotals: Totals { Totals(previousDays) }
   }
 
+  /// Lengths the user can pick in Settings → Statistics.
   static let weekLength = 7
+  static let monthLength = 30
+  static let periodLengths = [weekLength, monthLength]
+
+  /// A stored length that isn't one of `periodLengths` falls back to a week.
+  static func sanitizedLength(_ stored: Int?) -> Int {
+    guard let stored, periodLengths.contains(stored) else { return weekLength }
+    return stored
+  }
 
   /// `count` consecutive days ending with the day that contains `today`, oldest
   /// first. Days without completed focus sessions have zero pomodoros.
@@ -67,11 +78,21 @@ enum SessionStatistics {
     }
   }
 
+  /// The `length` days ending with the day of `today` and the `length` days
+  /// before them. Both are counted by calendar day, so a daylight-saving change
+  /// inside the range doesn't shift or drop a day.
+  static func period(
+    from records: [SessionHistory.Record], today: Date, length: Int, calendar: Calendar
+  ) -> Period {
+    let length = max(1, length)
+    let both = days(from: records, endingOn: today, count: length * 2, calendar: calendar)
+    return Period(days: Array(both.suffix(length)), previousDays: Array(both.prefix(length)))
+  }
+
   static func week(
     from records: [SessionHistory.Record], today: Date, calendar: Calendar
-  ) -> Week {
-    let both = days(from: records, endingOn: today, count: weekLength * 2, calendar: calendar)
-    return Week(days: Array(both.suffix(weekLength)), previousDays: Array(both.prefix(weekLength)))
+  ) -> Period {
+    period(from: records, today: today, length: weekLength, calendar: calendar)
   }
 
   /// Every day from the oldest record (at least `minimumDays` back) through
@@ -113,7 +134,14 @@ enum SessionStatistics {
     return lines.joined(separator: "\r\n") + "\r\n"
   }
 
-  /// "+3", "−2" (minus sign) or "0" for the change against the previous week.
+  /// The change from `previous` to `current` in whole percent (rounded), or nil
+  /// when there is nothing to compare with (`previous` is 0 or less).
+  static func percentChange(current: Int, previous: Int) -> Int? {
+    guard previous > 0 else { return nil }
+    return Int((Double(current - previous) / Double(previous) * 100).rounded())
+  }
+
+  /// "+3", "−2" (minus sign) or "0" for the change against the previous period.
   static func signedChange(_ value: Int) -> String {
     if value > 0 { return "+\(value)" }
     if value < 0 { return "\u{2212}\(-value)" }
@@ -122,16 +150,23 @@ enum SessionStatistics {
 }
 
 extension SessionHistory {
-  /// The last seven days and the seven before them, by the history's calendar.
-  func weekStatistics() -> SessionStatistics.Week {
-    SessionStatistics.week(from: records, today: currentDate, calendar: calendar)
+  /// The last `days` days and the same number before them, by the history's calendar.
+  func statistics(days: Int) -> SessionStatistics.Period {
+    SessionStatistics.period(
+      from: records, today: currentDate, length: days, calendar: calendar)
   }
 
-  /// The CSV export of every kept day (at least `retentionDays`), with the
-  /// `goal_reached` column when `goal` is set.
-  func statisticsCSV(goal: Int = DailyGoal.off) -> String {
-    let days = SessionStatistics.allDays(
-      from: records, today: currentDate, minimumDays: Self.retentionDays, calendar: calendar)
-    return SessionStatistics.csv(for: days, calendar: calendar, goal: goal)
+  /// The CSV export, with the `goal_reached` column when `goal` is set: the last
+  /// `days` days, or every kept day (at least `retentionDays`) without `days`.
+  func statisticsCSV(days: Int? = nil, goal: Int = DailyGoal.off) -> String {
+    let rows: [SessionStatistics.Day]
+    if let days {
+      rows = SessionStatistics.days(
+        from: records, endingOn: currentDate, count: max(1, days), calendar: calendar)
+    } else {
+      rows = SessionStatistics.allDays(
+        from: records, today: currentDate, minimumDays: Self.retentionDays, calendar: calendar)
+    }
+    return SessionStatistics.csv(for: rows, calendar: calendar, goal: goal)
   }
 }

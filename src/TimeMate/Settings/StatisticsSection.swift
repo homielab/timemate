@@ -7,17 +7,31 @@ import UniformTypeIdentifiers
 struct StatisticsSection: View {
   @EnvironmentObject var model: PopoverTimerModel
   @AppStorage(SettingsKey.dailyGoal) private var dailyGoal = DailyGoal.off
+  @AppStorage(SettingsKey.statisticsDays) private var storedDays = SessionStatistics.weekLength
   @State private var showingResetAlert = false
+
+  private var days: Int { SessionStatistics.sanitizedLength(storedDays) }
 
   var body: some View {
     SettingsSection(titleKey: "Statistics", systemImage: "chart.bar.fill") {
       DailyGoalRow(goal: $dailyGoal)
 
-      WeekStatisticsView(history: model.timer.history, goal: DailyGoal.sanitized(dailyGoal))
+      Picker(selection: $storedDays) {
+        Text("7 days").tag(SessionStatistics.weekLength)
+        Text("30 days").tag(SessionStatistics.monthLength)
+      } label: {
+        Text("Statistics period")
+      }
+      .pickerStyle(.segmented)
+      .labelsHidden()
+      .accessibilityLabel(Text("Statistics period"))
+
+      PeriodStatisticsView(
+        history: model.timer.history, days: days, goal: DailyGoal.sanitized(dailyGoal))
 
       MenuItemButton(title: "Export CSV…", systemImage: "square.and.arrow.up") {
         StatisticsExporter.export(
-          model.timer.history.statisticsCSV(goal: DailyGoal.sanitized(dailyGoal)))
+          model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)))
       }
 
       MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
@@ -62,56 +76,105 @@ private struct DailyGoalRow: View {
   }
 }
 
-/// One row per day of the last seven days, then the week's totals and the change
-/// against the seven days before. With a daily goal, days that met it get a
-/// check mark and the week shows on how many days it was met.
-private struct WeekStatisticsView: View {
+/// The last 7 days as one row per day, or the last 30 as a compact bar strip; then
+/// the totals and the change against the same number of days before. With a daily
+/// goal, days that met it get a check mark (7 days) or a green bar (30 days) and
+/// the period shows on how many days it was met.
+private struct PeriodStatisticsView: View {
   @ObservedObject var history: SessionHistory
+  let days: Int
   let goal: Int
 
   var body: some View {
-    let week = history.weekStatistics()
-    let maxPomodoros = max(1, week.days.map(\.pomodoros).max() ?? 0)
-    let totals = week.totals
-    let previous = week.previousTotals
+    let period = history.statistics(days: days)
+    let maxPomodoros = max(1, period.days.map(\.pomodoros).max() ?? 0)
+    let totals = period.totals
+    let previous = period.previousTotals
 
     VStack(alignment: .leading, spacing: 4) {
-      Text("Last 7 days")
+      Text(days == SessionStatistics.monthLength ? "Last 30 days" : "Last 7 days")
         .font(.caption)
         .foregroundColor(.secondary)
 
-      ForEach(week.days, id: \.date) { day in
-        DayRow(
-          day: day, fraction: Double(day.pomodoros) / Double(maxPomodoros), goal: goal,
-          calendar: history.calendar)
+      if days == SessionStatistics.monthLength {
+        BarStrip(
+          days: period.days, maxPomodoros: maxPomodoros, goal: goal, calendar: history.calendar)
+      } else {
+        ForEach(period.days, id: \.date) { day in
+          DayRow(
+            day: day, fraction: Double(day.pomodoros) / Double(maxPomodoros), goal: goal,
+            calendar: history.calendar)
+        }
       }
 
       Divider().padding(.vertical, 2)
 
-      Text(StatisticsText.week(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
-        .font(.callout.weight(.semibold))
-        .monospacedDigit()
-
       Text(
-        StatisticsText.change(
-          pomodoros: totals.pomodoros - previous.pomodoros,
-          minutes: totals.focusMinutes - previous.focusMinutes)
+        StatisticsText.total(
+          pomodoros: totals.pomodoros, minutes: totals.focusMinutes, days: days)
       )
-      .font(.caption)
-      .foregroundColor(.secondary)
+      .font(.callout.weight(.semibold))
       .monospacedDigit()
+
+      if let percent = SessionStatistics.percentChange(
+        current: totals.pomodoros, previous: previous.pomodoros)
+      {
+        Text(
+          StatisticsText.change(
+            pomodoros: totals.pomodoros - previous.pomodoros, percent: percent,
+            minutes: totals.focusMinutes - previous.focusMinutes, days: days)
+        )
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+      }
 
       if goal > DailyGoal.off {
         Text(
           StatisticsText.goalDays(
-            reached: SessionStatistics.daysReachingGoal(week.days, goal: goal),
-            of: week.days.count)
+            reached: SessionStatistics.daysReachingGoal(period.days, goal: goal),
+            of: period.days.count)
         )
         .font(.caption)
         .foregroundColor(.secondary)
         .monospacedDigit()
       }
     }
+  }
+}
+
+/// One thin column per day, oldest first, today last; a day that met the daily
+/// goal is green. Hovering a column names the day. VoiceOver reads the totals
+/// below instead of 30 separate columns.
+private struct BarStrip: View {
+  let days: [SessionStatistics.Day]
+  let maxPomodoros: Int
+  let goal: Int
+  let calendar: Calendar
+
+  private let height: CGFloat = 40
+
+  var body: some View {
+    HStack(alignment: .bottom, spacing: 2) {
+      ForEach(days, id: \.date) { day in
+        let reached = DailyGoal.isReached(completed: day.pomodoros, goal: goal)
+        RoundedRectangle(cornerRadius: 1.5)
+          .fill(reached ? Color.green : Color.accentColor)
+          .opacity(day.pomodoros == 0 ? 0.15 : 0.8)
+          .frame(
+            maxWidth: .infinity,
+            minHeight: day.pomodoros == 0 ? 2 : 3,
+            maxHeight: day.pomodoros == 0
+              ? 2 : max(3, height * CGFloat(day.pomodoros) / CGFloat(maxPomodoros))
+          )
+          .help(
+            Text(
+              verbatim:
+                "\(StatisticsFormat.dayLabel(day.date, calendar: calendar)): \(day.pomodoros)"))
+      }
+    }
+    .frame(height: height, alignment: .bottom)
+    .accessibilityHidden(true)
   }
 }
 

@@ -37,12 +37,26 @@ enum StatisticsText {
     format("Week: %lld pomodoros · %lld min", bundle, pomodoros, minutes)
   }
 
-  /// "+3 pomodoros, −20 min vs the previous 7 days"
-  static func change(pomodoros: Int, minutes: Int, bundle: Bundle = .main) -> String {
+  /// "Month: 40 pomodoros · 1000 min" (the last 30 days)
+  static func month(pomodoros: Int, minutes: Int, bundle: Bundle = .main) -> String {
+    format("Month: %lld pomodoros · %lld min", bundle, pomodoros, minutes)
+  }
+
+  /// The totals line of a period of `days` days: "Week: …" or "Month: …".
+  static func total(pomodoros: Int, minutes: Int, days: Int, bundle: Bundle = .main) -> String {
+    days == SessionStatistics.monthLength
+      ? month(pomodoros: pomodoros, minutes: minutes, bundle: bundle)
+      : week(pomodoros: pomodoros, minutes: minutes, bundle: bundle)
+  }
+
+  /// "+3 pomodoros (+25%), −20 min vs the previous 30 days"
+  static func change(
+    pomodoros: Int, percent: Int, minutes: Int, days: Int, bundle: Bundle = .main
+  ) -> String {
     format(
-      "%1$@ pomodoros, %2$@ min vs the previous 7 days", bundle,
-      SessionStatistics.signedChange(pomodoros), SessionStatistics.signedChange(minutes),
-      abs(pomodoros))
+      "%1$@ pomodoros (%2$@), %3$@ min vs the previous %4$lld days", bundle,
+      SessionStatistics.signedChange(pomodoros), SessionStatistics.signedChange(percent) + "%",
+      SessionStatistics.signedChange(minutes), days, abs(pomodoros))
   }
 
   /// VoiceOver for one day: "Monday, October 20: 1 pomodoro, 25 minutes"

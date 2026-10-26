@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Statistics: a **7 days / 30 days** switch (remembered). 30 days shows a compact
+  bar strip with the total and the change against the previous 30 days, e.g. "+4 pomodoros
+  (+12%), +100 min"; the comparison is hidden when the previous period is empty. **Export
+  CSV…** now saves the chosen period (30 rows for 30 days, 7 for 7 days).
 - Settings → Automation → **Pause when the Mac sleeps or the screen locks** (off by default):
   a running session pauses when the Mac sleeps, the display turns off or the screen locks, and
   stays paused until you resume it, so a lunch break no longer counts as a pomodoro. With it

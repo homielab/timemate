@@ -2,10 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>%1$@ pomodoros, %2$@ min vs the previous 7 days</key>
+	<key>%1$@ pomodoros (%2$@), %3$@ min vs the previous %4$lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%1$@ %3$#@pomodoros@, %2$@ min vs the previous 7 days</string>
+		<string>%1$@ %5$#@pomodoros@ (%2$@), %3$@ min vs the previous %4$#@days@</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld day</string>
+			<key>other</key>
+			<string>%lld days</string>
+		</dict>
 		<key>pomodoros</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
@@ -124,6 +135,22 @@
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>Today: %1$#@pomodoros@ · %2$lld min</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld pomodoro</string>
+			<key>other</key>
+			<string>%lld pomodoros</string>
+		</dict>
+	</dict>
+	<key>Month: %lld pomodoros · %lld min</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Month: %1$#@pomodoros@ · %2$lld min</string>
 		<key>pomodoros</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>

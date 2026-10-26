@@ -29,17 +29,30 @@ final class StatisticsTextTests: XCTestCase {
     XCTAssertEqual(
       StatisticsText.week(pomodoros: 12, minutes: 300, bundle: en), "Week: 12 pomodoros · 300 min")
     XCTAssertEqual(
-      StatisticsText.change(pomodoros: 1, minutes: 25, bundle: en),
-      "+1 pomodoro, +25 min vs the previous 7 days")
+      StatisticsText.change(pomodoros: 1, percent: 50, minutes: 25, days: 7, bundle: en),
+      "+1 pomodoro (+50%), +25 min vs the previous 7 days")
     XCTAssertEqual(
-      StatisticsText.change(pomodoros: -1, minutes: -25, bundle: en),
-      "\u{2212}1 pomodoro, \u{2212}25 min vs the previous 7 days")
+      StatisticsText.change(pomodoros: -1, percent: -100, minutes: -25, days: 7, bundle: en),
+      "\u{2212}1 pomodoro (\u{2212}100%), \u{2212}25 min vs the previous 7 days")
     XCTAssertEqual(
-      StatisticsText.change(pomodoros: -3, minutes: 0, bundle: en),
-      "\u{2212}3 pomodoros, 0 min vs the previous 7 days")
+      StatisticsText.change(pomodoros: -3, percent: -10, minutes: 0, days: 30, bundle: en),
+      "\u{2212}3 pomodoros (\u{2212}10%), 0 min vs the previous 30 days")
     XCTAssertEqual(
-      StatisticsText.change(pomodoros: 0, minutes: 0, bundle: en),
-      "0 pomodoros, 0 min vs the previous 7 days")
+      StatisticsText.change(pomodoros: 0, percent: 0, minutes: 0, days: 30, bundle: en),
+      "0 pomodoros (0%), 0 min vs the previous 30 days")
+  }
+
+  func testEnglishMonthTotal() throws {
+    let en = try bundle("en")
+    XCTAssertEqual(
+      StatisticsText.total(pomodoros: 40, minutes: 1000, days: 30, bundle: en),
+      "Month: 40 pomodoros · \(NumberFormatter.localizedString(from: 1000, number: .decimal)) min")
+    XCTAssertEqual(
+      StatisticsText.total(pomodoros: 1, minutes: 25, days: 30, bundle: en),
+      "Month: 1 pomodoro · 25 min")
+    XCTAssertEqual(
+      StatisticsText.total(pomodoros: 2, minutes: 50, days: 7, bundle: en),
+      "Week: 2 pomodoros · 50 min")
   }
 
   func testEnglishSpokenDay() throws {
@@ -99,8 +112,14 @@ final class StatisticsTextTests: XCTestCase {
     XCTAssertEqual(
       StatisticsText.week(pomodoros: 2, minutes: 50, bundle: vi), "Tuần: 2 pomodoro · 50 phút")
     XCTAssertEqual(
-      StatisticsText.change(pomodoros: 2, minutes: -20, bundle: vi),
-      "+2 pomodoro, \u{2212}20 phút so với 7 ngày trước đó")
+      StatisticsText.change(pomodoros: 2, percent: 25, minutes: -20, days: 7, bundle: vi),
+      "+2 pomodoro (+25%), \u{2212}20 phút so với 7 ngày trước đó")
+    XCTAssertEqual(
+      StatisticsText.change(pomodoros: -4, percent: -8, minutes: 10, days: 30, bundle: vi),
+      "\u{2212}4 pomodoro (\u{2212}8%), +10 phút so với 30 ngày trước đó")
+    XCTAssertEqual(
+      StatisticsText.total(pomodoros: 3, minutes: 75, days: 30, bundle: vi),
+      "Tháng: 3 pomodoro · 75 phút")
     XCTAssertEqual(
       StatisticsText.spokenDay("Thứ Hai", pomodoros: 1, minutes: 1, bundle: vi),
       "Thứ Hai: 1 pomodoro, 1 phút")

@@ -47,6 +47,8 @@ enum SettingsKey {
   static let dailyGoal = "dailyGoal"
   /// When the "daily goal reached" notification last went out, so it shows once a day.
   static let dailyGoalNotifiedAt = "dailyGoalNotifiedAt"
+  /// Days shown in Settings → Statistics: 7 or 30 (`SessionStatistics.periodLengths`).
+  static let statisticsDays = "statisticsDays"
   /// The timer's saved session (`TimerSnapshot` as JSON), restored at launch.
   static let timerSnapshot = "timerSnapshot"
 }

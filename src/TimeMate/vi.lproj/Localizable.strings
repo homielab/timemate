@@ -166,6 +166,10 @@
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "7 ngày qua";
+"Last 30 days" = "30 ngày qua";
+"7 days" = "7 ngày";
+"30 days" = "30 ngày";
+"Statistics period" = "Khoảng thống kê";
 "%lld min" = "%lld phút";
 "Export CSV…" = "Xuất CSV…";
 "Break through Focus" = "Hiện cả khi đang Tập trung";

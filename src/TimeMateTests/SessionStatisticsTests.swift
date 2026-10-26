@@ -123,6 +123,83 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(week.previousTotals, SessionStatistics.Totals(pomodoros: 2, focusMinutes: 50))
   }
 
+  // MARK: - 30-day period
+
+  func testThirtyDayPeriodAndThePeriodBefore() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 31, 18, in: utc)
+    let records = [
+      focus(end: date(2026, 3, 31, 9, in: utc)),
+      focus(end: date(2026, 3, 2, 9, in: utc), minutes: 30),  // first day of the period
+      focus(end: date(2026, 3, 1, 9, in: utc)),  // last day of the previous period
+      focus(end: date(2026, 1, 31, 9, in: utc)),  // first day of the previous period
+      focus(end: date(2026, 1, 30, 9, in: utc)),  // too old
+    ]
+
+    let period = SessionStatistics.period(from: records, today: today, length: 30, calendar: utc)
+
+    XCTAssertEqual(period.length, 30)
+    XCTAssertEqual(period.previousDays.count, 30)
+    XCTAssertEqual(period.days.first?.date, date(2026, 3, 2, in: utc))
+    XCTAssertEqual(period.days.last?.date, date(2026, 3, 31, in: utc))
+    XCTAssertEqual(period.previousDays.first?.date, date(2026, 1, 31, in: utc))
+    XCTAssertEqual(period.totals, SessionStatistics.Totals(pomodoros: 2, focusMinutes: 55))
+    XCTAssertEqual(period.previousTotals, SessionStatistics.Totals(pomodoros: 2, focusMinutes: 50))
+  }
+
+  func testPeriodKeepsOneRowPerDayAcrossDaylightSaving() {
+    let newYork = calendar("America/New_York")  // clocks went forward on 2026-03-08
+    let today = date(2026, 3, 20, 12, in: newYork)
+    let period = SessionStatistics.period(
+      from: [focus(end: date(2026, 3, 8, 12, in: newYork))], today: today, length: 30,
+      calendar: newYork)
+
+    XCTAssertEqual(period.days.count, 30)
+    XCTAssertEqual(Set(period.days.map(\.date)).count, 30)
+    XCTAssertEqual(period.days.first?.date, date(2026, 2, 19, in: newYork))
+    XCTAssertEqual(
+      period.days.first(where: { $0.pomodoros == 1 })?.date, date(2026, 3, 8, in: newYork))
+    XCTAssertEqual(period.previousDays.last?.date, date(2026, 2, 18, in: newYork))
+  }
+
+  func testPercentChange() {
+    XCTAssertEqual(SessionStatistics.percentChange(current: 15, previous: 10), 50)
+    XCTAssertEqual(SessionStatistics.percentChange(current: 9, previous: 10), -10)
+    XCTAssertEqual(SessionStatistics.percentChange(current: 10, previous: 10), 0)
+    XCTAssertEqual(SessionStatistics.percentChange(current: 0, previous: 4), -100)
+    XCTAssertEqual(SessionStatistics.percentChange(current: 1, previous: 3), -67)
+    XCTAssertEqual(SessionStatistics.percentChange(current: 2, previous: 3), -33)
+    // Nothing to compare with: no percentage at all.
+    XCTAssertNil(SessionStatistics.percentChange(current: 5, previous: 0))
+    XCTAssertNil(SessionStatistics.percentChange(current: 0, previous: 0))
+  }
+
+  func testStoredPeriodLengthFallsBackToAWeek() {
+    XCTAssertEqual(SessionStatistics.sanitizedLength(7), 7)
+    XCTAssertEqual(SessionStatistics.sanitizedLength(30), 30)
+    XCTAssertEqual(SessionStatistics.sanitizedLength(14), 7)
+    XCTAssertEqual(SessionStatistics.sanitizedLength(0), 7)
+    XCTAssertEqual(SessionStatistics.sanitizedLength(nil), 7)
+  }
+
+  func testHistoryStatisticsAndCSVFollowTheChosenPeriod() {
+    let utc = calendar("UTC")
+    let now = date(2026, 3, 31, 15, in: utc)
+    let history = SessionHistory(fileURL: nil, now: { now }, calendar: utc)
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2026, 3, 31, 9, in: utc))
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2026, 3, 5, 9, in: utc))
+
+    XCTAssertEqual(history.statistics(days: 7).totals.pomodoros, 1)
+    XCTAssertEqual(history.statistics(days: 30).totals.pomodoros, 2)
+
+    let lines = history.statisticsCSV(days: 30, goal: 1).components(separatedBy: "\r\n")
+    XCTAssertEqual(lines.first, "date,pomodoros,minutes,goal_reached")
+    XCTAssertEqual(lines.count, 1 + 30 + 1)  // header + 30 rows + ""
+    XCTAssertEqual(lines[1], "2026-03-02,0,0,0")
+    XCTAssertEqual(lines[lines.count - 2], "2026-03-31,1,25,1")
+    XCTAssertEqual(history.statisticsCSV(days: 7).components(separatedBy: "\r\n").count, 1 + 7 + 1)
+  }
+
   func testTotalMinutesAddUpTheRoundedDays() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 18, in: utc)
@@ -239,7 +316,7 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(lines.first, "date,pomodoros,minutes")
     XCTAssertEqual(lines.count, 1 + SessionHistory.retentionDays + 1)  // header + rows + ""
     XCTAssertEqual(lines[lines.count - 2], "2026-03-10,1,25")
-    XCTAssertEqual(history.weekStatistics().totals.pomodoros, 1)
+    XCTAssertEqual(history.statistics(days: 7).totals.pomodoros, 1)
   }
 
   // MARK: - Labels

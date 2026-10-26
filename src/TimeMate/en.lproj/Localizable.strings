@@ -166,6 +166,10 @@
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "Last 7 days";
+"Last 30 days" = "Last 30 days";
+"7 days" = "7 days";
+"30 days" = "30 days";
+"Statistics period" = "Statistics period";
 "%lld min" = "%lld min";
 "Export CSV…" = "Export CSV…";
 "Break through Focus" = "Break through Focus";
