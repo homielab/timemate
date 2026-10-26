@@ -78,6 +78,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- The end-of-session notification now says what comes next: "Next: Short Break · 5 min", or
+  "Short Break started · 5 min" when Auto-start next session is on. In that case it has no
+  **Start Next** button (only **Skip**), since the next session is already running.
 - Under the hood: the session order, break extend/postpone and restore-after-relaunch rules moved
   out of the timer into small tested pieces; behaviour is unchanged.
 - TimeMate no longer opens its popover and takes focus when it starts at login; it still

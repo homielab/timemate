@@ -6,9 +6,19 @@ extension PomodoroTimer {
   func sendNotification() {
     guard notificationsEnabled else { return }
 
+    // Called before the timer moves on, so work out the session that follows.
+    let next = SessionSequence.next(
+      after: .init(
+        sessionType: currentSessionType, focusSessionsCompleted: focusSessionsCompleted),
+      interval: longBreakInterval)
+    let completion = SessionSequence.completion(
+      of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)
+    let autoStarted = autoStartNextSession && completion == .advance
     postNotification(
       SessionNotification.request(
-        forCompleted: currentSessionType, breakThroughFocus: breakThroughFocus))
+        forCompleted: currentSessionType, next: next.sessionType,
+        minutes: SessionDuration.sanitized(minutesFor(session: next.sessionType)),
+        autoStarted: autoStarted, breakThroughFocus: breakThroughFocus))
   }
 
   /// Tells the user once a day when the session that just ended took today's

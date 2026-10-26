@@ -45,13 +45,16 @@ extension PomodoroTimer {
     #endif
   }
 
-  func durationFor(session: SessionType) -> Int {
-    let stored: Int
+  /// The stored length of `session` in minutes.
+  func minutesFor(session: SessionType) -> Int {
     switch session {
-    case .focus: stored = focusDurationMinutes
-    case .shortBreak: stored = shortBreakDurationMinutes
-    case .longBreak: stored = longBreakDurationMinutes
+    case .focus: return focusDurationMinutes
+    case .shortBreak: return shortBreakDurationMinutes
+    case .longBreak: return longBreakDurationMinutes
     }
-    return Self.seconds(forMinutes: SessionDuration.sanitized(stored))
+  }
+
+  func durationFor(session: SessionType) -> Int {
+    Self.seconds(forMinutes: SessionDuration.sanitized(minutesFor(session: session)))
   }
 }

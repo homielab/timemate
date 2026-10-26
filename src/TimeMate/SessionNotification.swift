@@ -40,19 +40,49 @@ enum NotificationResponse: Equatable {
 /// Builds the "session complete" notification and its category.
 enum SessionNotification {
   static let categoryIdentifier = "com.homielab.timemate.category.sessionComplete"
+  /// Same notification when the next session has already started: only "Skip".
+  static let autoStartedCategoryIdentifier =
+    "com.homielab.timemate.category.sessionCompleteAutoStarted"
   /// Groups all TimeMate session notifications into one stack in Notification Center.
   static let threadIdentifier = "com.homielab.timemate.sessions"
 
-  /// The category with the "Start Next" and "Skip" buttons; register it at launch.
+  /// The category with the "Start Next" and "Skip" buttons.
   static func category() -> UNNotificationCategory {
-    let actions = SessionNotificationAction.allCases.map { action in
+    category(identifier: categoryIdentifier, actions: SessionNotificationAction.allCases)
+  }
+
+  /// The category for a next session that started by itself: "Start Next" would do nothing.
+  static func autoStartedCategory() -> UNNotificationCategory {
+    category(identifier: autoStartedCategoryIdentifier, actions: [.skip])
+  }
+
+  /// Both categories; register them at launch.
+  static func categories() -> Set<UNNotificationCategory> {
+    [category(), autoStartedCategory()]
+  }
+
+  private static func category(
+    identifier: String, actions: [SessionNotificationAction]
+  ) -> UNNotificationCategory {
+    let buttons = actions.map { action in
       UNNotificationAction(
         identifier: action.rawValue,
         title: NSLocalizedString(action.titleKey, comment: "Notification action button"),
         options: [])
     }
     return UNNotificationCategory(
-      identifier: categoryIdentifier, actions: actions, intentIdentifiers: [], options: [])
+      identifier: identifier, actions: buttons, intentIdentifiers: [], options: [])
+  }
+
+  /// "Next: Short Break · 5 min", or "Short Break started · 5 min" when it already runs.
+  static func body(next: SessionType, minutes: Int, autoStarted: Bool) -> String {
+    let session = NSLocalizedString(next.rawValue, comment: "The name of the next session type")
+    let length = String(format: NSLocalizedString("%lld min", comment: "Minutes"), minutes)
+    let format =
+      autoStarted
+      ? NSLocalizedString("%1$@ started · %2$@", comment: "Notification body, next session runs")
+      : NSLocalizedString("Next: %1$@ · %2$@", comment: "Notification body, next session waits")
+    return String(format: format, session, length)
   }
 
   /// Content for the end of a session of `sessionType`. It carries no sound: the
@@ -62,7 +92,8 @@ enum SessionNotification {
   /// mode (or Do Not Disturb) still shows it unless the user turned that off
   /// for TimeMate in System Settings.
   static func content(
-    forCompleted sessionType: SessionType, breakThroughFocus: Bool = true
+    forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
+    autoStarted: Bool, breakThroughFocus: Bool = true
   ) -> UNMutableNotificationContent {
     let content = UNMutableNotificationContent()
     content.title = "TimeMate"
@@ -72,8 +103,9 @@ enum SessionNotification {
       format: NSLocalizedString("%@ session complete!", comment: "Notification format string"),
       localizedSessionTitle
     )
+    content.body = body(next: next, minutes: minutes, autoStarted: autoStarted)
     content.sound = nil
-    content.categoryIdentifier = categoryIdentifier
+    content.categoryIdentifier = autoStarted ? autoStartedCategoryIdentifier : categoryIdentifier
     content.threadIdentifier = threadIdentifier
     content.interruptionLevel = breakThroughFocus ? .timeSensitive : .active
     return content
@@ -103,12 +135,14 @@ enum SessionNotification {
 
   /// The request that shows the notification right away.
   static func request(
-    forCompleted sessionType: SessionType, breakThroughFocus: Bool,
-    identifier: String = UUID().uuidString
+    forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
+    autoStarted: Bool, breakThroughFocus: Bool, identifier: String = UUID().uuidString
   ) -> UNNotificationRequest {
     UNNotificationRequest(
       identifier: identifier,
-      content: content(forCompleted: sessionType, breakThroughFocus: breakThroughFocus),
+      content: content(
+        forCompleted: sessionType, next: next, minutes: minutes, autoStarted: autoStarted,
+        breakThroughFocus: breakThroughFocus),
       trigger: nil)
   }
 }

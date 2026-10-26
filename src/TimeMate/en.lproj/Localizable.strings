@@ -204,3 +204,6 @@
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate couldn't restart";
 "Quit TimeMate and open it again to apply the change." = "Quit TimeMate and open it again to apply the change.";
+
+"Next: %1$@ · %2$@" = "Next: %1$@ · %2$@";
+"%1$@ started · %2$@" = "%1$@ started · %2$@";

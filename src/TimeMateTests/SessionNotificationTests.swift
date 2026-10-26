@@ -51,7 +51,8 @@ final class SessionNotificationTests: XCTestCase {
   // MARK: - Content
 
   func testContentHasNoSoundAndUsesCategoryAndThread() {
-    let content = SessionNotification.content(forCompleted: .focus)
+    let content = SessionNotification.content(
+      forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false)
     XCTAssertNil(content.sound, "the app plays the alarm itself; a second sound doubles it")
     XCTAssertEqual(content.categoryIdentifier, SessionNotification.categoryIdentifier)
     XCTAssertEqual(content.threadIdentifier, SessionNotification.threadIdentifier)
@@ -64,6 +65,67 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(
       category.actions.map(\.identifier),
       [SessionNotificationAction.startNext.rawValue, SessionNotificationAction.skip.rawValue])
+  }
+
+  func testAutoStartedCategoryHasOnlySkip() {
+    let category = SessionNotification.autoStartedCategory()
+    XCTAssertEqual(category.actions.map(\.identifier), [SessionNotificationAction.skip.rawValue])
+    XCTAssertEqual(
+      Set(SessionNotification.categories().map(\.identifier)),
+      [SessionNotification.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier])
+  }
+
+  // MARK: - What comes next
+
+  private func content(
+    _ completed: SessionType, next: SessionType, minutes: Int, autoStarted: Bool
+  ) -> UNMutableNotificationContent {
+    SessionNotification.content(
+      forCompleted: completed, next: next, minutes: minutes, autoStarted: autoStarted)
+  }
+
+  func testFocusIntoShortBreakWaiting() {
+    let c = content(.focus, next: .shortBreak, minutes: 5, autoStarted: false)
+    XCTAssertEqual(c.body, "Next: Short Break · 5 min")
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.categoryIdentifier)
+  }
+
+  func testFocusIntoLongBreakWaiting() {
+    let c = content(.focus, next: .longBreak, minutes: 15, autoStarted: false)
+    XCTAssertEqual(c.body, "Next: Long Break · 15 min")
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.categoryIdentifier)
+  }
+
+  func testBreakIntoFocusWaiting() {
+    let c = content(.shortBreak, next: .focus, minutes: 25, autoStarted: false)
+    XCTAssertEqual(c.body, "Next: Focus · 25 min")
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.categoryIdentifier)
+  }
+
+  func testAutoStartedSaysSoAndDropsStartNext() {
+    let c = content(.focus, next: .shortBreak, minutes: 5, autoStarted: true)
+    XCTAssertEqual(c.body, "Short Break started · 5 min")
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
+  }
+
+  func testTimerPostsTheNextSessionFollowingItsSettings() {
+    var posted: [UNNotificationRequest] = []
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(7, forKey: SettingsKey.shortBreakDuration)
+    defaults.set(true, forKey: SettingsKey.autoStartNextSession)
+    defaults.set(0.0, forKey: SettingsKey.alarmVolume)
+    let timer = PomodoroTimer(
+      defaults: defaults,
+      now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(),
+      history: SessionHistory(fileURL: nil),
+      notificationCenter: NotificationCenter(),
+      postNotification: { posted.append($0) })
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(posted.first?.content.body, "Short Break started · 7 min")
+    XCTAssertEqual(
+      posted.first?.content.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
   }
 
   func testUnknownActionIdentifierMapsToNothing() {
@@ -95,16 +157,21 @@ final class SessionNotificationTests: XCTestCase {
 
   func testContentIsTimeSensitiveWhenBreakingThroughFocus() {
     XCTAssertEqual(
-      SessionNotification.content(forCompleted: .focus, breakThroughFocus: true)
-        .interruptionLevel, .timeSensitive)
+      SessionNotification.content(
+        forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false,
+        breakThroughFocus: true
+      ).interruptionLevel, .timeSensitive)
     XCTAssertEqual(
-      SessionNotification.content(forCompleted: .focus, breakThroughFocus: false)
-        .interruptionLevel, .active)
+      SessionNotification.content(
+        forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false,
+        breakThroughFocus: false
+      ).interruptionLevel, .active)
   }
 
   func testRequestShowsRightAway() {
     let request = SessionNotification.request(
-      forCompleted: .shortBreak, breakThroughFocus: true, identifier: "id")
+      forCompleted: .shortBreak, next: .focus, minutes: 25, autoStarted: false,
+      breakThroughFocus: true, identifier: "id")
     XCTAssertEqual(request.identifier, "id")
     XCTAssertNil(request.trigger)
     XCTAssertEqual(request.content.categoryIdentifier, SessionNotification.categoryIdentifier)

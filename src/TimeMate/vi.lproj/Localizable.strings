@@ -204,3 +204,6 @@
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate không khởi động lại được";
 "Quit TimeMate and open it again to apply the change." = "Hãy thoát TimeMate rồi mở lại để áp dụng thay đổi.";
+
+"Next: %1$@ · %2$@" = "Tiếp theo: %1$@ · %2$@";
+"%1$@ started · %2$@" = "Đã bắt đầu %1$@ · %2$@";

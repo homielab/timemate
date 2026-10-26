@@ -81,7 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     let notificationCenter = UNUserNotificationCenter.current()
     notificationCenter.delegate = self
-    notificationCenter.setNotificationCategories([SessionNotification.category()])
+    notificationCenter.setNotificationCategories(SessionNotification.categories())
     notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) {
       _, error in
       if let error {
