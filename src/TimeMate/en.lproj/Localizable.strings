@@ -22,6 +22,8 @@
 // Settings - Automation & Sound
 "Start at Login" = "Start at Login";
 "Login item needs approval in System Settings." = "Login item needs approval in System Settings.";
+"Could not turn on Start at Login: %@" = "Could not turn on Start at Login: %@";
+"Could not turn off Start at Login: %@" = "Could not turn off Start at Login: %@";
 "Notifications denied in System Settings." = "Notifications denied in System Settings.";
 "Open System Settings" = "Open System Settings";
 "Auto-start next session" = "Auto-start next session";

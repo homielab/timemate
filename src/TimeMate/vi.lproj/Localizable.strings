@@ -22,6 +22,8 @@
 // Settings - Automation & Sound
 "Start at Login" = "Khởi động cùng máy";
 "Login item needs approval in System Settings." = "Mục đăng nhập cần được phê duyệt trong Cài đặt hệ thống.";
+"Could not turn on Start at Login: %@" = "Không thể bật Khởi động cùng máy: %@";
+"Could not turn off Start at Login: %@" = "Không thể tắt Khởi động cùng máy: %@";
 "Notifications denied in System Settings." = "Thông báo đã bị từ chối trong Cài đặt hệ thống.";
 "Open System Settings" = "Mở Cài đặt hệ thống";
 "Auto-start next session" = "Tự động bắt đầu phiên tiếp theo";

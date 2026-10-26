@@ -18,36 +18,31 @@ extension Color {
 
 extension NSColor {
   convenience init?(hex: String) {
-    var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-    hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
-
-    var rgb: UInt64 = 0
-
-    guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else {
-      return nil
-    }
-
-    let length = hexSanitized.count
-    let r: CGFloat
-    let g: CGFloat
-    let b: CGFloat
-    let a: CGFloat
-
-    if length == 6 {
-      r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
-      g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
-      b = CGFloat(rgb & 0x0000FF) / 255.0
-      a = 1.0
-    } else if length == 8 {
-      r = CGFloat((rgb & 0xFF00_0000) >> 24) / 255.0
-      g = CGFloat((rgb & 0x00FF_0000) >> 16) / 255.0
-      b = CGFloat((rgb & 0x0000_FF00) >> 8) / 255.0
-      a = CGFloat(rgb & 0x0000_00FF) / 255.0
-    } else {
+    guard let (r, g, b, a) = NSColor.rgba(fromHex: hex) else {
       return nil
     }
 
     self.init(red: r, green: g, blue: b, alpha: a)
+  }
+
+  /// Parses `RGB`, `RRGGBB` or `RRGGBBAA` (optional leading `#`); anything else is nil.
+  static func rgba(fromHex hex: String) -> (CGFloat, CGFloat, CGFloat, CGFloat)? {
+    var digits = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if digits.hasPrefix("#") { digits.removeFirst() }
+    guard [3, 6, 8].contains(digits.count),
+      digits.unicodeScalars.allSatisfy({ $0.isASCII && $0.properties.isASCIIHexDigit })
+    else { return nil }
+    if digits.count == 3 {
+      digits = digits.map { "\($0)\($0)" }.joined()
+    }
+    guard let value = UInt64(digits, radix: 16) else { return nil }
+    let hasAlpha = digits.count == 8
+    let shift: UInt64 = hasAlpha ? 8 : 0
+    func channel(_ index: UInt64) -> CGFloat {
+      CGFloat((value >> (shift + (2 - index) * 8)) & 0xFF) / 255.0
+    }
+    let alpha: CGFloat = hasAlpha ? CGFloat(value & 0xFF) / 255.0 : 1.0
+    return (channel(0), channel(1), channel(2), alpha)
   }
 
   func toHex() -> String? {
@@ -62,10 +57,13 @@ extension NSColor {
     srgbColor.getRed(&r, green: &g, blue: &b, alpha: &a)
 
     if a == 1.0 {
-      return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+      return String(
+        format: "#%02X%02X%02X", Int((r * 255).rounded()), Int((g * 255).rounded()),
+        Int((b * 255).rounded()))
     } else {
       return String(
-        format: "#%02X%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255), Int(a * 255))
+        format: "#%02X%02X%02X%02X", Int((r * 255).rounded()), Int((g * 255).rounded()),
+        Int((b * 255).rounded()), Int((a * 255).rounded()))
     }
   }
 }

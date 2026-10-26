@@ -51,12 +51,15 @@ private struct CustomColorPicker: NSViewRepresentable {
     }
     colorWell.action = #selector(context.coordinator.colorChanged(_:))
     colorWell.target = context.coordinator
-    colorWell.color = NSColor(Color(hex: hexColor) ?? .clear)
+    colorWell.color = NSColor(hex: hexColor) ?? .clear
     return colorWell
   }
 
   func updateNSView(_ nsView: NSColorWell, context: Context) {
-    nsView.color = NSColor(Color(hex: hexColor) ?? .clear)
+    // An unparsable string keeps the color already shown instead of turning it clear.
+    if let color = NSColor(hex: hexColor) {
+      nsView.color = color
+    }
   }
 
   func makeCoordinator() -> Coordinator {

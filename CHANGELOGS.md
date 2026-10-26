@@ -99,6 +99,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Start at Login: if macOS refuses to register or remove the login item, the switch goes back
+  to its real state and shows the reason with an Open System Settings button; it also updates
+  when you change the login item in System Settings and return to TimeMate.
+- A hand-typed background color is only accepted as 3, 6 or 8 hex digits; anything else keeps
+  the previous color instead of turning into a different one. Color to hex now rounds
+  instead of truncating.
 - Changing a session length while the break screen is held open (Continue Work) no longer
   makes the Continue Work button disappear.
 - Settings → Language now shows "System Default" when you have not picked a language, and the

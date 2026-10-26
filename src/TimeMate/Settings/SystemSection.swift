@@ -11,6 +11,7 @@ struct SystemSection: View {
   // reads it into these states so register()/unregister() run only on user edits.
   @State private var startAtLogin = false
   @State private var startAtLoginNeedsApproval = false
+  @State private var startAtLoginError: String?
   @AppStorage(SettingsKey.showTimerAtLogin) private var showTimerAtLogin = false
   @AppStorage(SettingsKey.hideDockIcon) private var hideDockIcon = true
   @AppStorage(SettingsKey.keepAwake) private var keepAwake = false
@@ -25,6 +26,24 @@ struct SystemSection: View {
         )
       )
       .onAppear(perform: syncStartAtLoginStatus)
+      .onReceive(
+        NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+      ) { _ in
+        syncStartAtLoginStatus()
+      }
+      if let startAtLoginError {
+        HStack {
+          Text(startAtLoginError)
+            .font(.caption)
+            .foregroundColor(.red)
+          Spacer(minLength: 12)
+          Button("Open System Settings") {
+            try? SMAppService.openSystemSettingsLoginItems()
+          }
+          .buttonStyle(.link)
+          .font(.caption)
+        }
+      }
       if startAtLoginNeedsApproval {
         HStack {
           Text("Login item needs approval in System Settings.")
@@ -53,6 +72,7 @@ struct SystemSection: View {
   }
 
   private func updateStartAtLogin(_ enabled: Bool) {
+    startAtLoginError = nil
     do {
       if enabled {
         try SMAppService.mainApp.register()
@@ -62,13 +82,19 @@ struct SystemSection: View {
     } catch {
       Logger.app.error(
         "Could not update Start at Login: \(error.localizedDescription, privacy: .public)")
+      let format =
+        enabled
+        ? NSLocalizedString("Could not turn on Start at Login: %@", comment: "")
+        : NSLocalizedString("Could not turn off Start at Login: %@", comment: "")
+      startAtLoginError = String(format: format, error.localizedDescription)
     }
+    // The registration status, not the click, decides what the toggle shows.
     syncStartAtLoginStatus()
   }
 
   private func syncStartAtLoginStatus() {
-    let status = SMAppService.mainApp.status
-    startAtLogin = (status == .enabled || status == .requiresApproval)
-    startAtLoginNeedsApproval = (status == .requiresApproval)
+    let state = LoginItemState(from: SMAppService.mainApp.status)
+    startAtLogin = state.isOn
+    startAtLoginNeedsApproval = state.needsApproval
   }
 }
