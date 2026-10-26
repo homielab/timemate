@@ -63,7 +63,7 @@ struct AboutSection: View {
         }
       } message: {
         Text(
-          "This will restore all settings to their default values and restart the app. Are you sure?"
+          "This will restore all settings to their default values and restart the app. A running session and today's goal notification are kept. Are you sure?"
         )
       }
     }

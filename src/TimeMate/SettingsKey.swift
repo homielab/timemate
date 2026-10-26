@@ -24,6 +24,8 @@ enum SettingsKey {
   static let hideMenuBarTime = "hideMenuBarTime"
   static let hideDockIcon = "hideDockIcon"
   static let keepAwake = "keepAwake"
+  /// Pause a running session when the Mac sleeps or the screen locks (off by default).
+  static let pauseOnSleep = "pauseOnSleep"
   static let overlayEnabled = "overlayEnabled"
   static let overlaySkipFullscreen = "overlaySkipFullscreen"
   static let autoStartOnLaunch = "autoStartOnLaunch"

@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Automation → **Pause when the Mac sleeps or the screen locks** (off by default):
+  a running session pauses when the Mac sleeps, the display turns off or the screen locks, and
+  stays paused until you resume it, so a lunch break no longer counts as a pomodoro. With it
+  off, nothing changes: the session keeps counting while the Mac sleeps.
 - Settings → Alerts & Sound → **Don't interrupt full-screen apps** (on by default): when the
   app in front is full screen (a presentation, a video), the break screen no longer pulls
   you out of it. The notification still arrives, and the break screen appears once you leave
@@ -83,6 +87,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Reset All Settings no longer drops the running session or the daily-goal notification
+  state: the session carries on after the restart and the goal notification isn't sent twice.
 - The break screen's clock stops when the screen is hidden, and the Esc and screen-change
   listeners are removed when they are not needed.
 - When a break has ended and waits on the break screen, the popover's main button now

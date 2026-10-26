@@ -55,9 +55,28 @@ func restartApp() {
   }
 }
 
+/// Defaults keys that hold app state rather than settings; a reset keeps them.
+enum SettingsReset {
+  static let preservedKeys = [
+    SettingsKey.timerSnapshot, SettingsKey.dailyGoalNotifiedAt, SettingsKey.hasLaunchedBefore,
+  ]
+
+  /// Clears every setting but keeps the running session, the date of the last
+  /// daily-goal notification and the first-launch marker.
+  static func perform(on defaults: UserDefaults, domain: String) {
+    let kept = preservedKeys.compactMap { key in
+      defaults.object(forKey: key).map { (key, $0) }
+    }
+    defaults.removePersistentDomain(forName: domain)
+    for (key, value) in kept {
+      defaults.set(value, forKey: key)
+    }
+  }
+}
+
 func resetAllSettings() {
   if let bundleID = Bundle.main.bundleIdentifier {
-    UserDefaults.standard.removePersistentDomain(forName: bundleID)
+    SettingsReset.perform(on: .standard, domain: bundleID)
     Logger.app.notice("All settings have been reset, restarting")
     restartApp()
   } else {

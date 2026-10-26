@@ -12,6 +12,7 @@ final class PomodoroTimerTests: XCTestCase {
   private var currentTime: Date!
   private var workspaceCenter: NotificationCenter!
   private var clockCenter: NotificationCenter!
+  private var distributedCenter: NotificationCenter!
   /// The fake `uptime` clock: moves with real time, not with clock changes.
   private var currentUptime: TimeInterval = 0
   private var history: SessionHistory!
@@ -24,6 +25,7 @@ final class PomodoroTimerTests: XCTestCase {
     currentTime = Date(timeIntervalSince1970: 1_000_000)
     workspaceCenter = NotificationCenter()
     clockCenter = NotificationCenter()
+    distributedCenter = NotificationCenter()
     currentUptime = 50_000
     history = SessionHistory(
       fileURL: nil,
@@ -60,6 +62,7 @@ final class PomodoroTimerTests: XCTestCase {
         self?.currentTime ?? Date(timeIntervalSince1970: 0)
       },
       workspaceNotificationCenter: workspaceCenter,
+      distributedNotificationCenter: distributedCenter,
       history: history,
       notificationCenter: clockCenter,
       uptime: { [weak self] in self?.currentUptime ?? 0 })
@@ -459,6 +462,104 @@ final class PomodoroTimerTests: XCTestCase {
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
     XCTAssertEqual(timer.state, .paused)
     XCTAssertEqual(timer.timeRemaining, 100)
+  }
+
+  // MARK: - Pause on sleep or screen lock
+
+  private func lockScreen() {
+    distributedCenter.post(
+      name: Notification.Name(PomodoroTimer.screenLockedNotificationName), object: nil)
+  }
+
+  func testPauseOnSleepOffKeepsCountingThroughSleep() {
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    lockScreen()
+    workspaceCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .active)
+    advanceClock(by: 60)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 60)
+  }
+
+  func testPauseOnSleepKeepsSessionPausedAfterLongSleep() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 3000)
+    timer.startTimer()
+    runTicks(timer, 20)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+    advanceClock(by: 40 * 60)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 2980)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertTrue(history.records.isEmpty)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
+  func testPauseOnSleepPausesWhenScreenLocksOrSleeps() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    lockScreen()
+    XCTAssertEqual(timer.state, .paused)
+    timer.startTimer()
+    XCTAssertEqual(timer.state, .active)
+    workspaceCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+  }
+
+  func testPauseOnSleepLeavesIdleTimerAlone() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    lockScreen()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .idle)
+  }
+
+  func testPausedBySleepSurvivesRelaunch() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    runTicks(timer, 20)
+    lockScreen()
+    advanceClock(by: 3600)
+    let relaunched = makeTimer(focus: 120)
+    XCTAssertEqual(relaunched.state, .paused)
+    XCTAssertEqual(relaunched.timeRemaining, 100)
+  }
+
+  // MARK: - Reset All Settings
+
+  func testResetKeepsTimerSnapshotAndGoalNotificationDate() {
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    runTicks(timer, 20)
+    let notified = Date(timeIntervalSince1970: 123)
+    defaults.set(notified, forKey: SettingsKey.dailyGoalNotifiedAt)
+    defaults.set(true, forKey: SettingsKey.hasLaunchedBefore)
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    defaults.set(40, forKey: SettingsKey.overlaySkipDelay)
+
+    SettingsReset.perform(on: defaults, domain: Self.suiteName)
+
+    XCTAssertNil(defaults.object(forKey: SettingsKey.pauseOnSleep))
+    XCTAssertNil(defaults.object(forKey: SettingsKey.overlaySkipDelay))
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date, notified)
+    XCTAssertTrue(defaults.bool(forKey: SettingsKey.hasLaunchedBefore))
+    let relaunched = makeTimer(focus: 120)
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.timeRemaining, 100)
+  }
+
+  func testResetWithoutStateKeysDoesNotCreateThem() {
+    defaults.removeObject(forKey: SettingsKey.timerSnapshot)
+    defaults.set(5, forKey: SettingsKey.focusDuration)
+    SettingsReset.perform(on: defaults, domain: Self.suiteName)
+    XCTAssertNil(defaults.object(forKey: SettingsKey.timerSnapshot))
+    XCTAssertNil(defaults.object(forKey: SettingsKey.focusDuration))
   }
 
   func testTimerReadsLiveFromInjectedDefaults() {

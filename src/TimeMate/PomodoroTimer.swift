@@ -107,6 +107,7 @@ class PomodoroTimer: ObservableObject {
     defaults: UserDefaults = .standard,
     now: @escaping () -> Date = { Date() },
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
+    distributedNotificationCenter: NotificationCenter = DistributedNotificationCenter.default(),
     history: SessionHistory = SessionHistory(fileURL: nil),
     notificationCenter: NotificationCenter = .default,
     uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime,
@@ -132,6 +133,15 @@ class PomodoroTimer: ObservableObject {
       .store(in: &cancellables)
     workspaceNotificationCenter.publisher(for: NSWorkspace.didWakeNotification)
       .sink { [weak self] _ in self?.handleDidWake() }
+      .store(in: &cancellables)
+    // With "Pause when the Mac sleeps or the screen locks" on, the display
+    // going to sleep or the screen locking pauses a running session too.
+    workspaceNotificationCenter.publisher(for: NSWorkspace.screensDidSleepNotification)
+      .sink { [weak self] _ in self?.handleScreenInactive() }
+      .store(in: &cancellables)
+    distributedNotificationCenter
+      .publisher(for: Notification.Name(PomodoroTimer.screenLockedNotificationName))
+      .sink { [weak self] _ in self?.handleScreenInactive() }
       .store(in: &cancellables)
     // Settings → Durations writes to these defaults; an idle timer shows the
     // new length right away instead of on the next Start.
@@ -255,9 +265,23 @@ class PomodoroTimer: ObservableObject {
   /// in wall-clock time while the Mac sleeps.
   func handleWillSleep() {
     guard state == .active else { return }
+    if defaults.bool(forKey: SettingsKey.pauseOnSleep) {
+      pauseTimer()
+      return
+    }
     handleTick()
     timer?.cancel()
   }
+
+  /// The display went to sleep or the screen was locked. Only acts when
+  /// `pauseOnSleep` is on; the session stays paused until the user resumes it.
+  func handleScreenInactive() {
+    guard defaults.bool(forKey: SettingsKey.pauseOnSleep) else { return }
+    pauseTimer()
+  }
+
+  /// Posted by the system to the distributed center when the screen locks.
+  static let screenLockedNotificationName = "com.apple.screenIsLocked"
 
   /// The Mac woke up: catch up with the wall clock right away. A session whose
   /// end passed during sleep finishes once, then ticking resumes if active.
