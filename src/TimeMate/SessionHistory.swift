@@ -43,7 +43,10 @@ final class SessionHistory: ObservableObject {
   /// Where the history is saved; `nil` keeps it in memory only.
   private let fileURL: URL?
   private let now: () -> Date
-  private let calendar: Calendar
+  let calendar: Calendar
+
+  /// The current time as the history sees it (injectable in tests).
+  var currentDate: Date { now() }
 
   init(
     fileURL: URL?,

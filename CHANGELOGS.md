@@ -27,6 +27,9 @@ All notable changes to TimeMate will be documented in this file.
   pauses the timer (and continues past a waiting break screen), ⌃⌥S skips to the next
   session. Change or turn off each one in Settings → Keyboard Shortcuts; a shortcut
   already taken by another app is flagged there. No Accessibility permission needed.
+- Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day),
+  the week's total and the change against the previous 7 days. **Export CSV…** saves
+  the whole 90-day history as `date,pomodoros,minutes`, one row per day.
 - Today's statistics: the popover shows "Today: N pomodoros · X min" for completed
   focus sessions. Completed sessions (skipped ones don't count) are saved for 90 days
   and survive restarts; Settings → Statistics → "Reset Statistics" clears them.
