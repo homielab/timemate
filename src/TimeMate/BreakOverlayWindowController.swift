@@ -48,6 +48,10 @@ class BreakOverlayWindowController: NSObject {
   private var timer: PomodoroTimer
   private var cancellables = Set<AnyCancellable>()
   private var eventMonitor: Any?
+  private var screenObserver: NSObjectProtocol?
+  /// Re-checks whether the frontmost app left full screen while the break screen waits.
+  private var fullscreenPoll: Timer?
+  private var lastState: (PomodoroState, SessionType, Bool, Bool)?
   private var escDetector = DoubleEscDetector()
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
@@ -55,23 +59,29 @@ class BreakOverlayWindowController: NSObject {
     self.timer = timer
     super.init()
     setupSubscriptions()
-    setupEventMonitor()
-
-    // Listen for screen changes
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleScreenConfigurationChange),
-      name: NSApplication.didChangeScreenParametersNotification,
-      object: nil
-    )
   }
 
-  @objc private func handleScreenConfigurationChange() {
+  /// Listens for screen changes and Esc only while the break screen exists.
+  private func startObserving() {
+    if screenObserver == nil {
+      screenObserver = NotificationCenter.default.addObserver(
+        forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+      ) { [weak self] _ in self?.handleScreenConfigurationChange() }
+    }
+    setupEventMonitor()
+  }
+
+  private func stopObserving() {
+    if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+    screenObserver = nil
+    if let monitor = eventMonitor { NSEvent.removeMonitor(monitor) }
+    eventMonitor = nil
+  }
+
+  private func handleScreenConfigurationChange() {
     // Re-create windows when screens change
     if !windows.isEmpty {
       let isVisible = windows.first?.isVisible ?? false
-
-      closeAllWindows()
 
       if isVisible {
         createWindows()
@@ -82,6 +92,7 @@ class BreakOverlayWindowController: NSObject {
 
   private func createWindows() {
     closeAllWindows()  // Clear existing
+    startObserving()
 
     let screens = NSScreen.screens
     let primaryIndex = BreakOverlayAccessibility.primaryScreenIndex(
@@ -122,6 +133,7 @@ class BreakOverlayWindowController: NSObject {
     windows.forEach { $0.close() }
     windows.removeAll()
     primaryWindow = nil
+    stopObserving()
   }
 
   private func setupSubscriptions() {
@@ -137,6 +149,7 @@ class BreakOverlayWindowController: NSObject {
   }
 
   private func setupEventMonitor() {
+    guard eventMonitor == nil else { return }
     eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self = self else { return event }
 
@@ -161,12 +174,27 @@ class BreakOverlayWindowController: NSObject {
     state: PomodoroState, sessionType: SessionType, isWaitingToContinue: Bool,
     isBreakPostponed: Bool
   ) {
+    lastState = (state, sessionType, isWaitingToContinue, isBreakPostponed)
     let shouldShow = BreakOverlayRules.shouldShowOverlay(
       state: state, sessionType: sessionType, isWaiting: isWaitingToContinue,
       isPostponed: isBreakPostponed,
       enabled: UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled))
 
-    if shouldShow {
+    let defaults = UserDefaults.standard
+    let presentation = OverlayPolicy.presentation(
+      shouldShow: shouldShow,
+      skipFullscreen: defaults.bool(forKey: SettingsKey.overlaySkipFullscreen),
+      isFrontmostFullscreen: shouldShow && defaults.bool(forKey: SettingsKey.overlaySkipFullscreen)
+        && OverlayPolicy.isFrontmostAppFullscreen(),
+      isVisible: windows.contains { $0.isVisible })
+
+    if presentation == .waitForWindowedApp {
+      startFullscreenPoll()
+      return
+    }
+    stopFullscreenPoll()
+
+    if presentation == .show {
       // Not when the overlay only comes back during its fade-out.
       let isNewlyShown = windows.isEmpty
       if windows.isEmpty {
@@ -179,6 +207,25 @@ class BreakOverlayWindowController: NSObject {
     } else {
       hideWindows(animated: true)
     }
+  }
+
+  /// The notification already told the user the session ended; the break screen comes
+  /// once the app in front leaves full screen, until the break is over.
+  private func startFullscreenPoll() {
+    guard fullscreenPoll == nil else { return }
+    fullscreenPoll = Timer.scheduledTimer(
+      withTimeInterval: OverlayPolicy.pollInterval, repeats: true
+    ) { [weak self] _ in
+      guard let self, let state = self.lastState else { return }
+      self.handleStateChange(
+        state: state.0, sessionType: state.1, isWaitingToContinue: state.2,
+        isBreakPostponed: state.3)
+    }
+  }
+
+  private func stopFullscreenPoll() {
+    fullscreenPoll?.invalidate()
+    fullscreenPoll = nil
   }
 
   private func showWindows(animated: Bool) {
@@ -266,6 +313,7 @@ class BreakOverlayWindowController: NSObject {
           if let primary = self.primaryWindow, windowsToClose.contains(primary) {
             self.primaryWindow = nil
           }
+          if self.windows.isEmpty { self.stopObserving() }
         }
       }
     } else {
@@ -273,13 +321,12 @@ class BreakOverlayWindowController: NSObject {
       windowsToClose.forEach { $0.close() }
       windows.removeAll()
       primaryWindow = nil
+      stopObserving()
     }
   }
 
   deinit {
-    if let monitor = eventMonitor {
-      NSEvent.removeMonitor(monitor)
-    }
-    NotificationCenter.default.removeObserver(self)
+    stopFullscreenPoll()
+    stopObserving()
   }
 }

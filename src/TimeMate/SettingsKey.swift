@@ -25,6 +25,7 @@ enum SettingsKey {
   static let hideDockIcon = "hideDockIcon"
   static let keepAwake = "keepAwake"
   static let overlayEnabled = "overlayEnabled"
+  static let overlaySkipFullscreen = "overlaySkipFullscreen"
   static let autoStartOnLaunch = "autoStartOnLaunch"
   /// Open the popover also when the app starts at login (off by default).
   static let showTimerAtLogin = "showTimerAtLogin"

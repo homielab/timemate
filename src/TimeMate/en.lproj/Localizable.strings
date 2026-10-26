@@ -189,3 +189,6 @@
 "Reset Timer" = "Reset Timer";
 "Stops the TimeMate timer and starts the current session over." = "Stops the TimeMate timer and starts the current session over.";
 "Space" = "Space";
+
+"Don't interrupt full-screen apps" = "Don't interrupt full-screen apps";
+"While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives.";

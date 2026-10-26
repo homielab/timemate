@@ -8,6 +8,7 @@ struct AlertsSection: View {
   @AppStorage(SettingsKey.notificationsEnabled) private var notificationsEnabled = true
   @AppStorage(SettingsKey.breakThroughFocus) private var breakThroughFocus = true
   @AppStorage(SettingsKey.overlayEnabled) private var overlayEnabled = true
+  @AppStorage(SettingsKey.overlaySkipFullscreen) private var overlaySkipFullscreen = true
   @AppStorage(SettingsKey.overlaySkipDelay) private var skipDelay =
     BreakOverlayAccessibility.defaultSkipDelay
   @AppStorage(SettingsKey.alarmSound) private var alarmSound = AlarmSound.defaultName
@@ -49,6 +50,11 @@ struct AlertsSection: View {
         }
       }
       SettingsToggleRow(titleKey: "Enable Break Overlay", isOn: $overlayEnabled)
+      SettingsToggleRow(titleKey: "Don't interrupt full-screen apps", isOn: $overlaySkipFullscreen)
+        .disabled(!overlayEnabled)
+        .help(
+          "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives."
+        )
       HStack {
         Text("Skip button delay")
         Spacer(minLength: 12)

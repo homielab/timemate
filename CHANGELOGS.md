@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Alerts & Sound → **Don't interrupt full-screen apps** (on by default): when the
+  app in front is full screen (a presentation, a video), the break screen no longer pulls
+  you out of it. The notification still arrives, and the break screen appears once you leave
+  full screen, as long as the break lasts. It can't detect screen sharing in a normal window.
 - Settings → Alerts & Sound: choose **None** for a silent alarm, and a separate sound for
   the end of a break (it follows the alarm sound until you pick one). Both pickers and
   their preview buttons are named for VoiceOver.
@@ -79,6 +83,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The break screen's clock stops when the screen is hidden, and the Esc and screen-change
+  listeners are removed when they are not needed.
 - When a break has ended and waits on the break screen, the popover's main button now
   reads "Continue Work" and starts the next focus session instead of running the break
   again.

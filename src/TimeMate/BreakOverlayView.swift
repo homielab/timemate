@@ -27,8 +27,8 @@ struct BreakOverlayView: View {
   @State private var isAnimating = false
   @State private var currentTip = ""
 
-  /// One clock shared by the overlays of all screens.
-  private static let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+  /// Ticks only while the break screen is on screen.
+  @StateObject private var clock = OverlayClock()
 
   /// The entrance animation, or none when Reduce Motion is on.
   private func entrance(_ duration: Double, delay: Double = 0) -> Animation? {
@@ -224,6 +224,7 @@ struct BreakOverlayView: View {
       }
     }
     .onAppear {
+      clock.start()
       resetSkipCountdown()
       isAnimating = true
       currentTip = RelaxationTips.random()
@@ -233,7 +234,8 @@ struct BreakOverlayView: View {
         timer.continueWork()
       }
     }
-    .onReceive(Self.clock) { input in
+    .onDisappear { clock.stop() }
+    .onReceive(clock.$now.dropFirst()) { input in
       currentTime = input
 
       let isBreakActive = timer.state == .active && timer.isBreak && !timer.isBreakPostponed

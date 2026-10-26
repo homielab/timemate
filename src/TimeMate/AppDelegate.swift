@@ -56,6 +56,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     // Register defaults
     UserDefaults.standard.register(defaults: [
       SettingsKey.overlayEnabled: true,
+      SettingsKey.overlaySkipFullscreen: true,
       SettingsKey.notificationsEnabled: true,
       SettingsKey.breakThroughFocus: true,
       SettingsKey.keepAwake: false,
@@ -106,7 +107,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     popover.behavior = Self.popoverBehavior(
       alwaysVisible: UserDefaults.standard.bool(forKey: SettingsKey.alwaysVisible))
     popover.contentViewController = hostingController
-    installEscapeKeyMonitor()
     hotKeyManager.activate()
 
     // --- Initial State ---
@@ -203,14 +203,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   /// Closes the popover on Escape whatever its behavior, since an
   /// application-defined popover is not dismissed by the system.
   private func installEscapeKeyMonitor() {
+    guard escapeKeyMonitor == nil else { return }
     escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       // While a shortcut is being recorded, Escape cancels the recording.
-      guard let self, event.keyCode == 53, self.popover.isShown, !self.hotKeyManager.isRecording,
+      guard let self, event.keyCode == DoubleEscDetector.escKeyCode, self.popover.isShown,
+        !self.hotKeyManager.isRecording,
         event.window === self.popover.contentViewController?.view.window
       else { return event }
       self.popover.performClose(nil)
       return nil
     }
+  }
+
+  private func removeEscapeKeyMonitor() {
+    if let monitor = escapeKeyMonitor { NSEvent.removeMonitor(monitor) }
+    escapeKeyMonitor = nil
   }
 
   /// Sizes the status item and updates the menu bar view in place.
@@ -397,12 +404,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   func popoverWillShow(_ notification: Notification) {
     // Brings the countdown up to date before the popover reads it.
     isPopoverOpen = true
+    installEscapeKeyMonitor()
     updateTickMode()
     popoverModel.setPopoverVisible(true)
   }
 
   func popoverDidClose(_ notification: Notification) {
     isPopoverOpen = false
+    removeEscapeKeyMonitor()
     updateTickMode()
     popoverModel.setPopoverVisible(false)
   }
@@ -485,7 +494,8 @@ private struct MenuBarView: View {
     }
     .frame(
       width: Self.width(hideTime: hideTime), height: NSStatusBar.system.thickness,
-      alignment: .center)
+      alignment: .center
+    )
     .accessibilityHidden(true)
   }
 }
