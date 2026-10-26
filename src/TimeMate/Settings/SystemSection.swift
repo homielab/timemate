@@ -10,6 +10,7 @@ struct SystemSection: View {
   // reads it into these states so register()/unregister() run only on user edits.
   @State private var startAtLogin = false
   @State private var startAtLoginNeedsApproval = false
+  @AppStorage(SettingsKey.showTimerAtLogin) private var showTimerAtLogin = false
   @AppStorage(SettingsKey.hideDockIcon) private var hideDockIcon = true
   @AppStorage(SettingsKey.keepAwake) private var keepAwake = false
 
@@ -36,6 +37,8 @@ struct SystemSection: View {
           .font(.caption)
         }
       }
+      SettingsToggleRow(titleKey: "Show timer when started at login", isOn: $showTimerAtLogin)
+        .help("Open the timer popover when TimeMate starts at login.")
       SettingsToggleRow(titleKey: "Hide Dock icon", isOn: $hideDockIcon)
         .onChange(of: hideDockIcon) { newValue in
           appDelegate.setDockIcon(hidden: newValue)

@@ -31,7 +31,7 @@ enum TimerIntentActions {
   /// the session is over.
   static func minutesRemaining(_ timer: PomodoroTimer) -> Int {
     if timer.isWaitingToContinue { return 0 }
-    return (max(0, timer.timeRemaining) + 59) / 60
+    return (max(0, timer.secondsRemaining) + 59) / 60
   }
 
   /// Spoken / shown answer of "Get Timer Status", e.g. "Focus, running, 12 min left".

@@ -30,6 +30,8 @@
 "Keep the break overlay on screen until you continue manually." = "Keep the break overlay on screen until you continue manually.";
 "Continue Work" = "Continue Work";
 "Press Esc twice or click to continue" = "Press Esc twice or click to continue";
+"Show timer when started at login" = "Show timer when started at login";
+"Open the timer popover when TimeMate starts at login." = "Open the timer popover when TimeMate starts at login.";
 "Hide Dock icon" = "Hide Dock icon";
 "Show Progress Circle" = "Show Progress Circle";
 "Hide time in menu bar" = "Hide time in menu bar";

@@ -37,9 +37,14 @@ All notable changes to TimeMate will be documented in this file.
   progression and long-break cycles, auto-start, pause/resume, and the break screen's
   "continue" flow. The timer now takes its `UserDefaults` and clock through its
   initializer, and settings keys live in one shared `SettingsKey` enum.
+- Settings → System → "Show timer when started at login" (off by default).
 
 ### Changed
 
+- TimeMate no longer opens its popover and takes focus when it starts at login; it still
+  opens on the first launch and when you open the app yourself. No Dock icon flashes at launch.
+- Uses less energy: the countdown ticks every second only while you can see it (time in the
+  menu bar, popover open, break screen), otherwise the app wakes once when the session ends.
 - Build number is now 15, matching the 3.5 release commit.
 - README: correct requirements (macOS 13.5, Xcode 26), command-line build and test commands.
 - Internal: the popover and settings code is split into `Views/` and one file per
@@ -52,6 +57,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- "Today" in the popover and the Statistics week roll over at midnight and after a change of
+  the system time or time zone; setting the clock no longer cuts short or stretches a running
+  session.
 - Quitting, updating or a crash no longer loses the session: a running timer keeps
   counting down after relaunch, a paused one stays paused, and the pomodoro count is
   kept. A session that ended while TimeMate was closed is added to the statistics on

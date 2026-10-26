@@ -21,6 +21,10 @@ enum SettingsKey {
   static let keepAwake = "keepAwake"
   static let overlayEnabled = "overlayEnabled"
   static let autoStartOnLaunch = "autoStartOnLaunch"
+  /// Open the popover also when the app starts at login (off by default).
+  static let showTimerAtLogin = "showTimerAtLogin"
+  /// Set once the app has started; its absence marks the first launch.
+  static let hasLaunchedBefore = "hasLaunchedBefore"
   static let hotKeyStartPauseKeyCode = "hotKeyStartPauseKeyCode"
   static let hotKeyStartPauseModifiers = "hotKeyStartPauseModifiers"
   static let hotKeyStartPauseEnabled = "hotKeyStartPauseEnabled"

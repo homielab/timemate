@@ -44,6 +44,13 @@ final class SessionHistory: ObservableObject {
   private let fileURL: URL?
   private let now: () -> Date
   let calendar: Calendar
+  private var cancellables = Set<AnyCancellable>()
+
+  /// Posted when "today" may have become another day: midnight passed, or the
+  /// system time or time zone was changed.
+  static let dayChangeNotifications: [Notification.Name] = [
+    .NSCalendarDayChanged, .NSSystemClockDidChange, .NSSystemTimeZoneDidChange,
+  ]
 
   /// The current time as the history sees it (injectable in tests).
   var currentDate: Date { now() }
@@ -51,12 +58,28 @@ final class SessionHistory: ObservableObject {
   init(
     fileURL: URL?,
     now: @escaping () -> Date = { Date() },
-    calendar: Calendar = .current
+    calendar: Calendar = .autoupdatingCurrent,
+    notificationCenter: NotificationCenter = .default
   ) {
     self.fileURL = fileURL
     self.now = now
     self.calendar = calendar
     records = trimmed(Self.load(from: fileURL))
+
+    // Views of today's or this week's totals redraw for the new day.
+    for name in Self.dayChangeNotifications {
+      notificationCenter.publisher(for: name)
+        .sink { [weak self] _ in self?.dayMayHaveChanged() }
+        .store(in: &cancellables)
+    }
+  }
+
+  private func dayMayHaveChanged() {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { [weak self] in self?.dayMayHaveChanged() }
+      return
+    }
+    objectWillChange.send()
   }
 
   /// `Application Support/<bundle id>/session-history.json` (inside the app

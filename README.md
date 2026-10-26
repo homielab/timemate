@@ -37,7 +37,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
 - **Multilingual Support**: Available in both English and Vietnamese.
-- **Native & Efficient**: Built specifically for macOS with minimal system resource usage.
+- **Native & Efficient**: Built specifically for macOS with minimal system resource usage. The countdown ticks every second only while you can see it; with the menu bar time hidden and the popover closed, TimeMate wakes just once when the session ends. Starting at login stays quiet (no popover, no stolen focus) unless you turn on "Show timer when started at login"; "Today" rolls over at midnight and setting the clock never changes a running session's length.
 
 ## Screenshots
 
@@ -86,6 +86,8 @@ Sources are in `src/TimeMate/`:
 - `PomodoroTimer.swift` — the timer state machine; `TimerSnapshot.swift` — the session it saves in
   user defaults to restore after a relaunch; `SettingsKey.swift` — all user-defaults keys.
 - `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
+  `LaunchBehavior.swift` decides whether the popover opens at launch (not at login);
+  `TickMode.swift` decides whether the timer ticks every second or only at the session's end.
 - `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,
   `ControlButtonsView`).
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared

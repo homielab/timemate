@@ -30,6 +30,8 @@
 "Keep the break overlay on screen until you continue manually." = "Giữ màn hình nghỉ hiển thị cho đến khi bạn chủ động tiếp tục.";
 "Continue Work" = "Tiếp tục làm việc";
 "Press Esc twice or click to continue" = "Nhấn Esc hai lần hoặc nhấp để tiếp tục";
+"Show timer when started at login" = "Hiện đồng hồ khi khởi động cùng máy";
+"Open the timer popover when TimeMate starts at login." = "Mở cửa sổ hẹn giờ khi TimeMate tự khởi động lúc đăng nhập.";
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
 "Hide time in menu bar" = "Ẩn thời gian trên thanh menu";

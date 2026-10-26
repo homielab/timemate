@@ -20,6 +20,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private var breakOverlayController: BreakOverlayWindowController!
   private var escapeKeyMonitor: Any?
   private var keepAwakeEnabled = false
+  /// What shows the countdown right now; decides the timer's `TickMode`.
+  private var isPopoverOpen = false
+  private var isVoiceOverRunning = false
   /// Global shortcuts; registered only when running as the app, not under tests.
   private(set) lazy var hotKeyManager = HotKeyManager { [weak self] action in
     self?.timer.perform(action)
@@ -62,6 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       SettingsKey.showProgressCircle: true,
       SettingsKey.autoStartNextSession: true,
       SettingsKey.autoStartOnLaunch: false,
+      SettingsKey.showTimerAtLogin: false,
       SettingsKey.keepBreakScreenOpen: true,
     ])
 
@@ -105,9 +109,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     // --- Initial State ---
     updatePopoverSize()
-    NSApp.activate(ignoringOtherApps: true)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-      self.togglePopover()
+    let defaults = UserDefaults.standard
+    let showsPopover = LaunchBehavior.showsPopover(
+      isFirstLaunch: !defaults.bool(forKey: SettingsKey.hasLaunchedBefore),
+      isLoginLaunch: LaunchBehavior.isLoginLaunch(NSAppleEventManager.shared().currentAppleEvent),
+      showTimerAtLogin: defaults.bool(forKey: SettingsKey.showTimerAtLogin))
+    defaults.set(true, forKey: SettingsKey.hasLaunchedBefore)
+    if showsPopover {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        if !self.popover.isShown {
+          self.togglePopover()
+        }
+      }
     }
 
     // --- Auto-start Timer ---
@@ -118,6 +131,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     // --- Break Overlay ---
     breakOverlayController = BreakOverlayWindowController(timer: timer)
+    observeTimerForTickMode()
+  }
+
+  /// Ticks every second only while something shows the countdown.
+  private func updateTickMode() {
+    let overlayShown =
+      timer.state == .active && timer.isBreak && !timer.isBreakPostponed
+      && UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled)
+    timer.tickMode = TickMode.mode(
+      popoverOpen: isPopoverOpen, menuBarShowsTime: !hideMenuBarTime,
+      breakOverlayShown: overlayShown, voiceOverRunning: isVoiceOverRunning)
+  }
+
+  /// The break screen comes and goes with the session.
+  private func observeTimerForTickMode() {
+    // @Published emits before the change lands; read the timer on the next pass.
+    Publishers.CombineLatest3(timer.$state, timer.$currentSessionType, timer.$isBreakPostponed)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.updateTickMode() }
+      .store(in: &cancellables)
   }
 
   func updatePopoverSize() {
@@ -196,6 +229,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     }
 
     layoutMenuBar(hideTime: hideTime)
+    // @AppStorage may not hold the new value yet.
+    hideMenuBarTime = hideTime
+    updateTickMode()
 
     // Reopen popover if it was shown
     if wasShown {
@@ -287,6 +323,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   }
 
   private func setAccessibilityLabelUpdates(enabled: Bool) {
+    isVoiceOverRunning = enabled
+    updateTickMode()
     guard enabled else {
       accessibilityLabelUpdates = nil
       statusItem.button?.setAccessibilityLabel(Bundle.main.appName)
@@ -348,10 +386,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   // The countdown is only fed to the popover while it is open, so a closed
   // popover doesn't re-render every second.
   func popoverWillShow(_ notification: Notification) {
+    // Brings the countdown up to date before the popover reads it.
+    isPopoverOpen = true
+    updateTickMode()
     popoverModel.setPopoverVisible(true)
   }
 
   func popoverDidClose(_ notification: Notification) {
+    isPopoverOpen = false
+    updateTickMode()
     popoverModel.setPopoverVisible(false)
   }
 

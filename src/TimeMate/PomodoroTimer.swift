@@ -34,6 +34,9 @@ class PomodoroTimer: ObservableObject {
   private let defaults: UserDefaults
   /// Source of wall-clock time; tests inject a fixed clock.
   private let now: () -> Date
+  /// Seconds on a clock that keeps running during sleep and ignores changes to
+  /// the system time; used to keep a session's length when the clock is set.
+  private let uptime: () -> TimeInterval
   /// Log of completed sessions behind the "Today" statistics.
   let history: SessionHistory
 
@@ -74,16 +77,36 @@ class PomodoroTimer: ObservableObject {
   /// Wall-clock moment the running session ends. The remaining time is always
   /// derived from it, so sleep, App Nap or late timer fires cannot stretch a
   /// session. `nil` unless the timer is active.
-  private(set) var endDate: Date?
+  private(set) var endDate: Date? {
+    didSet { endUptime = endDate.map { uptime() + $0.timeIntervalSince(now()) } }
+  }
+  /// `endDate` on the `uptime` clock.
+  private var endUptime: TimeInterval?
+
+  /// How the running session refreshes `timeRemaining`. With `.atEnd` the
+  /// countdown is only brought up to date when the mode changes back, on
+  /// pause, wake or a clock change, and when the session ends.
+  var tickMode: TickMode = .everySecond {
+    didSet {
+      guard tickMode != oldValue, state == .active else { return }
+      handleTick()
+      if state == .active {
+        startTicking()
+      }
+    }
+  }
 
   init(
     defaults: UserDefaults = .standard,
     now: @escaping () -> Date = { Date() },
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
-    history: SessionHistory = SessionHistory(fileURL: nil)
+    history: SessionHistory = SessionHistory(fileURL: nil),
+    notificationCenter: NotificationCenter = .default,
+    uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime
   ) {
     self.defaults = defaults
     self.now = now
+    self.uptime = uptime
     self.history = history
     resetForCurrentSession()
     if let snapshot = TimerSnapshot.load(from: defaults) {
@@ -96,6 +119,10 @@ class PomodoroTimer: ObservableObject {
       .store(in: &cancellables)
     workspaceNotificationCenter.publisher(for: NSWorkspace.didWakeNotification)
       .sink { [weak self] _ in self?.handleDidWake() }
+      .store(in: &cancellables)
+    notificationCenter.publisher(for: .NSSystemClockDidChange)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.handleSystemClockChange() }
       .store(in: &cancellables)
 
     #if DEBUG
@@ -113,14 +140,45 @@ class PomodoroTimer: ObservableObject {
     startTicking()
   }
 
-  /// Fires `handleTick` every second to refresh the menu bar countdown.
+  /// Schedules `handleTick` for the current `tickMode`: every second, or
+  /// once at `endDate` when nothing shows the countdown.
   private func startTicking() {
     timer?.cancel()
-    timer = Timer.publish(every: 1, on: .main, in: .common)
-      .autoconnect()
-      .sink { [weak self] _ in
-        self?.handleTick()
+    switch tickMode {
+    case .everySecond:
+      timer = Timer.publish(every: 1, tolerance: TickMode.tolerance, on: .main, in: .common)
+        .autoconnect()
+        .sink { [weak self] _ in
+          self?.handleTick()
+        }
+    case .atEnd:
+      guard let endDate else { return }
+      let delay = max(0, endDate.timeIntervalSince(now()))
+      let endTimer = Timer(fire: Date().addingTimeInterval(delay), interval: 0, repeats: false) {
+        [weak self] _ in
+        guard let self else { return }
+        self.handleTick()
+        // Still running: a postponed break came back, or the clock moved.
+        if self.state == .active {
+          self.startTicking()
+        }
       }
+      endTimer.tolerance = TickMode.tolerance
+      RunLoop.main.add(endTimer, forMode: .common)
+      timer = AnyCancellable { endTimer.invalidate() }
+    }
+  }
+
+  /// Seconds left in the running session, up to date even when ticks are
+  /// sparse (`TickMode.atEnd`).
+  var secondsRemaining: Int {
+    guard state == .active, let endDate else { return timeRemaining }
+    return max(0, Int(endDate.timeIntervalSince(now()).rounded()))
+  }
+
+  /// A clock on `uptime` that ignores system time changes and counts sleep.
+  static func continuousUptime() -> TimeInterval {
+    TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC)) / 1_000_000_000
   }
 
   /// One tick of the state machine: recompute the remaining time from `endDate`
@@ -182,6 +240,19 @@ class PomodoroTimer: ObservableObject {
     if state == .active {
       startTicking()
     }
+  }
+
+  /// The system time was changed (by hand, a time zone or a network sync):
+  /// move `endDate` so the session keeps the length it had left instead of
+  /// being cut short or stretched by the jump.
+  func handleSystemClockChange() {
+    guard state == .active, let endUptime else { return }
+    endDate = now().addingTimeInterval(endUptime - uptime())
+    handleTick()
+    if state == .active {
+      startTicking()
+    }
+    saveSnapshot()
   }
 
   func pauseTimer() {

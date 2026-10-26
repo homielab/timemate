@@ -11,6 +11,9 @@ final class PomodoroTimerTests: XCTestCase {
   private var defaults: UserDefaults!
   private var currentTime: Date!
   private var workspaceCenter: NotificationCenter!
+  private var clockCenter: NotificationCenter!
+  /// The fake `uptime` clock: moves with real time, not with clock changes.
+  private var currentUptime: TimeInterval = 0
   private var history: SessionHistory!
   private var timer: PomodoroTimer!
 
@@ -20,6 +23,8 @@ final class PomodoroTimerTests: XCTestCase {
     defaults = UserDefaults(suiteName: Self.suiteName)
     currentTime = Date(timeIntervalSince1970: 1_000_000)
     workspaceCenter = NotificationCenter()
+    clockCenter = NotificationCenter()
+    currentUptime = 50_000
     history = SessionHistory(
       fileURL: nil,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) })
@@ -55,7 +60,9 @@ final class PomodoroTimerTests: XCTestCase {
         self?.currentTime ?? Date(timeIntervalSince1970: 0)
       },
       workspaceNotificationCenter: workspaceCenter,
-      history: history)
+      history: history,
+      notificationCenter: clockCenter,
+      uptime: { [weak self] in self?.currentUptime ?? 0 })
   }
 
   /// Advances the fake clock one second per tick, like the real 1 s timer.
@@ -66,7 +73,14 @@ final class PomodoroTimerTests: XCTestCase {
     }
   }
 
+  /// Lets `seconds` of real time pass.
   private func advanceClock(by seconds: TimeInterval) {
+    currentTime = currentTime.addingTimeInterval(seconds)
+    currentUptime += seconds
+  }
+
+  /// Sets the system time forward (or back) by `seconds`; no time passes.
+  private func setSystemClock(by seconds: TimeInterval) {
     currentTime = currentTime.addingTimeInterval(seconds)
   }
 
@@ -752,5 +766,96 @@ final class PomodoroTimerTests: XCTestCase {
     let relaunched = relaunch(after: -3600)
     XCTAssertEqual(relaunched.state, .active)
     XCTAssertEqual(relaunched.timeRemaining, 300)
+  }
+
+  // MARK: - System clock changes
+
+  func testClockSetForwardKeepsTheRemainingTime() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    runTicks(timer, 10)
+    setSystemClock(by: 3600)
+    timer.handleSystemClockChange()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 590)
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(590))
+    XCTAssertTrue(history.records.isEmpty)
+  }
+
+  func testClockSetBackDoesNotStretchTheSession() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    runTicks(timer, 10)
+    setSystemClock(by: -7200)
+    timer.handleSystemClockChange()
+    XCTAssertEqual(timer.timeRemaining, 590)
+    runTicks(timer, 590)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testClockChangeIsSavedForTheNextLaunch() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    setSystemClock(by: 3600)
+    timer.handleSystemClockChange()
+    let relaunched = relaunch(after: 100, focus: 600)
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.timeRemaining, 500)
+  }
+
+  func testClockChangeWhilePausedKeepsThePausedTime() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    runTicks(timer, 10)
+    timer.pauseTimer()
+    setSystemClock(by: 3600)
+    timer.handleSystemClockChange()
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 590)
+  }
+
+  func testPostedClockChangeNotificationMovesTheEndDate() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    setSystemClock(by: 3600)
+    clockCenter.post(name: .NSSystemClockDidChange, object: nil)
+    RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(600))
+  }
+
+  // MARK: - Tick mode
+
+  func testAtEndModeSkipsSecondTicksAndCatchesUpWhenShownAgain() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    timer.tickMode = .atEnd
+    advanceClock(by: 100)
+    XCTAssertEqual(timer.timeRemaining, 600)
+    XCTAssertEqual(timer.secondsRemaining, 500)
+    XCTAssertEqual(TimerIntentActions.minutesRemaining(timer), 9)
+    timer.tickMode = .everySecond
+    XCTAssertEqual(timer.timeRemaining, 500)
+  }
+
+  func testSwitchingTickModeAfterTheEndFinishesTheSessionOnce() {
+    timer = makeTimer(focus: 3, autoStart: false)
+    timer.startTimer()
+    timer.tickMode = .atEnd
+    advanceClock(by: 10)
+    timer.tickMode = .everySecond
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(history.records.count, 1)
+  }
+
+  func testAtEndModeFinishesTheSessionAtItsEnd() {
+    timer = makeTimer(focus: 1, autoStart: false)
+    timer.tickMode = .atEnd
+    timer.startTimer()
+    advanceClock(by: 1)
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(history.records.count, 1)
   }
 }

@@ -147,4 +147,28 @@ final class SessionHistoryTests: XCTestCase {
     currentTime = daysAgo(-20)  // 20 days later: the first one is now 100 days old
     XCTAssertEqual(makeHistory().records.count, 1)
   }
+
+  // MARK: - Day changes
+
+  func testTodayRedrawsAndResetsWhenTheDayChanges() {
+    let center = NotificationCenter()
+    let history = SessionHistory(
+      fileURL: nil,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      calendar: calendar, notificationCenter: center)
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+
+    var redraws = 0
+    let cancellable = history.objectWillChange.sink { redraws += 1 }
+    // 2026-03-11 00:00:30 UTC
+    currentTime = Date(timeIntervalSince1970: 1_773_187_230)
+    for name in SessionHistory.dayChangeNotifications {
+      center.post(name: name, object: nil)
+    }
+    XCTAssertEqual(redraws, 3)
+    XCTAssertEqual(
+      history.todayTotals(), SessionHistory.DayTotals(pomodoros: 0, focusSeconds: 0))
+    cancellable.cancel()
+  }
 }
