@@ -26,7 +26,8 @@
 "Could not turn off Start at Login: %@" = "Không thể tắt Khởi động cùng máy: %@";
 "Notifications denied in System Settings." = "Thông báo đã bị từ chối trong Cài đặt hệ thống.";
 "Open System Settings" = "Mở Cài đặt hệ thống";
-"Auto-start next session" = "Tự động bắt đầu phiên tiếp theo";
+"Auto-start breaks" = "Tự động bắt đầu phiên nghỉ";
+"Auto-start focus" = "Tự động bắt đầu phiên tập trung";
 "Auto-start on launch" = "Tự động chạy khi mở ứng dụng";
 "Keep break screen open until continued" = "Giữ màn hình nghỉ mở cho đến khi tiếp tục";
 "Keep the break overlay on screen until you continue manually." = "Giữ màn hình nghỉ hiển thị cho đến khi bạn chủ động tiếp tục.";
@@ -51,7 +52,8 @@
 "System" = "Hệ thống";
 "About & Support" = "Giới thiệu & Hỗ trợ";
 "Preview Alarm Sound" = "Nghe thử âm báo";
-"Start the next session automatically when the current one ends." = "Tự động bắt đầu phiên tiếp theo khi phiên hiện tại kết thúc.";
+"Start a break automatically when a focus session ends." = "Tự động bắt đầu phiên nghỉ khi phiên tập trung kết thúc.";
+"Start a focus session automatically when a break ends." = "Tự động bắt đầu phiên tập trung khi phiên nghỉ kết thúc.";
 "Start a focus session automatically when the app opens." = "Tự động bắt đầu phiên tập trung khi mở ứng dụng.";
 "Prevent your Mac from going to sleep during a focus session." = "Ngăn Mac chuyển sang chế độ ngủ khi đang trong phiên tập trung.";
 

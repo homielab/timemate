@@ -311,13 +311,13 @@ class PomodoroTimer: ObservableObject {
     defer { saveSnapshot() }
     isWaitingToContinue = false
     advanceToNextSession()
-    if !autoStartNextSession {
+    if state != .active {
       startTimer()
     }
   }
 
   /// Moves on to the session after the current one and starts it when
-  /// `start` (by default the "Auto-start next session" setting) is on.
+  /// `start` (by default the auto-start setting for that kind of session) is on.
   private func advanceToNextSession(start: Bool? = nil) {
     let next = SessionSequence.next(
       after: .init(
@@ -326,7 +326,7 @@ class PomodoroTimer: ObservableObject {
     currentSessionType = next.sessionType
     focusSessionsCompleted = next.focusSessionsCompleted
     resetForCurrentSession()
-    if start ?? autoStartNextSession {
+    if start ?? autoStart.shouldStart(next: next.sessionType) {
       startTimer()
     } else {
       state = .idle
@@ -405,7 +405,7 @@ class PomodoroTimer: ObservableObject {
     resetForCurrentSession()
 
     switch TimerRestorePlan.make(
-      from: snapshot, now: now(), autoStartNextSession: autoStartNextSession,
+      from: snapshot, now: now(), autoStart: autoStart,
       keepBreakScreenOpen: keepBreakScreenOpen)
     {
     case .idle:

@@ -22,7 +22,7 @@ enum TimerRestorePlan: Equatable {
   case expired(endDate: Date, duration: Int, startNext: Bool)
 
   static func make(
-    from snapshot: TimerSnapshot, now: Date, autoStartNextSession: Bool,
+    from snapshot: TimerSnapshot, now: Date, autoStart: AutoStart,
     keepBreakScreenOpen: Bool
   ) -> TimerRestorePlan {
     switch snapshot.state {
@@ -48,9 +48,12 @@ enum TimerRestorePlan: Equatable {
         SessionSequence.completion(
           of: snapshot.sessionType, keepBreakScreenOpen: keepBreakScreenOpen)
         == .waitOnBreakScreen
+      // Any break is followed by focus; focus by a short or long break.
+      let nextType: SessionType =
+        SessionSequence.isBreak(snapshot.sessionType) ? .focus : .shortBreak
       return .expired(
         endDate: savedEndDate, duration: snapshot.totalDuration,
-        startNext: autoStartNextSession && !waitsOnBreakScreen)
+        startNext: autoStart.shouldStart(next: nextType) && !waitsOnBreakScreen)
     }
   }
 }

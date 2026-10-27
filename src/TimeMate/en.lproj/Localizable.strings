@@ -26,7 +26,8 @@
 "Could not turn off Start at Login: %@" = "Could not turn off Start at Login: %@";
 "Notifications denied in System Settings." = "Notifications denied in System Settings.";
 "Open System Settings" = "Open System Settings";
-"Auto-start next session" = "Auto-start next session";
+"Auto-start breaks" = "Auto-start breaks";
+"Auto-start focus" = "Auto-start focus";
 "Auto-start on launch" = "Auto-start on launch";
 "Keep break screen open until continued" = "Keep break screen open until continued";
 "Keep the break overlay on screen until you continue manually." = "Keep the break overlay on screen until you continue manually.";
@@ -51,7 +52,8 @@
 "System" = "System";
 "About & Support" = "About & Support";
 "Preview Alarm Sound" = "Preview Alarm Sound";
-"Start the next session automatically when the current one ends." = "Start the next session automatically when the current one ends.";
+"Start a break automatically when a focus session ends." = "Start a break automatically when a focus session ends.";
+"Start a focus session automatically when a break ends." = "Start a focus session automatically when a break ends.";
 "Start a focus session automatically when the app opens." = "Start a focus session automatically when the app opens.";
 "Prevent your Mac from going to sleep during a focus session." = "Prevent your Mac from going to sleep during a focus session.";
 

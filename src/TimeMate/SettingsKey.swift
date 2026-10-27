@@ -9,7 +9,12 @@ enum SettingsKey {
   static let shortBreakDuration = "shortBreakDuration"
   static let longBreakDuration = "longBreakDuration"
   static let longBreakInterval = "longBreakInterval"
+  /// The old single switch; now only what an unset `autoStartBreaks` / `autoStartFocus` inherits.
   static let autoStartNextSession = "autoStartNextSession"
+  /// Start a break by itself when the session before it ends; unset = `autoStartNextSession`.
+  static let autoStartBreaks = "autoStartBreaks"
+  /// Start a focus session by itself when the break before it ends; unset = `autoStartNextSession`.
+  static let autoStartFocus = "autoStartFocus"
   static let keepBreakScreenOpen = "keepBreakScreenOpen"
   /// Sound after a focus session (`AlarmSound`); "None" plays nothing.
   static let alarmSound = "alarmSound"

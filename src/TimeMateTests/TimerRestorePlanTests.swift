@@ -18,10 +18,12 @@ final class TimerRestorePlanTests: XCTestCase {
   }
 
   private func plan(
-    _ snapshot: TimerSnapshot, autoStart: Bool = true, keepBreakScreenOpen: Bool = false
+    _ snapshot: TimerSnapshot, autoStart: Bool = true, keepBreakScreenOpen: Bool = false,
+    autoStartPolicy: AutoStart? = nil
   ) -> TimerRestorePlan {
     TimerRestorePlan.make(
-      from: snapshot, now: now, autoStartNextSession: autoStart,
+      from: snapshot, now: now,
+      autoStart: autoStartPolicy ?? AutoStart(breaks: autoStart, focus: autoStart),
       keepBreakScreenOpen: keepBreakScreenOpen)
   }
 
@@ -103,5 +105,17 @@ final class TimerRestorePlanTests: XCTestCase {
 
   func testActiveWithoutEndDateStaysIdle() {
     XCTAssertEqual(plan(snapshot(state: .active, end: nil)), .idle)
+  }
+
+  func testExpiredSessionStartsNextOnlyWhenItsKindIsOn() {
+    let focusEnded = snapshot(state: .active, type: .focus, end: now.addingTimeInterval(-60))
+    let breakEnded = snapshot(state: .active, type: .shortBreak, end: now.addingTimeInterval(-60))
+    let breaksOnly = AutoStart(breaks: true, focus: false)
+    XCTAssertEqual(
+      plan(focusEnded, autoStartPolicy: breaksOnly),
+      .expired(endDate: now.addingTimeInterval(-60), duration: 1500, startNext: true))
+    XCTAssertEqual(
+      plan(breakEnded, autoStartPolicy: breaksOnly),
+      .expired(endDate: now.addingTimeInterval(-60), duration: 1500, startNext: false))
   }
 }

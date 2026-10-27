@@ -6,6 +6,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Automation: **Auto-start next session** is now two switches, **Auto-start breaks** and
+  **Auto-start focus**, so breaks can run by themselves while you decide when to get back to
+  work (or the other way round). Until you change them, both follow your old setting.
 - Keyboard shortcuts in the popover: **Space** starts/pauses (not while typing in a duration
   field), **⌘,** opens or closes Settings, **⌘→** skips the session and **⌘R** resets it. Every
   button now has a tooltip, and VoiceOver reads the gear as "Settings" (expanded/collapsed).

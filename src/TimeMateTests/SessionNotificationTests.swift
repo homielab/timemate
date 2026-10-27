@@ -128,6 +128,35 @@ final class SessionNotificationTests: XCTestCase {
       posted.first?.content.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
   }
 
+  func testBreaksAutoStartButFocusWaits() {
+    var posted: [UNNotificationRequest] = []
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(2, forKey: SettingsKey.shortBreakDuration)
+    defaults.set(true, forKey: SettingsKey.autoStartBreaks)
+    defaults.set(false, forKey: SettingsKey.autoStartFocus)
+    defaults.set(false, forKey: SettingsKey.keepBreakScreenOpen)
+    defaults.set(0.0, forKey: SettingsKey.alarmVolume)
+    let timer = PomodoroTimer(
+      defaults: defaults,
+      now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(),
+      history: SessionHistory(fileURL: nil),
+      notificationCenter: NotificationCenter(),
+      postNotification: { posted.append($0) })
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(posted.count, 2)
+    XCTAssertEqual(
+      posted[0].content.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
+    // The focus session waits, so the end-of-break notification keeps "Start Next".
+    XCTAssertEqual(posted[1].content.categoryIdentifier, SessionNotification.categoryIdentifier)
+  }
+
   func testUnknownActionIdentifierMapsToNothing() {
     XCTAssertNil(SessionNotificationAction(rawValue: UNNotificationDefaultActionIdentifier))
     XCTAssertNil(SessionNotificationAction(rawValue: UNNotificationDismissActionIdentifier))

@@ -3,7 +3,10 @@
 import SwiftUI
 
 struct AutomationSection: View {
-  @AppStorage(SettingsKey.autoStartNextSession) private var autoStartNextSession = true
+  // Seeded from the stored switches (an unset one inherits the old single switch)
+  // and written back only when the user changes it.
+  @State private var autoStartBreaks = AutoStart(defaults: .standard).breaks
+  @State private var autoStartFocus = AutoStart(defaults: .standard).focus
   @AppStorage(SettingsKey.keepBreakScreenOpen) private var keepBreakScreenOpen = true
   @AppStorage(SettingsKey.autoStartOnLaunch) private var autoStartOnLaunch = false
 
@@ -11,8 +14,16 @@ struct AutomationSection: View {
 
   var body: some View {
     SettingsSection(titleKey: "Automation", systemImage: "play.circle") {
-      SettingsToggleRow(titleKey: "Auto-start next session", isOn: $autoStartNextSession)
-        .help("Start the next session automatically when the current one ends.")
+      SettingsToggleRow(titleKey: "Auto-start breaks", isOn: $autoStartBreaks)
+        .help("Start a break automatically when a focus session ends.")
+        .onChange(of: autoStartBreaks) { newValue in
+          UserDefaults.standard.set(newValue, forKey: SettingsKey.autoStartBreaks)
+        }
+      SettingsToggleRow(titleKey: "Auto-start focus", isOn: $autoStartFocus)
+        .help("Start a focus session automatically when a break ends.")
+        .onChange(of: autoStartFocus) { newValue in
+          UserDefaults.standard.set(newValue, forKey: SettingsKey.autoStartFocus)
+        }
       SettingsToggleRow(
         titleKey: "Keep break screen open until continued", isOn: $keepBreakScreenOpen
       )

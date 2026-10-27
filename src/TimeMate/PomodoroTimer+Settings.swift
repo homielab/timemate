@@ -16,9 +16,7 @@ extension PomodoroTimer {
   var longBreakInterval: Int {
     SessionCycle.sanitizedInterval(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int)
   }
-  var autoStartNextSession: Bool {
-    defaults.object(forKey: SettingsKey.autoStartNextSession) as? Bool ?? true
-  }
+  var autoStart: AutoStart { AutoStart(defaults: defaults) }
   var keepBreakScreenOpen: Bool {
     defaults.object(forKey: SettingsKey.keepBreakScreenOpen) as? Bool ?? true
   }
