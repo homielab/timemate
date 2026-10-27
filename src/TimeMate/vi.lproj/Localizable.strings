@@ -233,3 +233,8 @@
 "The session in progress will be lost." = "Phiên đang chạy sẽ bị mất.";
 "What are you working on?" = "Bạn đang làm gì?";
 "Saved with each focus session you complete" = "Lưu cùng mỗi phiên tập trung bạn hoàn thành";
+"%@ shortcut" = "Phím tắt %@";
+"Control" = "Control";
+"Option" = "Option";
+"Shift" = "Shift";
+"Command" = "Command";

@@ -78,6 +78,15 @@ final class HotKeyTests: XCTestCase {
 
   // MARK: - Key names
 
+  func testSpokenStringNamesModifiersInWords() throws {
+    let shortcut = HotKeyAction.startPause.defaultShortcut
+    XCTAssertEqual(shortcut.spokenString(bundle: try bundle("en")), "Control Option P")
+    let withCommand = HotKeyShortcut(
+      keyCode: UInt32(kVK_Space), modifiers: UInt32(cmdKey | shiftKey))
+    XCTAssertEqual(withCommand.spokenString(bundle: try bundle("en")), "Shift Command Space")
+    XCTAssertEqual(withCommand.spokenString(bundle: try bundle("vi")), "Shift Command Dấu cách")
+  }
+
   private func bundle(_ localization: String) throws -> Bundle {
     let path = try XCTUnwrap(
       Bundle(for: PomodoroTimer.self).path(forResource: localization, ofType: "lproj"))

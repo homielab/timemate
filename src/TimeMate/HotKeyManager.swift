@@ -153,6 +153,18 @@ struct HotKeyShortcut: Equatable {
     return prefix + Self.keyLabel(for: keyCode, bundle: bundle)
   }
 
+  /// "Control Option P": the shortcut as VoiceOver should say it, since "⌃⌥P" is read as symbols.
+  var spokenString: String { spokenString(bundle: .main) }
+
+  func spokenString(bundle: Bundle) -> String {
+    let names: [(Int, String)] = [
+      (controlKey, "Control"), (optionKey, "Option"), (shiftKey, "Shift"), (cmdKey, "Command"),
+    ]
+    let modifierNames = names.compactMap { modifiers & UInt32($0.0) != 0 ? $0.1 : nil }
+      .map { bundle.localizedString(forKey: $0, value: $0, table: nil) }
+    return (modifierNames + [Self.keyLabel(for: keyCode, bundle: bundle)]).joined(separator: " ")
+  }
+
   private static let keyLabels: [Int: String] = [
     kVK_ANSI_A: "A", kVK_ANSI_B: "B", kVK_ANSI_C: "C", kVK_ANSI_D: "D", kVK_ANSI_E: "E",
     kVK_ANSI_F: "F", kVK_ANSI_G: "G", kVK_ANSI_H: "H", kVK_ANSI_I: "I", kVK_ANSI_J: "J",

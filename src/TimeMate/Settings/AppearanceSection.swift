@@ -65,6 +65,7 @@ private struct CustomColorPicker: NSViewRepresentable {
     colorWell.action = #selector(context.coordinator.colorChanged(_:))
     colorWell.target = context.coordinator
     colorWell.color = NSColor(hex: hexColor) ?? .clear
+    colorWell.setAccessibilityLabel(NSLocalizedString("Background Color", comment: ""))
     return colorWell
   }
 

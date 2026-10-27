@@ -92,6 +92,10 @@ private struct HotKeyRecorder: View {
     .controlSize(.small)
     .disabled(hotKeys.isRecording && !isRecording)
     .help("Click to record a new shortcut")
+    .accessibilityLabel(
+      String(format: NSLocalizedString("%@ shortcut", comment: ""), action.title(bundle: .main))
+    )
+    .accessibilityValue(isRecording ? "" : hotKeys.shortcut(for: action).spokenString)
     .onDisappear(perform: stopRecording)
   }
 
