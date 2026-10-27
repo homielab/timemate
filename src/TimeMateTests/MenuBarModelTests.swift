@@ -119,11 +119,14 @@ final class MenuBarModelTests: XCTestCase {
     let controller = StatusItemController(
       timer: timer, menuBarStyle: .minutesSeconds, statusItem: statusItem)
     // Let the controller read the real VoiceOver state first, then pretend it's on.
-    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    drainMainQueue()
     controller.setAccessibilityLabelUpdates(enabled: true)
     timer.startTimer()
     tick()
-    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    XCTAssertTrue(
+      waitUntil {
+        statusItem.button?.accessibilityLabel() == controller.menuBarModel.accessibilityLabel
+      })
     XCTAssertEqual(
       statusItem.button?.accessibilityLabel(), controller.menuBarModel.accessibilityLabel)
     XCTAssertEqual(controller.menuBarModel.timeRemaining, 29)
@@ -135,11 +138,14 @@ final class MenuBarModelTests: XCTestCase {
     let controller = StatusItemController(
       timer: timer, menuBarStyle: .minutesOnly, statusItem: statusItem)
     // Let the controller read the real VoiceOver state first, then pretend it's on.
-    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    drainMainQueue()
     controller.setAccessibilityLabelUpdates(enabled: true)
     timer.startTimer()
     tick()
-    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    XCTAssertTrue(
+      waitUntil {
+        statusItem.button?.accessibilityLabel() == controller.menuBarModel.accessibilityLabel
+      })
     XCTAssertEqual(
       statusItem.button?.accessibilityLabel(), controller.menuBarModel.accessibilityLabel)
     XCTAssertEqual(controller.menuBarModel.timeRemaining, 29)
