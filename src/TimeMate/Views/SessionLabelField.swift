@@ -8,8 +8,42 @@ import SwiftUI
 struct SessionLabelField: View {
   @AppStorage(SettingsKey.sessionLabel) private var label = ""
   @FocusState private var isFocused: Bool
+  @EnvironmentObject var model: PopoverTimerModel
 
   var body: some View {
+    HStack(spacing: 2) {
+      field
+      recentMenu
+    }
+  }
+
+  /// Labels of the latest focus sessions, to pick one instead of typing it again.
+  private var recentMenu: some View {
+    let labels = model.timer.history.recentLabels()
+    return Menu {
+      if labels.isEmpty {
+        Text("No recent labels")
+      } else {
+        Section("Recent labels") {
+          ForEach(labels, id: \.self) { recent in
+            Button(recent) { label = recent }
+          }
+        }
+        Divider()
+        Button("Clear label") { label = "" }
+          .disabled(label.isEmpty)
+      }
+    } label: {
+      Image(systemName: "chevron.down")
+    }
+    .menuStyle(.borderlessButton)
+    .menuIndicator(.hidden)
+    .fixedSize()
+    .help("Recent labels")
+    .accessibilityLabel("Recent labels")
+  }
+
+  private var field: some View {
     TextField("What are you working on?", text: $label)
       .textFieldStyle(.roundedBorder)
       .multilineTextAlignment(.center)

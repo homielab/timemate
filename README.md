@@ -158,7 +158,7 @@ Sources are in `src/TimeMate/`:
     texts, plural forms), `DailyGoal.swift` (goal and streak display).
   - Sessions: `SessionCycle.swift` (cycle dots, VoiceOver clock), `SessionDuration.swift` (typed
     minutes), `SessionLabel.swift` and `Views/SessionLabelField.swift` ("What are you working
-    on?"), `SessionNotification.swift` (the "session complete" notification and its actions),
+    on?" and its Recent labels menu), `SessionNotification.swift` (the "session complete" notification and its actions),
     `AutoStart.swift` (auto-start rules), `SessionType+Style.swift` (color and icon per session).
   - Popover: `PopoverTimerModel.swift` (what the popover observes), `PopoverShortcuts.swift`
     (keys and the Restart confirmation).

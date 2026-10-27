@@ -231,6 +231,9 @@
 "The session in progress will be lost." = "The session in progress will be lost.";
 "What are you working on?" = "What are you working on?";
 "Saved with each focus session you complete" = "Saved with each focus session you complete";
+"Recent labels" = "Recent labels";
+"No recent labels" = "No recent labels";
+"Clear label" = "Clear label";
 "%@ shortcut" = "%@ shortcut";
 "Control" = "Control";
 "Option" = "Option";

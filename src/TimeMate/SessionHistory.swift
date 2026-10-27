@@ -108,6 +108,23 @@ final class SessionHistory: ObservableObject {
     save()
   }
 
+  /// The labels of the latest focus sessions, newest first, each once (compared
+  /// ignoring case, keeping the newest spelling), at most `limit`.
+  func recentLabels(limit: Int = 8) -> [String] {
+    Self.recentLabels(in: records, limit: limit)
+  }
+
+  static func recentLabels(in records: [Record], limit: Int = 8) -> [String] {
+    var seen = Set<String>()
+    var labels: [String] = []
+    for record in records.sorted(by: { $0.end > $1.end }) where record.kind == .focus {
+      guard labels.count < limit else { break }
+      guard let label = SessionLabel.normalized(record.label) else { continue }
+      if seen.insert(label.lowercased()).inserted { labels.append(label) }
+    }
+    return labels
+  }
+
   /// Deletes all recorded sessions.
   func reset() {
     records = []

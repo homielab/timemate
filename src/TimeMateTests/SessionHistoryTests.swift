@@ -43,6 +43,46 @@ final class SessionHistoryTests: XCTestCase {
     calendar.date(byAdding: .day, value: -days, to: currentTime)!
   }
 
+  // MARK: - Recent labels
+
+  func testRecentLabelsDedupeIgnoringCaseKeepingNewestSpelling() {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(5), label: "write report")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(4), label: "Email")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1), label: "Write Report")
+    XCTAssertEqual(history.recentLabels(), ["Write Report", "Email"])
+  }
+
+  func testRecentLabelsNewestFirstEvenWhenRecordedOutOfOrder() {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1), label: "B")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(3), label: "A")
+    XCTAssertEqual(history.recentLabels(), ["B", "A"])
+  }
+
+  func testRecentLabelsLimit() {
+    let history = makeHistory()
+    for index in 0..<5 {
+      history.recordCompletedSession(
+        .focus, duration: 1500, end: hoursAgo(Double(10 - index)), label: "L\(index)")
+    }
+    XCTAssertEqual(history.recentLabels(limit: 3), ["L4", "L3", "L2"])
+    XCTAssertEqual(history.recentLabels().count, 5)
+  }
+
+  func testRecentLabelsSkipBreaksAndMissingLabels() {
+    let history = makeHistory()
+    history.recordCompletedSession(.shortBreak, duration: 300, end: hoursAgo(1), label: "Break")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(2), label: nil)
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(3), label: "  ")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(4), label: "Code")
+    XCTAssertEqual(history.recentLabels(), ["Code"])
+  }
+
+  func testRecentLabelsEmptyHistory() {
+    XCTAssertEqual(makeHistory().recentLabels(), [])
+  }
+
   // MARK: - Write / read
 
   func testRecordsArePersistedAndReadBack() throws {

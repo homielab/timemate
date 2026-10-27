@@ -231,6 +231,9 @@
 "The session in progress will be lost." = "Phiên đang chạy sẽ bị mất.";
 "What are you working on?" = "Bạn đang làm gì?";
 "Saved with each focus session you complete" = "Lưu cùng mỗi phiên tập trung bạn hoàn thành";
+"Recent labels" = "Nhãn gần đây";
+"No recent labels" = "Chưa có nhãn gần đây";
+"Clear label" = "Xoá nhãn";
 "%@ shortcut" = "Phím tắt %@";
 "Control" = "Control";
 "Option" = "Option";
