@@ -100,16 +100,13 @@ class BreakOverlayWindowController: NSObject {
     eventMonitor = nil
   }
 
+  /// Re-creates the windows for the new screen layout. A break screen that is fading out
+  /// is left to close: rebuilding it would cancel the close and bring it back. The
+  /// countdown keeps running across the rebuild.
   private func handleScreenConfigurationChange() {
-    // Re-create windows when screens change
-    if !windows.isEmpty {
-      let isVisible = windows.first?.isVisible ?? false
-
-      if isVisible {
-        createWindows()
-        showWindows(animated: false)  // Snap to new layout
-      }
-    }
+    guard isShowingOverlay, windows.first?.isVisible == true else { return }
+    createWindows()
+    showWindows(animated: false)  // Snap to new layout
   }
 
   private func createWindows() {
@@ -251,6 +248,7 @@ class BreakOverlayWindowController: NSObject {
       let isNewlyShown = windows.isEmpty
       if windows.isEmpty {
         createWindows()
+        startBreakCountdown()
       }
       showWindows(animated: animated)
       if isNewlyShown && !isWaitingToContinue {
@@ -318,6 +316,16 @@ class BreakOverlayWindowController: NSObject {
     }
   }
 
+  /// Starts the skip delay of a break screen that has just appeared. The session type
+  /// changes before the timer resets to the break length, so wait for the current change
+  /// to finish: that reset must not count as a second of the delay.
+  private func startBreakCountdown() {
+    DispatchQueue.main.async { [weak self] in
+      guard let self, self.isShowingOverlay else { return }
+      self.model.beginBreakScreen()
+    }
+  }
+
   private func announceBreakStart() {
     // The session type changes before the timer resets to the break length, so
     // read the remaining time once the current change has finished.
@@ -365,7 +373,10 @@ class BreakOverlayWindowController: NSObject {
           if let primary = self.primaryWindow, windowsToClose.contains(primary) {
             self.primaryWindow = nil
           }
-          if self.windows.isEmpty { self.stopObserving() }
+          if self.windows.isEmpty {
+            self.stopObserving()
+            self.model.setLive(false)
+          }
         }
       }
     } else {
@@ -374,6 +385,7 @@ class BreakOverlayWindowController: NSObject {
       windows.removeAll()
       primaryWindow = nil
       stopObserving()
+      model.setLive(false)
     }
   }
 

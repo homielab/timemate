@@ -49,6 +49,13 @@ final class BreakOverlayModel: ObservableObject {
     countdown.setLive(live)
   }
 
+  /// Starts the countdown for a break screen that has just appeared: the skip delay
+  /// starts over. Rebuilding the windows (a display change) must not call this.
+  func beginBreakScreen() {
+    countdown.resetSkipCountdown()
+    countdown.setLive(true)
+  }
+
   func extendBreak(by minutes: Int = BreakOverlayAccessibility.extendMinutes) {
     timer.extend(by: minutes)
   }
@@ -126,6 +133,8 @@ final class BreakOverlayCountdown: ObservableObject {
     skipCountdown.reset(skipDelay: delay)
   }
 
+  /// Follows the timer while the break screen is up. Calling it again with the same value
+  /// does nothing, and turning it back on keeps the skip delay where it was.
   func setLive(_ live: Bool) {
     guard live != isLive else { return }
     guard live else {
@@ -138,7 +147,6 @@ final class BreakOverlayCountdown: ObservableObject {
     // Catch up immediately
     timeRemaining = timer.timeRemaining
     currentTime = now()
-    resetSkipCountdown()
 
     timerSubscription = timer.$timeRemaining
       .sink { [weak self] remaining in

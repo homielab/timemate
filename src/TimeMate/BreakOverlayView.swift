@@ -107,7 +107,6 @@ struct BreakOverlayView: View {
       }
     }
     .onAppear {
-      model.setLive(true)
       isAnimating = true
       currentTip = RelaxationTips.random()
     }
@@ -115,9 +114,6 @@ struct BreakOverlayView: View {
       if model.isWaitingToContinue {
         model.continueWork()
       }
-    }
-    .onDisappear {
-      model.setLive(false)
     }
   }
 }

@@ -123,6 +123,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Connecting or disconnecting a display (or Sidecar/AirPlay) during a break no longer restarts the "Skip available in N" countdown or stops the break screen's clock, and no longer brings back a break screen that was already closing after the break ended or was skipped.
 - Global keyboard shortcuts keep working after changing the language or resetting all settings
   (the app restart briefly ran two copies, and the new one lost ⌃⌥P/⌃⌥S and Settings blamed
   another app). Shortcuts that are taken are tried again a few seconds after launch and whenever

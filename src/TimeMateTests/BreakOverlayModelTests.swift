@@ -152,4 +152,34 @@ final class BreakOverlayModelTests: XCTestCase {
     XCTAssertEqual(model.countdown.skipSecondsRemaining, 0)
     XCTAssertTrue(model.countdown.canSkip)
   }
+
+  func testGoingLiveAgainKeepsTheSkipCountdown() {
+    timer.startTimer()
+    timer.skipSession()
+    model.beginBreakScreen()
+    runTicks(3)
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 2)
+
+    model.setLive(false)
+    model.setLive(true)
+    model.setLive(true)
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 2)
+    XCTAssertTrue(model.countdown.isLive)
+
+    runTicks(1)
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 1)
+  }
+
+  func testNewBreakScreenStartsTheSkipDelayOver() {
+    timer.startTimer()
+    timer.skipSession()
+    model.beginBreakScreen()
+    runTicks(3)
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 2)
+
+    model.setLive(false)
+    model.beginBreakScreen()
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 5)
+    XCTAssertTrue(model.countdown.isLive)
+  }
 }
