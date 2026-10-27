@@ -45,14 +45,23 @@ final class StatisticsTextTests: XCTestCase {
   func testEnglishMonthTotal() throws {
     let en = try bundle("en")
     XCTAssertEqual(
-      StatisticsText.total(pomodoros: 40, minutes: 1000, days: 30, bundle: en),
-      "Month: 40 pomodoros · \(NumberFormatter.localizedString(from: 1000, number: .decimal)) min")
+      StatisticsText.total(
+        pomodoros: 40, minutes: 1000, days: 30, bundle: en, locale: Locale(identifier: "en_US")),
+      "Month: 40 pomodoros · 1,000 min")
     XCTAssertEqual(
       StatisticsText.total(pomodoros: 1, minutes: 25, days: 30, bundle: en),
       "Month: 1 pomodoro · 25 min")
     XCTAssertEqual(
       StatisticsText.total(pomodoros: 2, minutes: 50, days: 7, bundle: en),
       "Week: 2 pomodoros · 50 min")
+  }
+
+  func testMonthTotalGroupsDigitsByTheGivenLocale() throws {
+    let vi = try bundle("vi")
+    XCTAssertEqual(
+      StatisticsText.total(
+        pomodoros: 40, minutes: 1000, days: 30, bundle: vi, locale: Locale(identifier: "vi_VN")),
+      "Tháng: 40 pomodoro · 1.000 phút")
   }
 
   func testEnglishSpokenDay() throws {
