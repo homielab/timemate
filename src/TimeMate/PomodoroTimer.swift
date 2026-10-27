@@ -31,6 +31,9 @@ class PomodoroTimer: ObservableObject {
   let history: SessionHistory
   /// Hands a "session complete" notification to the system; tests capture it.
   let postNotification: (UNNotificationRequest) -> Void
+  /// Takes the "session complete" notification out of Notification Center once
+  /// the user moves on, so its buttons can't act on a later session; tests count calls.
+  let removeSessionNotifications: () -> Void
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
 
@@ -77,10 +80,12 @@ class PomodoroTimer: ObservableObject {
     postNotification: @escaping (UNNotificationRequest) -> Void = {
       UNUserNotificationCenter.current().add($0)
     },
+    removeSessionNotifications: @escaping () -> Void = SessionNotification.removeDelivered,
     playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) }
   ) {
     self.defaults = defaults
     self.postNotification = postNotification
+    self.removeSessionNotifications = removeSessionNotifications
     self.playSound = playSound
     self.now = now
     self.uptime = uptime
@@ -127,7 +132,15 @@ class PomodoroTimer: ObservableObject {
     #endif
   }
 
+  /// Starts or resumes the current session for the user.
   func startTimer() {
+    removeSessionNotifications()
+    beginSession()
+  }
+
+  /// Starts or resumes the current session; also the auto-start after a
+  /// session ends, which must keep the notification it has just posted.
+  private func beginSession() {
     defer { saveSnapshot() }
     if state != .paused {
       resetForCurrentSession()
@@ -293,6 +306,7 @@ class PomodoroTimer: ObservableObject {
 
   func stopTimer() {
     defer { saveSnapshot() }
+    removeSessionNotifications()
     isWaitingToContinue = false
     state = .idle
     endDate = nil
@@ -302,6 +316,7 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
+    removeSessionNotifications()
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
@@ -310,6 +325,7 @@ class PomodoroTimer: ObservableObject {
 
   func restartCycle() {
     defer { saveSnapshot() }
+    removeSessionNotifications()
     isWaitingToContinue = false
     state = .idle
     focusSessionsCompleted = 0
@@ -321,10 +337,11 @@ class PomodoroTimer: ObservableObject {
 
   func continueWork() {
     defer { saveSnapshot() }
+    removeSessionNotifications()
     isWaitingToContinue = false
     advanceToNextSession()
     if state != .active {
-      startTimer()
+      beginSession()
     }
   }
 
@@ -339,7 +356,7 @@ class PomodoroTimer: ObservableObject {
     focusSessionsCompleted = next.focusSessionsCompleted
     resetForCurrentSession()
     if start ?? autoStart.shouldStart(next: next.sessionType) {
-      startTimer()
+      beginSession()
     } else {
       state = .idle
     }

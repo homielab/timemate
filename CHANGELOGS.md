@@ -121,6 +121,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Start Next** / **Skip** on an old "session complete" notification no longer act on the
+  session you are running: TimeMate removes that notification from Notification Center when you
+  start, skip, reset or restart, and a new one replaces the previous.
 - Waking the Mac from a long sleep no longer rings the alarm or shows a "session complete" notification for a session that ended more than 5 minutes ago; the session just ends quietly.
 - The break screen no longer rescans the system window list on every unrelated settings write
   (timer state, alarm volume, colors); dragging the volume slider is smooth again during a break.

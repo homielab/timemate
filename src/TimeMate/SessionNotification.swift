@@ -152,11 +152,23 @@ enum SessionNotification {
       identifier: dailyGoalIdentifier, content: dailyGoalContent(goal: goal), trigger: nil)
   }
 
+  /// Identifier of every "session complete" notification: a new one replaces
+  /// the previous, so Notification Center never holds buttons for an older session.
+  static let sessionCompleteIdentifier = "com.homielab.timemate.sessionComplete"
+
+  /// Removes the "session complete" notification from Notification Center
+  /// (the user has moved on), leaving the daily goal one and other apps' alone.
+  static func removeDelivered() {
+    let center = UNUserNotificationCenter.current()
+    center.removeDeliveredNotifications(withIdentifiers: [sessionCompleteIdentifier])
+    center.removePendingNotificationRequests(withIdentifiers: [sessionCompleteIdentifier])
+  }
+
   /// The request that shows the notification right away.
   static func request(
     forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
     autoStarted: Bool, breakThroughFocus: Bool, label: String? = nil,
-    identifier: String = UUID().uuidString
+    identifier: String = sessionCompleteIdentifier
   ) -> UNNotificationRequest {
     UNNotificationRequest(
       identifier: identifier,

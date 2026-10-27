@@ -17,6 +17,8 @@ final class PomodoroTimerTests: XCTestCase {
   private var currentUptime: TimeInterval = 0
   private var history: SessionHistory!
   private var timer: PomodoroTimer!
+  /// How often the timer took the "session complete" notification away.
+  private var notificationRemovals = 0
 
   override func setUp() {
     super.setUp()
@@ -27,6 +29,7 @@ final class PomodoroTimerTests: XCTestCase {
     clockCenter = NotificationCenter()
     distributedCenter = NotificationCenter()
     currentUptime = 50_000
+    notificationRemovals = 0
     history = SessionHistory(
       fileURL: nil,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) })
@@ -65,7 +68,8 @@ final class PomodoroTimerTests: XCTestCase {
       distributedNotificationCenter: distributedCenter,
       history: history,
       notificationCenter: clockCenter,
-      uptime: { [weak self] in self?.currentUptime ?? 0 })
+      uptime: { [weak self] in self?.currentUptime ?? 0 },
+      removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 })
   }
 
   /// Advances the fake clock one second per tick, like the real 1 s timer.
@@ -500,6 +504,7 @@ final class PomodoroTimerTests: XCTestCase {
       notificationCenter: clockCenter,
       uptime: { [weak self] in self?.currentUptime ?? 0 },
       postNotification: { _ in posts += 1 },
+      removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
       playSound: { _, _ in sounds += 1 })
     return (alertTimer, { sounds }, { posts })
   }
@@ -1133,5 +1138,71 @@ final class PomodoroTimerTests: XCTestCase {
     RunLoop.main.run(until: Date().addingTimeInterval(1.5))
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
     XCTAssertEqual(history.records.count, 1)
+  }
+
+  // MARK: - Old "session complete" notifications
+
+  func testStartSkipResetAndRestartRemoveTheSessionNotification() {
+    timer.startTimer()
+    XCTAssertEqual(notificationRemovals, 1)
+    timer.skipSession()
+    XCTAssertEqual(notificationRemovals, 2)
+    timer.stopTimer()
+    XCTAssertEqual(notificationRemovals, 3)
+    timer.restartCycle()
+    XCTAssertEqual(notificationRemovals, 4)
+  }
+
+  func testIdleTicksPauseAndLaunchDoNotRemoveNotifications() {
+    runTicks(timer, 3)
+    timer.pauseTimer()
+    XCTAssertEqual(notificationRemovals, 0)
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    XCTAssertEqual(notificationRemovals, 1)
+  }
+
+  func testAutoStartKeepsTheNotificationItJustPosted() {
+    let (alertTimer, _, posts) = makeAlertTimer()
+    alertTimer.startTimer()
+    XCTAssertEqual(notificationRemovals, 1)
+    runTicks(alertTimer, 3)
+    XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
+    XCTAssertEqual(alertTimer.state, .active)
+    XCTAssertEqual(posts(), 1)
+    XCTAssertEqual(notificationRemovals, 1)
+  }
+
+  func testContinueWorkRemovesTheSessionNotification() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertEqual(notificationRemovals, 1)
+    timer.continueWork()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(notificationRemovals, 2)
+  }
+
+  func testSkipOnAFreshNotificationStillSkipsTheAutoStartedSession() {
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    timer.handleNotificationAction(.skip)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(notificationRemovals, 2)
+  }
+
+  func testStartNextOnAFreshNotificationStartsTheWaitingSession() {
+    timer = makeTimer(autoStart: false)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.state, .idle)
+    timer.handleNotificationAction(.startNext)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(notificationRemovals, 2)
   }
 }

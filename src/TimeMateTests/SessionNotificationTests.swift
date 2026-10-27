@@ -222,6 +222,18 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(request.content.categoryIdentifier, SessionNotification.categoryIdentifier)
   }
 
+  func testSessionCompleteRequestsShareOneIdentifier() {
+    let first = SessionNotification.request(
+      forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false,
+      breakThroughFocus: true)
+    let second = SessionNotification.request(
+      forCompleted: .shortBreak, next: .focus, minutes: 25, autoStarted: true,
+      breakThroughFocus: true)
+    XCTAssertEqual(first.identifier, SessionNotification.sessionCompleteIdentifier)
+    XCTAssertEqual(second.identifier, first.identifier)
+    XCTAssertNotEqual(first.identifier, SessionNotification.dailyGoalIdentifier)
+  }
+
   private func postedRequests(breakThroughFocus: Bool?, notificationsEnabled: Bool = true)
     -> [UNNotificationRequest]
   {
