@@ -76,10 +76,12 @@ final class BreakOverlayCountdown: ObservableObject {
   private let defaults: UserDefaults
   private let now: () -> Date
   private var timerSubscription: AnyCancellable?
+  private var stateSubscription: AnyCancellable?
   private var clock: OverlayClock?
   private var clockCancellable: AnyCancellable?
 
   var isLive: Bool { timerSubscription != nil }
+  var isClockRunning: Bool { clock?.isRunning ?? false }
 
   var canSkip: Bool { skipCountdown.canSkip }
   var skipSecondsRemaining: Int { skipCountdown.remainingSeconds }
@@ -128,9 +130,8 @@ final class BreakOverlayCountdown: ObservableObject {
     guard live != isLive else { return }
     guard live else {
       timerSubscription = nil
-      clock?.stop()
-      clock = nil
-      clockCancellable = nil
+      stateSubscription = nil
+      stopClock()
       return
     }
 
@@ -153,7 +154,21 @@ final class BreakOverlayCountdown: ObservableObject {
         }
       }
 
-    // OverlayClock drives wall clock when timer is not actively ticking (e.g. waiting to continue)
+    stateSubscription = timer.$state.removeDuplicates()
+      .sink { [weak self] state in self?.updateClock(for: state) }
+    updateClock(for: timer.state)
+  }
+
+  /// The wall clock drives the countdown only when the timer is not active (waiting to
+  /// continue, paused). An active timer already publishes every second, so a second clock
+  /// would wake the Mac twice a second. `state` is passed in because `$state` fires before
+  /// the new value is stored.
+  private func updateClock(for state: PomodoroState) {
+    guard isLive, state != .active else {
+      stopClock()
+      return
+    }
+    guard clock == nil else { return }
     let overlayClock = OverlayClock()
     clockCancellable = overlayClock.$now.dropFirst().sink { [weak self] date in
       guard let self else { return }
@@ -162,6 +177,12 @@ final class BreakOverlayCountdown: ObservableObject {
       }
     }
     overlayClock.start()
-    self.clock = overlayClock
+    clock = overlayClock
+  }
+
+  private func stopClock() {
+    clock?.stop()
+    clock = nil
+    clockCancellable = nil
   }
 }

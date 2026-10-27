@@ -31,7 +31,8 @@ final class BreakOverlayModelTests: XCTestCase {
       defaults: defaults,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil))
+      history: SessionHistory(fileURL: nil),
+      isFullscreenProbe: { false })
 
     model = BreakOverlayModel(
       timer: timer, defaults: defaults,
@@ -100,6 +101,39 @@ final class BreakOverlayModelTests: XCTestCase {
 
     timer.skipSession()
     XCTAssertEqual(model.currentSessionType, .shortBreak)
+  }
+
+  func testWallClockRunsOnlyWhileTheTimerIsNotActive() {
+    timer.startTimer()
+    timer.skipSession()
+    model.setLive(true)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertFalse(model.countdown.isClockRunning, "an active timer already ticks every second")
+
+    timer.pauseTimer()
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertTrue(model.countdown.isClockRunning)
+
+    timer.startTimer()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertFalse(model.countdown.isClockRunning)
+
+    model.setLive(false)
+    XCTAssertFalse(model.countdown.isClockRunning)
+  }
+
+  func testWallClockRunsWhileWaitingOnTheBreakScreen() {
+    timer.startTimer()
+    timer.skipSession()
+    model.setLive(true)
+    runTicks(timer.timeRemaining)
+
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertTrue(model.countdown.isClockRunning)
+
+    model.setLive(false)
+    XCTAssertFalse(model.countdown.isClockRunning)
   }
 
   func testSkipCountdownTicksWithBreak() {

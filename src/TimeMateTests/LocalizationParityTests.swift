@@ -45,6 +45,17 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// Siri phrases have no English table: the phrase itself is the English. Each one
+  /// listed in `TimeMateShortcutPhrases` needs a Vietnamese translation, and no stray one.
+  func testSiriPhrasesHaveAVietnameseTranslation() throws {
+    let vietnamese = try strings("AppShortcuts", "vi")
+    let listed = Set(TimeMateShortcutPhrases.keys)
+    XCTAssertEqual(listed.count, TimeMateShortcutPhrases.keys.count, "duplicate phrase key")
+    XCTAssertEqual(listed.subtracting(vietnamese.keys).sorted(), [], "missing in vi.lproj")
+    XCTAssertEqual(
+      Set(vietnamese.keys).subtracting(listed).sorted(), [], "not in TimeMateShortcutPhrases")
+  }
+
   // MARK: - Plurals (Localizable.stringsdict)
 
   private func pluralRules(_ localization: String) throws -> [String: [String: Any]] {

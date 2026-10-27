@@ -122,6 +122,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Break screen battery use**: while a break counts down, the break screen no longer runs a second one-second clock next to the timer, so the Mac wakes up half as often during breaks. The clock still runs when the break is paused or waiting for Continue Work.
 - **Skip while idle** no longer counts a focus session you never started: the cycle dots and VoiceOver ("1 of 4 focus sessions done") stay put and the long break does not come early. Skipping a running or paused focus session still counts it.
 - **Exported CSV files** (daily and sessions) now start with a UTF-8 byte order mark, so Excel shows Vietnamese and other accented labels correctly instead of garbled text.
 - **Auto-start focus** now works when the break screen is off (or held back by a full-screen app): a finished break no longer waits silently for "Continue Work". With the break screen showing and "Keep break screen open until continued" on, nothing changes. Settings → Automation explains it under Auto-start focus.

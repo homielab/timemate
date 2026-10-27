@@ -104,6 +104,7 @@ final class OverlayClock: ObservableObject {
     guard timer == nil else { return }
     now = Date()
     let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.now = Date() }
+    timer.tolerance = TickMode.tolerance
     RunLoop.main.add(timer, forMode: .common)
     self.timer = timer
   }

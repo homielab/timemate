@@ -170,6 +170,23 @@ struct GetTodayProgressIntent: AppIntent {
   }
 }
 
+/// The keys of the Siri phrases in `TimeMateShortcuts`, as they are written in
+/// `AppShortcuts.strings` (`${applicationName}` is the app name). Keep in step with
+/// `appShortcuts`: `LocalizationParityTests` checks the Vietnamese table has each one.
+enum TimeMateShortcutPhrases {
+  static let keys = [
+    "Start ${applicationName}",
+    "Start a focus session in ${applicationName}",
+    "Pause ${applicationName}",
+    "Skip session in ${applicationName}",
+    "Reset ${applicationName}",
+    "How much time is left in ${applicationName}",
+    "${applicationName} status",
+    "Today's progress in ${applicationName}",
+    "${applicationName} progress today",
+  ]
+}
+
 struct TimeMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(

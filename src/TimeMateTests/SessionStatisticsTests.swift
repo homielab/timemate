@@ -335,11 +335,38 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertTrue(vietnamese.lowercased().contains("thứ hai"), vietnamese)
   }
 
+  func testShortDayLabelFollowsTheGivenLocale() {
+    let utc = calendar("UTC")
+    let monday = date(2026, 3, 9, in: utc)
+
+    let english = StatisticsFormat.dayLabel(monday, calendar: utc, locale: Locale(identifier: "en"))
+    XCTAssertTrue(english.contains("Mon"), english)
+    XCTAssertTrue(english.contains("9"), english)
+
+    let vietnamese = StatisticsFormat.dayLabel(
+      monday, calendar: utc, locale: Locale(identifier: "vi"))
+    XCTAssertTrue(vietnamese.contains("Thứ 2"), vietnamese)
+    XCTAssertTrue(vietnamese.contains("9"), vietnamese)
+  }
+
   func testDefaultFileName() {
     let utc = calendar("UTC")
     XCTAssertEqual(
       StatisticsExporter.defaultFileName(today: date(2026, 3, 10, 15, in: utc), calendar: utc),
       "TimeMate-statistics-2026-03-10.csv")
+  }
+
+  func testSessionsFileNameUsesTheLocalDayNearMidnight() {
+    let utc = calendar("UTC")
+    let hanoi = calendar("Asia/Ho_Chi_Minh")
+    // 00:30 in Hà Nội on 21 Oct is still 17:30 UTC on 20 Oct.
+    let justAfterMidnight = date(2026, 10, 21, 0, 30, in: hanoi)
+    XCTAssertEqual(
+      StatisticsExporter.sessionsFileName(today: justAfterMidnight, calendar: hanoi),
+      "TimeMate-sessions-2026-10-21.csv")
+    XCTAssertEqual(
+      StatisticsExporter.sessionsFileName(today: justAfterMidnight, calendar: utc),
+      "TimeMate-sessions-2026-10-20.csv")
   }
 
   func testExportDataStartsWithUTF8BOMAndKeepsTheTextVerbatim() {
