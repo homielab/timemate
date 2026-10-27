@@ -153,4 +153,32 @@ final class MenuBarModelTests: XCTestCase {
     XCTAssertTrue(
       (statusItem.button?.accessibilityLabel() ?? "").contains(String(29)))
   }
+
+  func testToolTipIsTheVoiceOverSentenceAndFollowsTheTimer() throws {
+    let statusItem = NSStatusBar.system.statusItem(withLength: 24)
+    defer { NSStatusBar.system.removeStatusItem(statusItem) }
+    let button = try XCTUnwrap(statusItem.button)
+    let controller = StatusItemController(
+      timer: timer, menuBarStyle: .iconOnly, statusItem: statusItem)
+
+    // Idle: the tooltip uses the same ready-state sentence as VoiceOver.
+    let idle = controller.view(
+      button, stringForToolTip: 0, point: .zero, userData: nil)
+    XCTAssertEqual(idle, controller.menuBarModel.accessibilityLabel)
+    XCTAssertEqual(
+      idle,
+      StatusItemMenu.accessibilityLabel(
+        sessionType: timer.currentSessionType, state: .idle,
+        secondsRemaining: timer.timeRemaining, isBreakPostponed: false,
+        isWaitingToContinue: false))
+
+    // Running: the text is computed on hover, so it reflects the current time.
+    timer.startTimer()
+    tick()
+    let running = controller.view(
+      button, stringForToolTip: 0, point: .zero, userData: nil)
+    XCTAssertEqual(running, controller.menuBarModel.accessibilityLabel)
+    XCTAssertTrue(running.hasPrefix("TimeMate, Focus, "), running)
+    XCTAssertTrue(running.hasSuffix(" remaining"), running)
+  }
 }

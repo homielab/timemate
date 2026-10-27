@@ -15,6 +15,7 @@ final class StatusItemController: NSObject {
   private let menuBarHostingView: PassThroughHostingView
   private var accessibilityLabelUpdates: AnyCancellable?
   private var voiceOverObservation: NSKeyValueObservation?
+  private var toolTipTag: NSView.ToolTipTag?
   private(set) var isVoiceOverRunning = false
 
   var onTogglePopover: (() -> Void)?
@@ -71,6 +72,27 @@ final class StatusItemController: NSObject {
     menuBarHostingView.rootView = AnyView(MenuBarView(model: menuBarModel, style: style))
     menuBarHostingView.frame = NSRect(
       x: 0, y: 0, width: width, height: NSStatusBar.system.thickness)
+    updateToolTip(width: width)
+  }
+
+  /// Hovering the item shows the same sentence VoiceOver reads, e.g. "TimeMate,
+  /// Focus, 12 minutes, 34 seconds remaining". The text is produced when the
+  /// tooltip appears (`view(_:stringForToolTip:...)`), so nothing runs per tick.
+  private func updateToolTip(width: CGFloat) {
+    guard let button = statusItem.button else { return }
+    if let toolTipTag {
+      button.removeToolTip(toolTipTag)
+    }
+    toolTipTag = button.addToolTip(
+      NSRect(x: 0, y: 0, width: width, height: NSStatusBar.system.thickness),
+      owner: self, userData: nil)
+  }
+
+  func view(
+    _ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint,
+    userData data: UnsafeMutableRawPointer?
+  ) -> String {
+    menuBarModel.accessibilityLabel
   }
 
   /// Left click toggles the popover; right click (or Control-click) opens the menu.
