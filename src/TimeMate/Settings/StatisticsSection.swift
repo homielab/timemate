@@ -292,6 +292,11 @@ enum StatisticsExporter {
       .replacingOccurrences(of: "statistics", with: "sessions")
   }
 
+  /// The file bytes: a UTF-8 BOM first so Excel reads non-ASCII labels as UTF-8.
+  static func data(for csv: String) -> Data {
+    Data([0xEF, 0xBB, 0xBF]) + Data(csv.utf8)
+  }
+
   static func export(_ csv: String, fileName: String = defaultFileName()) {
     let panel = NSSavePanel()
     panel.allowedContentTypes = [.commaSeparatedText]
@@ -300,7 +305,7 @@ enum StatisticsExporter {
     NSApp.activate(ignoringOtherApps: true)
     guard panel.runModal() == .OK, let url = panel.url else { return }
     do {
-      try Data(csv.utf8).write(to: url, options: .atomic)
+      try data(for: csv).write(to: url, options: .atomic)
     } catch {
       let alert = NSAlert(error: error)
       alert.runModal()

@@ -341,6 +341,15 @@ final class SessionStatisticsTests: XCTestCase {
       StatisticsExporter.defaultFileName(today: date(2026, 3, 10, 15, in: utc), calendar: utc),
       "TimeMate-statistics-2026-03-10.csv")
   }
+
+  func testExportDataStartsWithUTF8BOMAndKeepsTheTextVerbatim() {
+    let csv = "start,label\r\n2026-03-10T08:00:00Z,Viết báo cáo\r\n"
+    let data = StatisticsExporter.data(for: csv)
+    XCTAssertEqual(Array(data.prefix(3)), [0xEF, 0xBB, 0xBF])
+    XCTAssertEqual(String(decoding: data.dropFirst(3), as: UTF8.self), csv)
+    XCTAssertEqual(Array(StatisticsExporter.data(for: "").prefix(3)), [0xEF, 0xBB, 0xBF])
+  }
+
   // MARK: - Goal streak
 
   /// Days oldest first ending 2026-03-10, with the given pomodoro counts.
