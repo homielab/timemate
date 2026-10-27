@@ -5,6 +5,8 @@ import SwiftUI
 
 struct KeyboardShortcutsSection: View {
   @EnvironmentObject var hotKeys: HotKeyManager
+  /// Why the last combination recorded for an action was refused.
+  @State private var refusals: [HotKeyAction: HotKeyAssignment] = [:]
 
   var body: some View {
     SettingsSection(titleKey: "Keyboard Shortcuts", systemImage: "keyboard") {
@@ -13,14 +15,18 @@ struct KeyboardShortcutsSection: View {
           HStack {
             Text(action.titleKey)
             Spacer(minLength: 12)
-            HotKeyRecorder(action: action)
+            HotKeyRecorder(action: action, refusal: refusalBinding(for: action))
               .disabled(!hotKeys.isEnabled(action))
             Toggle(isOn: enabledBinding(for: action)) { EmptyView() }
               .toggleStyle(.switch)
               .fixedSize()
               .accessibilityLabel(Text(action.titleKey))
           }
-          if hotKeys.failedActions.contains(action) {
+          if let message = refusalMessage(for: action) {
+            Text(message)
+              .font(.caption)
+              .foregroundColor(.orange)
+          } else if hotKeys.failedActions.contains(action) {
             Text("This shortcut is used by another app. Record a different one.")
               .font(.caption)
               .foregroundColor(.orange)
@@ -31,6 +37,23 @@ struct KeyboardShortcutsSection: View {
         .font(.caption)
         .foregroundColor(.secondary)
         .fixedSize(horizontal: false, vertical: true)
+    }
+  }
+
+  private func refusalBinding(for action: HotKeyAction) -> Binding<HotKeyAssignment?> {
+    Binding(get: { refusals[action] }, set: { refusals[action] = $0 })
+  }
+
+  private func refusalMessage(for action: HotKeyAction) -> String? {
+    switch refusals[action] {
+    case .reserved:
+      return NSLocalizedString("Reserved by macOS. Record a different one.", comment: "")
+    case .conflict(let other):
+      return String(
+        format: NSLocalizedString("Already used by %@. Record a different one.", comment: ""),
+        other.title(bundle: .main))
+    default:
+      return nil
     }
   }
 
@@ -48,8 +71,8 @@ struct KeyboardShortcutsSection: View {
 private struct HotKeyRecorder: View {
   @EnvironmentObject var hotKeys: HotKeyManager
   let action: HotKeyAction
+  @Binding var refusal: HotKeyAssignment?
   @State private var keyMonitor: Any?
-  @State private var needsModifier = false
 
   private var isRecording: Bool { keyMonitor != nil }
 
@@ -58,7 +81,7 @@ private struct HotKeyRecorder: View {
       isRecording ? stopRecording() : startRecording()
     } label: {
       if isRecording {
-        Text(needsModifier ? "Add ⌃ or ⌘" : "Press keys…")
+        Text(refusal == .invalid ? "Add ⌃ or ⌘" : "Press keys…")
           .frame(minWidth: 70)
       } else {
         Text(verbatim: hotKeys.shortcut(for: action).displayString)
@@ -74,7 +97,7 @@ private struct HotKeyRecorder: View {
 
   private func startRecording() {
     guard keyMonitor == nil else { return }
-    needsModifier = false
+    refusal = nil
     hotKeys.beginRecording()
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
       let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
@@ -84,10 +107,11 @@ private struct HotKeyRecorder: View {
         return nil
       }
       let shortcut = HotKeyShortcut(keyCode: event.keyCode, modifierFlags: flags)
-      if hotKeys.setShortcut(shortcut, for: action) {
+      let result = hotKeys.setShortcut(shortcut, for: action)
+      if result == .ok {
         stopRecording()
       } else {
-        needsModifier = true
+        refusal = result
       }
       return nil
     }
@@ -97,7 +121,7 @@ private struct HotKeyRecorder: View {
     guard let keyMonitor else { return }
     NSEvent.removeMonitor(keyMonitor)
     self.keyMonitor = nil
-    needsModifier = false
+    refusal = nil
     hotKeys.endRecording()
   }
 }

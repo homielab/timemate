@@ -67,8 +67,8 @@ final class HotKeyTests: XCTestCase {
   func testResetShortcutCanBeTurnedOnAndRecorded() {
     let manager = HotKeyManager(defaults: defaults)
     manager.setEnabled(true, for: .reset)
-    let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(cmdKey))
-    XCTAssertTrue(manager.setShortcut(shortcut, for: .reset))
+    let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey))
+    XCTAssertEqual(manager.setShortcut(shortcut, for: .reset), .ok)
 
     let reloaded = HotKeyManager(defaults: defaults)
     XCTAssertTrue(reloaded.isEnabled(.reset))
@@ -101,7 +101,7 @@ final class HotKeyTests: XCTestCase {
   func testShortcutIsSavedAsKeyCodeAndModifiersAndReloaded() {
     let manager = HotKeyManager(defaults: defaults)
     let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_J), modifiers: UInt32(cmdKey | shiftKey))
-    XCTAssertTrue(manager.setShortcut(shortcut, for: .skip))
+    XCTAssertEqual(manager.setShortcut(shortcut, for: .skip), .ok)
 
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipKeyCode), kVK_ANSI_J)
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipModifiers), cmdKey | shiftKey)
@@ -114,9 +114,63 @@ final class HotKeyTests: XCTestCase {
   func testShortcutWithoutCommandOrControlIsRefused() {
     let manager = HotKeyManager(defaults: defaults)
     let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_E), modifiers: UInt32(optionKey))
-    XCTAssertFalse(manager.setShortcut(shortcut, for: .startPause))
+    XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .invalid)
     XCTAssertEqual(manager.shortcut(for: .startPause), HotKeyAction.startPause.defaultShortcut)
     XCTAssertNil(defaults.object(forKey: SettingsKey.hotKeyStartPauseKeyCode))
+  }
+
+  func testShortcutOfAnotherActionIsRefusedWithItsName() {
+    let manager = HotKeyManager(defaults: defaults)
+    let startPause = HotKeyAction.startPause.defaultShortcut
+    XCTAssertEqual(manager.setShortcut(startPause, for: .skip), .conflict(.startPause))
+    XCTAssertEqual(manager.shortcut(for: .skip), HotKeyAction.skip.defaultShortcut)
+    XCTAssertNil(defaults.object(forKey: SettingsKey.hotKeySkipKeyCode))
+    // The action's own combination is not a conflict.
+    XCTAssertEqual(manager.setShortcut(startPause, for: .startPause), .ok)
+    XCTAssertEqual(HotKeyAction.startPause.title(bundle: .main), "Start / Pause")
+  }
+
+  func testConflictNamesTheActionInBothLanguages() throws {
+    XCTAssertEqual(HotKeyAction.skip.title(bundle: try bundle("en")), "Skip Session")
+    XCTAssertNotEqual(
+      HotKeyAction.skip.title(bundle: try bundle("vi")),
+      HotKeyAction.skip.title(bundle: try bundle("en")))
+  }
+
+  func testReservedSystemShortcutsAreRefused() {
+    let manager = HotKeyManager(defaults: defaults)
+    let reserved = [
+      kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
+      kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab,
+    ]
+    for key in reserved {
+      let shortcut = HotKeyShortcut(keyCode: UInt32(key), modifiers: UInt32(cmdKey))
+      XCTAssertTrue(shortcut.isReserved, "key \(key)")
+      XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .reserved, "key \(key)")
+    }
+    XCTAssertEqual(manager.shortcut(for: .startPause), HotKeyAction.startPause.defaultShortcut)
+    XCTAssertNil(defaults.object(forKey: SettingsKey.hotKeyStartPauseKeyCode))
+  }
+
+  func testOtherCombinationsAreNotReserved() {
+    let notReserved = [
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(cmdKey | shiftKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(controlKey | optionKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_K), modifiers: UInt32(cmdKey)),
+    ]
+    let manager = HotKeyManager(defaults: defaults)
+    for shortcut in notReserved {
+      XCTAssertFalse(shortcut.isReserved)
+      XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .ok)
+    }
+  }
+
+  func testReservedSavedShortcutFallsBackToDefault() {
+    defaults.set(kVK_ANSI_V, forKey: SettingsKey.hotKeySkipKeyCode)
+    defaults.set(cmdKey, forKey: SettingsKey.hotKeySkipModifiers)
+    XCTAssertEqual(
+      HotKeyManager.loadShortcut(for: .skip, from: defaults), HotKeyAction.skip.defaultShortcut)
   }
 
   func testInvalidSavedShortcutFallsBackToDefault() {

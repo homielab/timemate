@@ -16,12 +16,17 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
   var id: UInt32 { rawValue }
 
   /// Settings label of the action.
-  var titleKey: LocalizedStringKey {
+  var titleKey: LocalizedStringKey { LocalizedStringKey(title(bundle: .main)) }
+
+  /// The label in the language of `bundle`, for messages that name the action.
+  func title(bundle: Bundle) -> String {
+    let name: String
     switch self {
-    case .startPause: return "Start / Pause"
-    case .skip: return "Skip Session"
-    case .reset: return "Reset Timer"
+    case .startPause: name = "Start / Pause"
+    case .skip: name = "Skip Session"
+    case .reset: name = "Reset Timer"
     }
+    return bundle.localizedString(forKey: name, value: name, table: nil)
   }
 
   /// Start/pause and skip are on from the start; reset only once the user
@@ -124,6 +129,18 @@ struct HotKeyShortcut: Equatable {
     modifiers & UInt32(cmdKey | controlKey) != 0
   }
 
+  /// Bare ⌘ combinations macOS and every app rely on (copy, paste, quit, …);
+  /// a global hot key would take them from the whole system.
+  var isReserved: Bool {
+    guard modifiers == UInt32(cmdKey) else { return false }
+    return Self.reservedCommandKeys.contains(Int(keyCode))
+  }
+
+  private static let reservedCommandKeys: Set<Int> = [
+    kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
+    kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab,
+  ]
+
   /// "⌃⌥P", in the system's modifier order.
   var displayString: String { displayString(bundle: .main) }
 
@@ -166,6 +183,17 @@ struct HotKeyShortcut: Equatable {
     }
     return keyLabels[Int(keyCode)] ?? "#\(keyCode)"
   }
+}
+
+/// Outcome of `HotKeyManager.setShortcut`.
+enum HotKeyAssignment: Equatable {
+  case ok
+  /// Needs ⌘ or ⌃ (see `HotKeyShortcut.isValidGlobalHotKey`).
+  case invalid
+  /// A system-wide shortcut such as ⌘V (see `HotKeyShortcut.isReserved`).
+  case reserved
+  /// Another action of TimeMate already uses the combination.
+  case conflict(HotKeyAction)
 }
 
 // MARK: - Manager
@@ -222,7 +250,7 @@ final class HotKeyManager: ObservableObject {
       let code = UInt32(exactly: keyCode), let flags = UInt32(exactly: modifiers)
     else { return action.defaultShortcut }
     let shortcut = HotKeyShortcut(keyCode: code, modifiers: flags)
-    return shortcut.isValidGlobalHotKey ? shortcut : action.defaultShortcut
+    return shortcut.isValidGlobalHotKey && !shortcut.isReserved ? shortcut : action.defaultShortcut
   }
 
   static func loadEnabled(for action: HotKeyAction, from defaults: UserDefaults) -> Bool {
@@ -237,16 +265,23 @@ final class HotKeyManager: ObservableObject {
     enabled[action] ?? action.isEnabledByDefault
   }
 
-  /// Saves a new combination and applies it right away. Combinations without
-  /// ⌘ or ⌃ are refused (returns false).
+  /// Saves a new combination and applies it right away. Refused, with the
+  /// reason, when it lacks ⌘ or ⌃, is reserved by macOS, or is the combination
+  /// of another action (so two actions never fight over one key).
   @discardableResult
-  func setShortcut(_ shortcut: HotKeyShortcut, for action: HotKeyAction) -> Bool {
-    guard shortcut.isValidGlobalHotKey else { return false }
+  func setShortcut(_ shortcut: HotKeyShortcut, for action: HotKeyAction) -> HotKeyAssignment {
+    guard shortcut.isValidGlobalHotKey else { return .invalid }
+    guard !shortcut.isReserved else { return .reserved }
+    if let other = HotKeyAction.allCases.first(where: {
+      $0 != action && self.shortcut(for: $0) == shortcut
+    }) {
+      return .conflict(other)
+    }
     shortcuts[action] = shortcut
     defaults.set(Int(shortcut.keyCode), forKey: action.keyCodeKey)
     defaults.set(Int(shortcut.modifiers), forKey: action.modifiersKey)
     reregister()
-    return true
+    return .ok
   }
 
   func setEnabled(_ isOn: Bool, for action: HotKeyAction) {

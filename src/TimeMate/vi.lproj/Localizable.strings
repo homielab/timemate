@@ -139,6 +139,8 @@
 "Start / Pause" = "Bắt đầu / Tạm dừng";
 "Skip Session" = "Bỏ qua phiên";
 "This shortcut is used by another app. Record a different one." = "Phím tắt này đang được ứng dụng khác dùng. Hãy ghi một tổ hợp khác.";
+"Reserved by macOS. Record a different one." = "Phím tắt này do macOS giữ. Hãy ghi một tổ hợp khác.";
+"Already used by %@. Record a different one." = "Đã dùng cho %@. Hãy ghi một tổ hợp khác.";
 "Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘." = "Dùng được trong mọi ứng dụng. Bấm vào phím tắt rồi nhấn tổ hợp mới có ⌃ hoặc ⌘.";
 "Add ⌃ or ⌘" = "Thêm ⌃ hoặc ⌘";
 "Press keys…" = "Nhấn phím…";

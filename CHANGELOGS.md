@@ -122,6 +122,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Settings → Keyboard Shortcuts no longer accepts a combination another TimeMate action already uses or a bare ⌘ shortcut macOS needs (⌘C, ⌘V, ⌘X, ⌘Z, ⌘A, ⌘Q, ⌘W, ⌘H, ⌘, ⌘Space, ⌘Tab). It now says "Already used by <action>" or "Reserved by macOS" instead of blaming another app.
 - **Break screen battery use**: while a break counts down, the break screen no longer runs a second one-second clock next to the timer, so the Mac wakes up half as often during breaks. The clock still runs when the break is paused or waiting for Continue Work.
 - **Skip while idle** no longer counts a focus session you never started: the cycle dots and VoiceOver ("1 of 4 focus sessions done") stay put and the long break does not come early. Skipping a running or paused focus session still counts it.
 - **Exported CSV files** (daily and sessions) now start with a UTF-8 byte order mark, so Excel shows Vietnamese and other accented labels correctly instead of garbled text.
