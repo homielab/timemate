@@ -73,6 +73,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       alwaysVisible: UserDefaults.standard.bool(forKey: SettingsKey.alwaysVisible))
     popover.contentViewController = hostingController
     hotKeyManager.activate()
+    // A shortcut held by another app (or by the copy that is quitting during a
+    // restart) is tried again whenever TimeMate comes to the front.
+    NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+      .sink { [weak self] _ in self?.hotKeyManager.retryFailed() }
+      .store(in: &cancellables)
     updatePopoverSize()
   }
 
@@ -238,6 +243,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     removeEscapeKeyMonitor()
     updateTickMode()
     popoverModel.setPopoverVisible(false)
+    // Closing the popover mid-recording would otherwise leave every shortcut off.
+    if hotKeyManager.isRecording { hotKeyManager.endRecording() }
   }
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)

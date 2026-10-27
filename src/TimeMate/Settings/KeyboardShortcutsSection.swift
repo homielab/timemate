@@ -97,6 +97,8 @@ private struct HotKeyRecorder: View {
     )
     .accessibilityValue(isRecording ? "" : hotKeys.shortcut(for: action).spokenString)
     .onDisappear(perform: stopRecording)
+    // Recording ended elsewhere (the popover closed): drop the key monitor too.
+    .onChange(of: hotKeys.isRecording) { if !$0 { stopRecording() } }
   }
 
   private func startRecording() {
@@ -126,6 +128,6 @@ private struct HotKeyRecorder: View {
     NSEvent.removeMonitor(keyMonitor)
     self.keyMonitor = nil
     refusal = nil
-    hotKeys.endRecording()
+    if hotKeys.isRecording { hotKeys.endRecording() }
   }
 }

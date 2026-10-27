@@ -210,6 +210,27 @@ enum HotKeyAssignment: Equatable {
 
 // MARK: - Manager
 
+/// Registers and unregisters one Carbon hot key. Tests use a fake so they
+/// neither take the user's real shortcuts nor depend on other running apps.
+struct HotKeyRegistrar {
+  /// Returns the registered hot key, or nil when the system refused it.
+  var register: (HotKeyShortcut, HotKeyAction) -> EventHotKeyRef?
+  var unregister: (EventHotKeyRef) -> Void
+
+  static let carbon = HotKeyRegistrar(
+    register: { shortcut, action in
+      var ref: EventHotKeyRef?
+      // Exclusive: a combination another app already registered fails here,
+      // so Settings can say so instead of the shortcut silently not firing.
+      let status = RegisterEventHotKey(
+        shortcut.keyCode, shortcut.modifiers,
+        EventHotKeyID(signature: HotKeyManager.signature, id: action.rawValue),
+        GetApplicationEventTarget(), OptionBits(kEventHotKeyExclusive), &ref)
+      return status == noErr ? ref : nil
+    },
+    unregister: { UnregisterEventHotKey($0) })
+}
+
 /// Global keyboard shortcuts for the timer.
 ///
 /// Uses Carbon hot keys (`RegisterEventHotKey`), which work in the App Sandbox
@@ -228,16 +249,34 @@ final class HotKeyManager: ObservableObject {
   /// so the current combination can be recorded too.
   @Published private(set) var isRecording = false
 
+  /// Seconds after `activate()` at which shortcuts that failed are tried again.
+  /// A restart briefly runs two copies of the app, and the old one still holds
+  /// the shortcuts when the new one starts.
+  static let retryDelays: [TimeInterval] = [1, 3, 10]
+
   private let defaults: UserDefaults
   private let onAction: (HotKeyAction) -> Void
+  private let registrar: HotKeyRegistrar
+  private let schedule: (TimeInterval, @escaping () -> Void) -> Void
+  /// Bumped by `activate()` and `unregisterAll()` so older retries do nothing.
+  private var retryGeneration = 0
   private var hotKeyRefs: [HotKeyAction: EventHotKeyRef] = [:]
   private var eventHandlerRef: EventHandlerRef?
   private var isActive = false
   /// Hot keys held down, so key auto-repeat runs an action only once.
   private var pressedActions: Set<HotKeyAction> = []
 
-  init(defaults: UserDefaults = .standard, onAction: @escaping (HotKeyAction) -> Void = { _ in }) {
+  init(
+    defaults: UserDefaults = .standard,
+    registrar: HotKeyRegistrar = .carbon,
+    schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void = { delay, work in
+      DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    },
+    onAction: @escaping (HotKeyAction) -> Void = { _ in }
+  ) {
     self.defaults = defaults
+    self.registrar = registrar
+    self.schedule = schedule
     self.onAction = onAction
     for action in HotKeyAction.allCases {
       shortcuts[action] = Self.loadShortcut(for: action, from: defaults)
@@ -317,16 +356,38 @@ final class HotKeyManager: ObservableObject {
   // MARK: Registration
 
   /// Registers every enabled shortcut and keeps them in sync with later
-  /// changes. Main thread only.
+  /// changes; shortcuts that fail are tried again after `retryDelays`.
+  /// Main thread only.
   func activate() {
     isActive = true
     reregister()
+    retryGeneration += 1
+    scheduleRetry(index: 0, generation: retryGeneration)
   }
 
   func unregisterAll() {
     isActive = false
+    retryGeneration += 1
     unregisterHotKeys()
     failedActions = []
+  }
+
+  /// Tries again to register the shortcuts that failed, e.g. once another copy
+  /// of the app has quit. Does nothing when none failed or while inactive or
+  /// recording.
+  func retryFailed() {
+    guard isActive, !isRecording, !failedActions.isEmpty else { return }
+    reregister()
+  }
+
+  private func scheduleRetry(index: Int, generation: Int) {
+    guard index < Self.retryDelays.count, !failedActions.isEmpty else { return }
+    let elapsed = index == 0 ? 0 : Self.retryDelays[index - 1]
+    schedule(Self.retryDelays[index] - elapsed) { [weak self] in
+      guard let self, self.retryGeneration == generation else { return }
+      self.retryFailed()
+      self.scheduleRetry(index: index + 1, generation: generation)
+    }
   }
 
   private func reregister() {
@@ -336,15 +397,7 @@ final class HotKeyManager: ObservableObject {
 
     var failed: Set<HotKeyAction> = []
     for action in HotKeyAction.allCases where isEnabled(action) {
-      let shortcut = self.shortcut(for: action)
-      var ref: EventHotKeyRef?
-      // Exclusive: a combination another app already registered fails here,
-      // so Settings can say so instead of the shortcut silently not firing.
-      let status = RegisterEventHotKey(
-        shortcut.keyCode, shortcut.modifiers,
-        EventHotKeyID(signature: Self.signature, id: action.rawValue),
-        GetApplicationEventTarget(), OptionBits(kEventHotKeyExclusive), &ref)
-      if status == noErr, let ref {
+      if let ref = registrar.register(shortcut(for: action), action) {
         hotKeyRefs[action] = ref
       } else {
         failed.insert(action)
@@ -355,7 +408,7 @@ final class HotKeyManager: ObservableObject {
 
   private func unregisterHotKeys() {
     for ref in hotKeyRefs.values {
-      UnregisterEventHotKey(ref)
+      registrar.unregister(ref)
     }
     hotKeyRefs.removeAll()
     pressedActions.removeAll()

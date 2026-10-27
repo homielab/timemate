@@ -123,6 +123,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Global keyboard shortcuts keep working after changing the language or resetting all settings
+  (the app restart briefly ran two copies, and the new one lost ⌃⌥P/⌃⌥S and Settings blamed
+  another app). Shortcuts that are taken are tried again a few seconds after launch and whenever
+  TimeMate comes to the front; closing the popover while recording a shortcut turns them back on.
 - With the Dock icon shown, **TimeMate → Settings…** (⌘,) opens the popover on Settings instead of a blank window.
 - VoiceOver reads each shortcut button as "Start / Pause shortcut, Control Option P" instead of "⌃⌥P", and the background color well as "Background Color".
 - Settings → Keyboard Shortcuts no longer accepts a combination another TimeMate action already uses or a bare ⌘ shortcut macOS needs (⌘C, ⌘V, ⌘X, ⌘Z, ⌘A, ⌘Q, ⌘W, ⌘H, ⌘, ⌘Space, ⌘Tab). It now says "Already used by <action>" or "Reserved by macOS" instead of blaming another app.

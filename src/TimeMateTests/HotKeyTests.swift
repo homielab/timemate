@@ -206,6 +206,142 @@ final class HotKeyTests: XCTestCase {
     XCTAssertTrue(manager.failedActions.isEmpty)
   }
 
+  // MARK: - Retrying failed shortcuts
+
+  /// Stands in for Carbon: combinations in `taken` are refused, others succeed.
+  private final class FakeHotKeys {
+    var taken: Set<HotKeyAction> = []
+    var registered: Set<HotKeyAction> = []
+    var registerCalls = 0
+    var scheduled: [(delay: TimeInterval, work: () -> Void)] = []
+
+    var registrar: HotKeyRegistrar {
+      HotKeyRegistrar(
+        register: { [weak self] _, action in
+          guard let self else { return nil }
+          self.registerCalls += 1
+          guard !self.taken.contains(action) else { return nil }
+          self.registered.insert(action)
+          return OpaquePointer(bitPattern: Int(action.rawValue))
+        },
+        unregister: { [weak self] ref in
+          let id = UInt32(Int(bitPattern: UnsafeRawPointer(ref)))
+          if let action = HotKeyAction(rawValue: id) { self?.registered.remove(action) }
+        })
+    }
+
+    func schedule(_ delay: TimeInterval, _ work: @escaping () -> Void) {
+      scheduled.append((delay, work))
+    }
+
+    /// Runs the oldest pending retry and returns its delay.
+    @discardableResult
+    func runNext() -> TimeInterval? {
+      guard !scheduled.isEmpty else { return nil }
+      let next = scheduled.removeFirst()
+      next.work()
+      return next.delay
+    }
+  }
+
+  private func makeManager(_ fake: FakeHotKeys) -> HotKeyManager {
+    HotKeyManager(defaults: defaults, registrar: fake.registrar, schedule: fake.schedule)
+  }
+
+  func testRetryFailedRegistersShortcutsFreedByAnotherApp() {
+    let fake = FakeHotKeys()
+    fake.taken = [.startPause, .skip]
+    let manager = makeManager(fake)
+    manager.activate()
+    XCTAssertEqual(manager.failedActions, [.startPause, .skip])
+
+    fake.taken = []
+    manager.retryFailed()
+
+    XCTAssertTrue(manager.failedActions.isEmpty)
+    XCTAssertEqual(fake.registered, [.startPause, .skip])
+  }
+
+  func testRetryFailedDoesNothingBeforeActivate() {
+    let fake = FakeHotKeys()
+    let manager = makeManager(fake)
+    manager.retryFailed()
+    XCTAssertEqual(fake.registerCalls, 0)
+    XCTAssertTrue(fake.registered.isEmpty)
+  }
+
+  func testRetryFailedDoesNothingWhenNothingFailed() {
+    let fake = FakeHotKeys()
+    let manager = makeManager(fake)
+    manager.activate()
+    let calls = fake.registerCalls
+    manager.retryFailed()
+    XCTAssertEqual(fake.registerCalls, calls)
+    XCTAssertTrue(fake.scheduled.isEmpty, "no retries scheduled when everything registered")
+  }
+
+  func testRetriesRunAfterOneThreeAndTenSecondsThenStop() {
+    let fake = FakeHotKeys()
+    fake.taken = [.startPause]
+    let manager = makeManager(fake)
+    manager.activate()
+
+    var elapsed: TimeInterval = 0
+    var times: [TimeInterval] = []
+    while let delay = fake.runNext() {
+      elapsed += delay
+      times.append(elapsed)
+    }
+    XCTAssertEqual(times, [1, 3, 10])
+    XCTAssertEqual(manager.failedActions, [.startPause])
+    XCTAssertEqual(fake.registered, [.skip])
+  }
+
+  func testRetriesStopOnceTheShortcutIsFree() {
+    let fake = FakeHotKeys()
+    fake.taken = [.startPause]
+    let manager = makeManager(fake)
+    manager.activate()
+
+    fake.taken = []
+    XCTAssertEqual(fake.runNext(), 1)
+
+    XCTAssertTrue(manager.failedActions.isEmpty)
+    XCTAssertEqual(fake.registered, [.startPause, .skip])
+    XCTAssertTrue(fake.scheduled.isEmpty)
+  }
+
+  func testRetriesStopAfterUnregisterAll() {
+    let fake = FakeHotKeys()
+    fake.taken = [.startPause]
+    let manager = makeManager(fake)
+    manager.activate()
+    manager.unregisterAll()
+    fake.taken = []
+    let calls = fake.registerCalls
+
+    fake.runNext()
+
+    XCTAssertEqual(fake.registerCalls, calls)
+    XCTAssertTrue(fake.scheduled.isEmpty)
+  }
+
+  func testRetryWaitsWhileRecording() {
+    let fake = FakeHotKeys()
+    fake.taken = [.skip]
+    let manager = makeManager(fake)
+    manager.activate()
+    manager.beginRecording()
+    fake.taken = []
+
+    manager.retryFailed()
+    XCTAssertTrue(fake.registered.isEmpty)
+
+    manager.endRecording()
+    XCTAssertTrue(manager.failedActions.isEmpty)
+    XCTAssertEqual(fake.registered, [.startPause, .skip])
+  }
+
   // MARK: - Actions on the timer
 
   private func makeTimer(autoStart: Bool = true, keepBreakOpen: Bool = false) -> PomodoroTimer {
