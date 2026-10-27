@@ -258,7 +258,7 @@ private struct BreakOverlayBottomActionsView: View {
           .font(.caption)
           .foregroundColor(.white.opacity(hintOpacity))
           .padding(.top, 8)
-      } else {
+      } else if countdown.canSkip {
         Text(LocalizedStringKey("Press Esc twice to skip"))
           .font(.caption)
           .foregroundColor(.white.opacity(hintOpacity))

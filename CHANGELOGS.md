@@ -124,6 +124,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Pressing Esc twice on the break screen no longer skips a break before the **Skip button delay** has passed (the Skip button and the global shortcut ⌃⌥S / Shortcuts behave as before); the "Press Esc twice to skip" hint now shows only when Esc works.
+- The minutes-only menu bar time is localized ("13 ph" in Vietnamese instead of "13m").
 - Connecting or disconnecting a display (or Sidecar/AirPlay) during a break no longer restarts the "Skip available in N" countdown or stops the break screen's clock, and no longer brings back a break screen that was already closing after the break ended or was skipped.
 - Global keyboard shortcuts keep working after changing the language or resetting all settings
   (the app restart briefly ran two copies, and the new one lost ⌃⌥P/⌃⌥S and Settings blamed

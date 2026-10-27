@@ -5,6 +5,7 @@ import AppKit
 import Combine
 import SwiftUI
 import UserNotifications
+import os
 
 class PomodoroTimer: ObservableObject {
   // MARK: - Published Properties for UI
@@ -133,7 +134,7 @@ class PomodoroTimer: ObservableObject {
       .store(in: &cancellables)
 
     #if DEBUG
-      print("--- TimeMate running in DEBUG mode (timers are in seconds) ---")
+      Logger.app.debug("TimeMate running in DEBUG mode (timers are in seconds)")
     #endif
   }
 

@@ -183,6 +183,7 @@
 "30 days" = "30 ngày";
 "Statistics period" = "Khoảng thống kê";
 "%lld min" = "%lld phút";
+"%lldm" = "%lld ph";
 "Export CSV…" = "Xuất CSV…";
 "Export sessions CSV…" = "Xuất phiên ra CSV…";
 "Saves every completed session of the last 90 days with its label, one row each." = "Lưu mọi phiên đã hoàn thành trong 90 ngày qua kèm nhãn, mỗi phiên một dòng.";

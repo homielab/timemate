@@ -25,6 +25,13 @@ final class MenuBarTimeStyleTests: XCTestCase {
     XCTAssertEqual(MenuBarTimeStyle.iconOnly.text(seconds: 754), "")
   }
 
+  func testMinutesOnlyIsLocalized() throws {
+    let path = try XCTUnwrap(
+      Bundle(for: PomodoroTimer.self).path(forResource: "vi", ofType: "lproj"))
+    let vi = try XCTUnwrap(Bundle(path: path))
+    XCTAssertEqual(MenuBarTimeStyle.minutesOnly.text(seconds: 754, bundle: vi), "13 ph")
+  }
+
   func testMinutesRoundUp() {
     XCTAssertEqual(MenuBarTimeStyle.minutes(roundingUp: 1500), 25)
     XCTAssertEqual(MenuBarTimeStyle.minutes(roundingUp: 1499), 25)

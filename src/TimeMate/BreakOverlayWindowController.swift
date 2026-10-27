@@ -205,9 +205,13 @@ class BreakOverlayWindowController: NSObject {
 
       if event.keyCode == DoubleEscDetector.escKeyCode {
         if self.escDetector.registerPress() {
-          switch BreakOverlayRules.escAction(isWaitingToContinue: self.timer.isWaitingToContinue) {
+          switch BreakOverlayRules.escAction(
+            isWaitingToContinue: self.timer.isWaitingToContinue,
+            canSkip: self.model.countdown.canSkip)
+          {
           case .continueWork: self.timer.continueWork()
           case .skipSession: self.timer.skipSession()
+          case .none: break
           }
         }
         return nil  // Consume event
@@ -271,6 +275,7 @@ class BreakOverlayWindowController: NSObject {
         state: state.0, sessionType: state.1, isWaitingToContinue: state.2,
         isBreakPostponed: state.3)
     }
+    fullscreenPoll?.tolerance = TickMode.tolerance
   }
 
   private func stopFullscreenPoll() {

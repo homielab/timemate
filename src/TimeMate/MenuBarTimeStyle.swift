@@ -14,10 +14,13 @@ enum MenuBarTimeStyle: String, CaseIterable {
   var showsTime: Bool { self != .iconOnly }
 
   /// The text beside the icon; empty for `.iconOnly`.
-  func text(seconds: Int) -> String {
+  func text(seconds: Int, bundle: Bundle = .main) -> String {
     switch self {
     case .minutesSeconds: return seconds.toMinuteSecondString()
-    case .minutesOnly: return "\(Self.minutes(roundingUp: seconds))m"
+    case .minutesOnly:
+      return String(
+        format: bundle.localizedString(forKey: "%lldm", value: nil, table: nil),
+        Self.minutes(roundingUp: seconds))
     case .iconOnly: return ""
     }
   }

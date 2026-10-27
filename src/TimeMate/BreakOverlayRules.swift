@@ -10,6 +10,8 @@ enum BreakOverlayRules {
     case continueWork
     /// The break is still running: end it early.
     case skipSession
+    /// The break is running and Skip is not available yet: nothing happens.
+    case none
   }
 
   /// The overlay shows during a running, not postponed break, and on the "break is
@@ -23,8 +25,11 @@ enum BreakOverlayRules {
     return (state == .active && isBreak && !isPostponed) || isWaiting
   }
 
-  static func escAction(isWaitingToContinue: Bool) -> EscAction {
-    isWaitingToContinue ? .continueWork : .skipSession
+  /// Esc twice continues a waiting break; on a running one it skips only once the
+  /// Skip button is available, like the button itself.
+  static func escAction(isWaitingToContinue: Bool, canSkip: Bool) -> EscAction {
+    if isWaitingToContinue { return .continueWork }
+    return canSkip ? .skipSession : .none
   }
 }
 

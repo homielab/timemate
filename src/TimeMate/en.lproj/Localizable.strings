@@ -183,6 +183,7 @@
 "30 days" = "30 days";
 "Statistics period" = "Statistics period";
 "%lld min" = "%lld min";
+"%lldm" = "%lldm";
 "Export CSV…" = "Export CSV…";
 "Export sessions CSV…" = "Export sessions CSV…";
 "Saves every completed session of the last 90 days with its label, one row each." = "Saves every completed session of the last 90 days with its label, one row each.";

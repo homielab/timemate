@@ -48,8 +48,13 @@ final class BreakOverlayRulesTests: XCTestCase {
   }
 
   func testDoubleEscContinuesAWaitingBreakAndSkipsARunningOne() {
-    XCTAssertEqual(BreakOverlayRules.escAction(isWaitingToContinue: true), .continueWork)
-    XCTAssertEqual(BreakOverlayRules.escAction(isWaitingToContinue: false), .skipSession)
+    XCTAssertEqual(
+      BreakOverlayRules.escAction(isWaitingToContinue: true, canSkip: true), .continueWork)
+    XCTAssertEqual(
+      BreakOverlayRules.escAction(isWaitingToContinue: true, canSkip: false), .continueWork)
+    XCTAssertEqual(
+      BreakOverlayRules.escAction(isWaitingToContinue: false, canSkip: true), .skipSession)
+    XCTAssertEqual(BreakOverlayRules.escAction(isWaitingToContinue: false, canSkip: false), .none)
   }
 }
 
