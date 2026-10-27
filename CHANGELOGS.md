@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- **+5 min for focus**: a small button under the popover controls adds five minutes to a running or paused focus session when you are in the flow, instead of letting it ring and starting over. The longer length is what the history and statistics record. Breaks are still extended from the break screen.
 - Settings → Statistics → **Export sessions CSV…** saves each completed session of the last 90 days as `start,end,kind,minutes,label` (ISO 8601 times, with your "What are you working on?" label) for timesheets and invoices. The daily Export CSV is unchanged.
 - Settings → Appearance → **Menu bar time** replaces "Hide time in menu bar" with three
   choices: minutes and seconds ("12:34"), **minutes only** ("13m", rounded up, a compact

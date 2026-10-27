@@ -97,8 +97,35 @@ final class SessionSequenceTests: XCTestCase {
     XCTAssertEqual(result.progress, 1.0)
   }
 
+  func testExtendRunningFocusPushesEndDate() throws {
+    let result = try XCTUnwrap(
+      SessionSequence.extend(
+        countdown(type: .focus, total: 1500, remaining: 100), by: 300, now: now))
+    XCTAssertEqual(result.state, .active)
+    XCTAssertEqual(result.totalDuration, 1800)
+    XCTAssertEqual(result.timeRemaining, 400)
+    XCTAssertEqual(result.endDate, now.addingTimeInterval(400))
+  }
+
+  func testExtendPausedFocusAddsToRemaining() throws {
+    let result = try XCTUnwrap(
+      SessionSequence.extend(
+        countdown(type: .focus, state: .paused, total: 1500, remaining: 100), by: 300, now: now))
+    XCTAssertEqual(result.state, .paused)
+    XCTAssertEqual(result.totalDuration, 1800)
+    XCTAssertEqual(result.timeRemaining, 400)
+    XCTAssertNil(result.endDate)
+  }
+
+  func testFocusExtendIsOfferedOnlyWhileRunningOrPaused() {
+    XCTAssertTrue(SessionSequence.offersFocusExtend(sessionType: .focus, state: .active))
+    XCTAssertTrue(SessionSequence.offersFocusExtend(sessionType: .focus, state: .paused))
+    XCTAssertFalse(SessionSequence.offersFocusExtend(sessionType: .focus, state: .idle))
+    XCTAssertFalse(SessionSequence.offersFocusExtend(sessionType: .shortBreak, state: .active))
+  }
+
   func testExtendIgnoredWhenNotApplicable() {
-    XCTAssertNil(SessionSequence.extend(countdown(type: .focus), by: 60, now: now))
+    XCTAssertNil(SessionSequence.extend(countdown(type: .focus, state: .idle), by: 60, now: now))
     XCTAssertNil(SessionSequence.extend(countdown(postponed: true), by: 60, now: now))
     XCTAssertNil(SessionSequence.extend(countdown(state: .idle), by: 60, now: now))
     XCTAssertNil(SessionSequence.extend(countdown(), by: 0, now: now))

@@ -57,11 +57,56 @@ final class PomodoroTimerExtendTests: TimerTestCase {
     XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(2 + fiveMinutes))
   }
 
-  func testExtendDoesNothingDuringFocus() {
+  func testExtendFocusAddsFiveMinutesWhileRunning() {
     timer.startTimer()
-    let endDate = timer.endDate
+    let endDate = timer.endDate!
     timer.extend(by: 5)
-    XCTAssertEqual(timer.endDate, endDate)
+    XCTAssertEqual(timer.endDate, endDate.addingTimeInterval(fiveMinutes))
+    XCTAssertEqual(timer.timeRemaining, 3 + Int(fiveMinutes))
+    XCTAssertEqual(timer.progress, 1.0)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+  }
+
+  func testExtendedFocusEndsAtTheNewEndDateAndRecordsTheLongerLength() {
+    timer.startTimer()
+    timer.extend(by: 5)
+    runTicks(timer, 3 + Int(fiveMinutes) - 1)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertTrue(history.records.isEmpty)
+    runTicks(timer, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(history.records.count, 1)
+    let record = history.records[0]
+    XCTAssertEqual(
+      record.end.timeIntervalSince(record.start), 3 + fiveMinutes, accuracy: 0.5)
+  }
+
+  func testExtendFocusWhilePausedAddsToRemaining() {
+    timer.startTimer()
+    timer.pauseTimer()
+    timer.extend(by: 5)
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 3 + Int(fiveMinutes))
+    XCTAssertNil(timer.endDate)
+    timer.startTimer()
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(3 + fiveMinutes))
+  }
+
+  func testExtendedFocusSurvivesRelaunch() {
+    timer.startTimer()
+    timer.extend(by: 5)
+    let relaunched = relaunch(after: 1)
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.currentSessionType, .focus)
+    XCTAssertEqual(relaunched.timeRemaining, 2 + Int(fiveMinutes))
+    let total = 3 + fiveMinutes
+    XCTAssertEqual(relaunched.progress, (total - 1) / total, accuracy: 0.001)
+  }
+
+  func testExtendDoesNothingWhenIdle() {
+    timer.extend(by: 5)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertNil(timer.endDate)
     XCTAssertEqual(timer.timeRemaining, 3)
   }
 

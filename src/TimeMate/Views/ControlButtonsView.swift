@@ -34,6 +34,24 @@ struct ControlButtonsView: View {
   }
 
   var body: some View {
+    VStack(spacing: 10) {
+      controls
+      if SessionSequence.offersFocusExtend(
+        sessionType: model.currentSessionType, state: model.state)
+      {
+        Button {
+          timer.extend(by: BreakOverlayAccessibility.extendMinutes)
+        } label: {
+          Text("+5 min")
+        }
+        .buttonStyle(.bordered).controlSize(.small)
+        .help("Add 5 minutes to the focus session")
+        .accessibilityLabel("Add 5 minutes to the focus session")
+      }
+    }
+  }
+
+  private var controls: some View {
     HStack(spacing: 16) {
       Button {
         if PopoverShortcuts.restartNeedsConfirmation(state: model.state) {

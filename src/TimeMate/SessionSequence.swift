@@ -74,14 +74,19 @@ enum SessionSequence {
     var isWaitingToContinue: Bool
   }
 
-  /// Adds `extra` seconds to the running break. A break that already ended and
+  /// Whether the popover offers "+5 min" for this session: a focus session that is
+  /// running or paused (a break is extended from its break screen).
+  static func offersFocusExtend(sessionType: SessionType, state: PomodoroState) -> Bool {
+    sessionType == .focus && state != .idle
+  }
+
+  /// Adds `extra` seconds to the running session. A break that already ended and
   /// waits on the break screen starts again for `extra`. `nil` means nothing
-  /// changes (not a break, a postponed break, idle, or nothing to add).
+  /// changes (idle, a postponed break, or nothing to add).
   static func extend(_ countdown: Countdown, by extra: Int, now: Date) -> Adjustment? {
-    guard extra > 0, isBreak(countdown.sessionType), !countdown.isBreakPostponed else {
-      return nil
-    }
+    guard extra > 0, !countdown.isBreakPostponed else { return nil }
     if countdown.isWaitingToContinue {
+      guard isBreak(countdown.sessionType) else { return nil }
       return Adjustment(
         state: .active, totalDuration: extra, timeRemaining: extra,
         endDate: now.addingTimeInterval(TimeInterval(extra)))
