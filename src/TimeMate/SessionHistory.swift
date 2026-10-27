@@ -147,15 +147,33 @@ final class SessionHistory: ObservableObject {
     return decoder
   }
 
-  /// A missing or empty file starts an empty history. A file that can't be
-  /// read is first moved aside (see `backUpUnreadableFile`), so the next save
+  /// Decodes to `nil` instead of throwing, so one bad element doesn't fail the
+  /// whole array.
+  private struct Lossy<Value: Decodable>: Decodable {
+    let value: Value?
+    init(from decoder: Decoder) throws {
+      value = try? Value(from: decoder)
+    }
+  }
+
+  /// A missing or empty file starts an empty history. Records that can't be
+  /// decoded (an unknown kind, a malformed date) are skipped and the rest are
+  /// kept; the next save writes the file without them. A file that isn't a
+  /// JSON array at all can't be read and is first moved aside (see `backUpUnreadableFile`), so the next save
   /// doesn't overwrite the sessions it may still hold.
   private static func load(from url: URL?, now: Date) -> [Record] {
     guard let url, FileManager.default.fileExists(atPath: url.path) else { return [] }
     do {
       let data = try Data(contentsOf: url)
       if data.isEmpty { return [] }
-      return try makeDecoder().decode([Record].self, from: data)
+      let decoded = try makeDecoder().decode([Lossy<Record>].self, from: data)
+      let records = decoded.compactMap(\.value)
+      if records.count < decoded.count {
+        Logger.history.error(
+          "Skipped \(decoded.count - records.count, privacy: .public) unreadable history record(s)"
+        )
+      }
+      return records
     } catch {
       Logger.history.error(
         "Could not read the session history: \(error.localizedDescription, privacy: .public)")

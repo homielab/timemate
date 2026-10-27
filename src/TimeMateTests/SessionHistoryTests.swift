@@ -104,6 +104,43 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(SessionHistory.corruptBackups(in: fileURL.deletingLastPathComponent()), [])
   }
 
+  func testUnreadableRecordIsSkippedAndTheRestKept() throws {
+    let mixed = """
+      [
+        {"completed": true, "end": "2026-03-10T14:00:00Z", "kind": "focus",
+         "start": "2026-03-10T13:35:00Z"},
+        {"completed": true, "end": "2026-03-10T14:30:00Z", "kind": "deep",
+         "start": "2026-03-10T14:05:00Z"},
+        {"completed": true, "end": "not a date", "kind": "short",
+         "start": "2026-03-10T14:00:00Z"},
+        {"completed": true, "end": "2026-03-10T14:10:00Z", "kind": "long",
+         "start": "2026-03-10T14:00:00Z"}
+      ]
+      """
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data(mixed.utf8).write(to: fileURL)
+
+    let history = makeHistory()
+    XCTAssertEqual(history.records.map(\.kind), [.focus, .long])
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder), [])
+    XCTAssertTrue(FileManager.default.fileExists(atPath: fileURL.path))
+
+    // The next save writes the file without the skipped records.
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
+    XCTAssertEqual(makeHistory().records.map(\.kind), [.focus, .long, .focus])
+  }
+
+  func testNonArrayJSONIsMovedAside() throws {
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data("{\"records\": []}".utf8).write(to: fileURL)
+
+    XCTAssertEqual(makeHistory().records, [])
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder).count, 1)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+  }
+
   func testMissingOrEmptyFileStartsEmpty() throws {
     XCTAssertEqual(makeHistory().records, [])
 
