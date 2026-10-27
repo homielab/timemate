@@ -28,6 +28,7 @@
 "Open System Settings" = "Open System Settings";
 "Auto-start breaks" = "Auto-start breaks";
 "Auto-start focus" = "Auto-start focus";
+"Auto-start focus hint" = "With \"Keep break screen open\" on and the break screen showing, the next session starts from the break screen.";
 "Auto-start on launch" = "Auto-start on launch";
 "Keep break screen open until continued" = "Keep break screen open until continued";
 "Keep the break overlay on screen until you continue manually." = "Keep the break overlay on screen until you continue manually.";

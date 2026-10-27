@@ -36,6 +36,8 @@ class PomodoroTimer: ObservableObject {
   let removeSessionNotifications: () -> Void
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
+  /// Whether the app in front covers a screen (`OverlayPolicy.isFrontmostAppFullscreen`).
+  let isFullscreenProbe: () -> Bool
 
   /// How long after its end a session may still sound the alarm, notify and
   /// start the next session. Later than this (waking from a long sleep or
@@ -82,8 +84,10 @@ class PomodoroTimer: ObservableObject {
       UNUserNotificationCenter.current().add($0)
     },
     removeSessionNotifications: @escaping () -> Void = SessionNotification.removeDelivered,
-    playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) }
+    playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) },
+    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen
   ) {
+    self.isFullscreenProbe = isFullscreenProbe
     self.defaults = defaults
     self.postNotification = postNotification
     self.removeSessionNotifications = removeSessionNotifications
@@ -247,7 +251,8 @@ class PomodoroTimer: ObservableObject {
       sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
       switch SessionSequence.completion(
-        of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)
+        of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen,
+        breakScreenShown: breakScreenCanShow)
       {
       case .waitOnBreakScreen:
         isWaitingToContinue = true
@@ -450,7 +455,8 @@ class PomodoroTimer: ObservableObject {
 
     switch TimerRestorePlan.make(
       from: snapshot, now: now(), autoStart: autoStart,
-      keepBreakScreenOpen: keepBreakScreenOpen, overdueGracePeriod: Self.overdueGracePeriod)
+      keepBreakScreenOpen: keepBreakScreenOpen, breakScreenShown: breakScreenCanShow,
+      overdueGracePeriod: Self.overdueGracePeriod)
     {
     case .idle:
       break

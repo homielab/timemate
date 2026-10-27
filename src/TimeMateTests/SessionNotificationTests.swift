@@ -36,7 +36,7 @@ final class SessionNotificationTests: XCTestCase {
       defaults: defaults,
       now: { [unowned self] in self.currentTime },
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil))
+      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
   }
 
   private func finishSession(_ timer: PomodoroTimer) {

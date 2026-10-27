@@ -71,7 +71,8 @@ class TimerTestCase: XCTestCase {
       history: history,
       notificationCenter: clockCenter,
       uptime: { [weak self] in self?.currentUptime ?? 0 },
-      removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 })
+      removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
+      isFullscreenProbe: { false })
   }
 
   /// Advances the fake clock one second per tick, like the real 1 s timer.
@@ -115,7 +116,8 @@ class TimerTestCase: XCTestCase {
       uptime: { [weak self] in self?.currentUptime ?? 0 },
       postNotification: { _ in posts += 1 },
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
-      playSound: { _, _ in sounds += 1 })
+      playSound: { _, _ in sounds += 1 },
+      isFullscreenProbe: { false })
     return (alertTimer, { sounds }, { posts })
   }
 

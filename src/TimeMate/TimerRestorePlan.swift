@@ -25,7 +25,7 @@ enum TimerRestorePlan: Equatable {
   /// starts the next one: the user comes back to a waiting timer.
   static func make(
     from snapshot: TimerSnapshot, now: Date, autoStart: AutoStart,
-    keepBreakScreenOpen: Bool, overdueGracePeriod: TimeInterval
+    keepBreakScreenOpen: Bool, breakScreenShown: Bool, overdueGracePeriod: TimeInterval
   ) -> TimerRestorePlan {
     switch snapshot.state {
     case .idle:
@@ -48,7 +48,8 @@ enum TimerRestorePlan: Equatable {
       if snapshot.isBreakPostponed { return .postponedBreakDue }
       let waitsOnBreakScreen =
         SessionSequence.completion(
-          of: snapshot.sessionType, keepBreakScreenOpen: keepBreakScreenOpen)
+          of: snapshot.sessionType, keepBreakScreenOpen: keepBreakScreenOpen,
+          breakScreenShown: breakScreenShown)
         == .waitOnBreakScreen
       // Any break is followed by focus; focus by a short or long break.
       let nextType: SessionType =

@@ -24,6 +24,10 @@ struct AutomationSection: View {
         .onChange(of: autoStartFocus) { newValue in
           UserDefaults.standard.set(newValue, forKey: SettingsKey.autoStartFocus)
         }
+      Text("Auto-start focus hint")
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
       SettingsToggleRow(
         titleKey: "Keep break screen open until continued", isOn: $keepBreakScreenOpen
       )

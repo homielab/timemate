@@ -37,6 +37,14 @@ enum OverlayPolicy {
     case hide
   }
 
+  /// Whether the break screen can appear at all right now. The probe runs only when
+  /// the answer depends on it.
+  static func breakScreenCanShow(
+    settings: OverlaySettings, isFrontmostFullscreen: () -> Bool
+  ) -> Bool {
+    settings.enabled && !(settings.skipFullscreen && isFrontmostFullscreen())
+  }
+
   /// How often to look again while waiting for the frontmost app to leave full screen.
   static let pollInterval: TimeInterval = 5
 

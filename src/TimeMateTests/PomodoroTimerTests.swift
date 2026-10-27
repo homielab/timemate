@@ -107,6 +107,29 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.state, .active)
   }
 
+  func testKeepBreakScreenOpenWithOverlayOffStartsFocusAutomatically() {
+    defaults.set(false, forKey: SettingsKey.overlayEnabled)
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)  // focus -> short break
+    finishSession(timer)  // break ends: nothing to wait on
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testBreakScreenCannotShowWhileAFullScreenAppHoldsItBack() {
+    defaults.set(true, forKey: SettingsKey.overlaySkipFullscreen)
+    timer = makeTimer(keepBreakOpen: true)
+    XCTAssertTrue(timer.breakScreenCanShow)
+    let fullscreen = PomodoroTimer(
+      defaults: defaults, now: { Date(timeIntervalSince1970: 0) },
+      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { true })
+    XCTAssertFalse(fullscreen.breakScreenCanShow)
+    defaults.set(false, forKey: SettingsKey.overlaySkipFullscreen)
+    XCTAssertTrue(fullscreen.breakScreenCanShow)
+  }
+
   func testKeepBreakScreenOpenOffAdvancesImmediately() {
     timer = makeTimer(keepBreakOpen: false)
     timer.startTimer()

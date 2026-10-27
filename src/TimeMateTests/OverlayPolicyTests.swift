@@ -57,4 +57,16 @@ final class OverlayPolicyTests: XCTestCase {
     clock.stop()
     XCTAssertFalse(clock.isRunning)
   }
+
+  func testBreakScreenCanShowNeedsTheOverlayAndNoHoldingFullScreenApp() {
+    func canShow(enabled: Bool, skip: Bool, fullscreen: Bool) -> Bool {
+      OverlayPolicy.breakScreenCanShow(
+        settings: OverlaySettings(enabled: enabled, skipFullscreen: skip),
+        isFrontmostFullscreen: { fullscreen })
+    }
+    XCTAssertTrue(canShow(enabled: true, skip: true, fullscreen: false))
+    XCTAssertTrue(canShow(enabled: true, skip: false, fullscreen: true))
+    XCTAssertFalse(canShow(enabled: true, skip: true, fullscreen: true))
+    XCTAssertFalse(canShow(enabled: false, skip: false, fullscreen: false))
+  }
 }

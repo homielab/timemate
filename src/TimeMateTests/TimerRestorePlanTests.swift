@@ -19,12 +19,13 @@ final class TimerRestorePlanTests: XCTestCase {
 
   private func plan(
     _ snapshot: TimerSnapshot, autoStart: Bool = true, keepBreakScreenOpen: Bool = false,
-    autoStartPolicy: AutoStart? = nil
+    breakScreenShown: Bool = true, autoStartPolicy: AutoStart? = nil
   ) -> TimerRestorePlan {
     TimerRestorePlan.make(
       from: snapshot, now: now,
       autoStart: autoStartPolicy ?? AutoStart(breaks: autoStart, focus: autoStart),
-      keepBreakScreenOpen: keepBreakScreenOpen, overdueGracePeriod: 300)
+      keepBreakScreenOpen: keepBreakScreenOpen, breakScreenShown: breakScreenShown,
+      overdueGracePeriod: 300)
   }
 
   func testIdleStaysIdle() {
@@ -100,6 +101,15 @@ final class TimerRestorePlanTests: XCTestCase {
     // A focus session is not held back by the break-screen setting.
     XCTAssertEqual(
       plan(snapshot(state: .active, type: .focus, end: end), keepBreakScreenOpen: true),
+      .expired(endDate: end, duration: 1500, startNext: true))
+  }
+
+  func testExpiredBreakStartsFocusWhenNoBreakScreenCanShow() {
+    let end = now.addingTimeInterval(-30)
+    XCTAssertEqual(
+      plan(
+        snapshot(state: .active, type: .longBreak, end: end), keepBreakScreenOpen: true,
+        breakScreenShown: false),
       .expired(endDate: end, duration: 1500, startNext: true))
   }
 

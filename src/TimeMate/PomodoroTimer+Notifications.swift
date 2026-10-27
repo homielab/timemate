@@ -12,7 +12,8 @@ extension PomodoroTimer {
         sessionType: currentSessionType, focusSessionsCompleted: focusSessionsCompleted),
       interval: longBreakInterval)
     let completion = SessionSequence.completion(
-      of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)
+      of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen,
+      breakScreenShown: breakScreenCanShow)
     let autoStarted = autoStart.shouldStart(next: next.sessionType) && completion == .advance
     postNotification(
       SessionNotification.request(

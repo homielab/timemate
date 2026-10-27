@@ -48,13 +48,23 @@ final class SessionSequenceTests: XCTestCase {
   // MARK: - Completion
 
   func testCompletionWaitsOnlyForBreaksWhenScreenStaysOpen() {
-    XCTAssertEqual(
-      SessionSequence.completion(of: .shortBreak, keepBreakScreenOpen: true), .waitOnBreakScreen)
-    XCTAssertEqual(
-      SessionSequence.completion(of: .longBreak, keepBreakScreenOpen: true), .waitOnBreakScreen)
-    XCTAssertEqual(SessionSequence.completion(of: .focus, keepBreakScreenOpen: true), .advance)
-    XCTAssertEqual(
-      SessionSequence.completion(of: .shortBreak, keepBreakScreenOpen: false), .advance)
+    func completion(
+      _ type: SessionType, keep: Bool, shown: Bool = true
+    ) -> SessionSequence.Completion {
+      SessionSequence.completion(of: type, keepBreakScreenOpen: keep, breakScreenShown: shown)
+    }
+    XCTAssertEqual(completion(.shortBreak, keep: true), .waitOnBreakScreen)
+    XCTAssertEqual(completion(.longBreak, keep: true), .waitOnBreakScreen)
+    XCTAssertEqual(completion(.focus, keep: true), .advance)
+    XCTAssertEqual(completion(.shortBreak, keep: false), .advance)
+  }
+
+  func testCompletionDoesNotWaitWhenNoBreakScreenCanShow() {
+    for type in [SessionType.shortBreak, .longBreak] {
+      XCTAssertEqual(
+        SessionSequence.completion(of: type, keepBreakScreenOpen: true, breakScreenShown: false),
+        .advance)
+    }
   }
 
   // MARK: - Extend and postpone

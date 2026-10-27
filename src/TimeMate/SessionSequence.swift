@@ -39,8 +39,13 @@ enum SessionSequence {
     case advance
   }
 
-  static func completion(of type: SessionType, keepBreakScreenOpen: Bool) -> Completion {
-    keepBreakScreenOpen && isBreak(type) ? .waitOnBreakScreen : .advance
+  /// `breakScreenShown`: the break screen can actually appear (it is switched on and
+  /// not held back by a full-screen app). Without one there is nothing to wait on, so
+  /// the next session follows and starts if auto-start is on.
+  static func completion(
+    of type: SessionType, keepBreakScreenOpen: Bool, breakScreenShown: Bool
+  ) -> Completion {
+    keepBreakScreenOpen && breakScreenShown && isBreak(type) ? .waitOnBreakScreen : .advance
   }
 
   // MARK: - Extending and postponing a break

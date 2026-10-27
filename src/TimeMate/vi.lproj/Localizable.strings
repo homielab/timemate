@@ -28,6 +28,7 @@
 "Open System Settings" = "Mở Cài đặt hệ thống";
 "Auto-start breaks" = "Tự động bắt đầu phiên nghỉ";
 "Auto-start focus" = "Tự động bắt đầu phiên tập trung";
+"Auto-start focus hint" = "Khi bật \"Giữ màn hình nghỉ mở\" và màn hình nghỉ đang hiện, phiên kế tiếp bắt đầu từ màn hình nghỉ.";
 "Auto-start on launch" = "Tự động chạy khi mở ứng dụng";
 "Keep break screen open until continued" = "Giữ màn hình nghỉ mở cho đến khi tiếp tục";
 "Keep the break overlay on screen until you continue manually." = "Giữ màn hình nghỉ hiển thị cho đến khi bạn chủ động tiếp tục.";
