@@ -37,8 +37,9 @@ class PomodoroTimer: ObservableObject {
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
 
-  /// How long after its end a session may still sound the alarm and notify.
-  /// Later than this (waking from a long sleep) it ends silently.
+  /// How long after its end a session may still sound the alarm, notify and
+  /// start the next session. Later than this (waking from a long sleep or
+  /// opening the app again) it ends silently and the next session waits.
   static let overdueGracePeriod: TimeInterval = 5 * 60
 
   // MARK: - Private Properties
@@ -202,10 +203,18 @@ class PomodoroTimer: ObservableObject {
     lastTickAt = tickTime
     guard state == .active, let endDate else { return }
 
+    let isLongOverdue = tickTime.timeIntervalSince(endDate) > Self.overdueGracePeriod
     if isBreakPostponed, endDate <= tickTime {
-      // The postponed break comes back at its full length.
+      // The postponed break comes back at its full length; long after it came
+      // due (the Mac slept) it waits for Start instead of covering the screen.
       resetForCurrentSession()
-      self.endDate = tickTime.addingTimeInterval(TimeInterval(timeRemaining))
+      if isLongOverdue {
+        self.endDate = nil
+        timer?.cancel()
+        state = .idle
+      } else {
+        self.endDate = tickTime.addingTimeInterval(TimeInterval(timeRemaining))
+      }
       saveSnapshot()
       return
     }
@@ -225,13 +234,17 @@ class PomodoroTimer: ObservableObject {
         currentSessionType, duration: TimeInterval(totalDuration), end: endDate,
         label: label(for: currentSessionType))
       // A session that ended long ago (the Mac slept through it) finishes
-      // silently, like one restored after quitting the app.
-      if tickTime.timeIntervalSince(endDate) <= Self.overdueGracePeriod {
-        playSound(
-          AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
-        sendNotification()
-        sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      // silently, like one restored after quitting the app, and the next
+      // session waits for Start: no break screen for a break that is long gone.
+      if isLongOverdue {
+        advanceToNextSession(start: false)
+        saveSnapshot()
+        return
       }
+      playSound(
+        AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
+      sendNotification()
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
       switch SessionSequence.completion(
         of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)
@@ -426,7 +439,8 @@ class PomodoroTimer: ObservableObject {
   /// counting from its end date and a paused one stays paused. A session that
   /// ended while the app was closed is recorded in the history on the day it
   /// ended and the next session follows, without the alarm or a late
-  /// notification. A waiting break screen or a postponed break that is due
+  /// notification; it only starts when the session ended within
+  /// `overdueGracePeriod`. A waiting break screen or a postponed break that is due
   /// is not shown at launch: the timer waits on the next session instead.
   private func restore(_ snapshot: TimerSnapshot) {
     currentSessionType = snapshot.sessionType
@@ -435,7 +449,7 @@ class PomodoroTimer: ObservableObject {
 
     switch TimerRestorePlan.make(
       from: snapshot, now: now(), autoStart: autoStart,
-      keepBreakScreenOpen: keepBreakScreenOpen)
+      keepBreakScreenOpen: keepBreakScreenOpen, overdueGracePeriod: Self.overdueGracePeriod)
     {
     case .idle:
       break

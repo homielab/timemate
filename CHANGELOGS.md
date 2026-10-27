@@ -131,6 +131,10 @@ All notable changes to TimeMate will be documented in this file.
   session you are running: TimeMate removes that notification from Notification Center when you
   start, skip, reset or restart, and a new one replaces the previous.
 - Waking the Mac from a long sleep no longer rings the alarm or shows a "session complete" notification for a session that ended more than 5 minutes ago; the session just ends quietly.
+- Closing the lid or quitting during a session no longer greets you with a full-screen break
+  that started hours ago: a session that ended more than 5 minutes before you wake the Mac or
+  open TimeMate still counts in your statistics, but the next session waits for Start (no break
+  screen). Within those 5 minutes auto-start works as before.
 - The break screen no longer rescans the system window list on every unrelated settings write
   (timer state, alarm volume, colors); dragging the volume slider is smooth again during a break.
 - Start at Login: if macOS refuses to register or remove the login item, the switch goes back
@@ -172,7 +176,7 @@ All notable changes to TimeMate will be documented in this file.
   counting down after relaunch, a paused one stays paused, and the pomodoro count is
   kept. A session that ended while TimeMate was closed is added to the statistics on
   the day it ended and the next session follows (started only if auto-start is on
-  for it), without a late alarm or notification.
+  for it and it ended at most 5 minutes ago), without a late alarm or notification.
 - "Review on App Store" now opens TimeMate's review page in the App Store, and
   the unused push-notification entitlement was removed.
 - The "session complete" notification now shows as a banner even when TimeMate is

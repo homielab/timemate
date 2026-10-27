@@ -69,18 +69,58 @@ final class PomodoroTimerClockTests: TimerTestCase {
     workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
     advanceClock(by: 3600)
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    // Still counted, but the break that is long gone waits for Start.
+    XCTAssertEqual(history.records.count, 1)
     XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
     XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
-    XCTAssertEqual(alertTimer.state, .active)
+    XCTAssertEqual(alertTimer.state, .idle)
+    XCTAssertNil(alertTimer.endDate)
     XCTAssertEqual(alertTimer.timeRemaining, 2)
+    XCTAssertFalse(alertTimer.isWaitingToContinue)
+    XCTAssertFalse(showsOverlay(alertTimer))
     XCTAssertEqual(sounds(), 0)
     XCTAssertEqual(posts(), 0)
     // A second wake (or the timer's late fire) must not finish the next session.
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
     alertTimer.handleTick()
     XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
+    XCTAssertEqual(alertTimer.state, .idle)
     XCTAssertEqual(alertTimer.timeRemaining, 2)
     XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
+    XCTAssertEqual(history.records.count, 1)
+  }
+
+  func testWakeAfterLongSleepThroughBreakDoesNotOpenBreakScreen() {
+    timer = makeTimer(focus: 3, short: 60, keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(history.records.count, 2)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertFalse(showsOverlay(timer))
+  }
+
+  func testWakeJustWithinGracePeriodStillStartsNextSession() {
+    timer = makeTimer(focus: 3)
+    timer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3 + PomodoroTimer.overdueGracePeriod)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertTrue(showsOverlay(timer))
+  }
+
+  private func showsOverlay(_ timer: PomodoroTimer) -> Bool {
+    BreakOverlayRules.shouldShowOverlay(
+      state: timer.state, sessionType: timer.currentSessionType,
+      isWaiting: timer.isWaitingToContinue, isPostponed: timer.isBreakPostponed, enabled: true)
   }
 
   func testWakeAfterShortSleepPastTheEndStillAlerts() {

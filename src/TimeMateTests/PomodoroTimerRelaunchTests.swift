@@ -72,11 +72,29 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     timer = makeTimer(focus: 300)
     timer.startTimer()
 
-    let relaunched = relaunch(after: 3600)
+    // Ended two minutes ago: within the grace period.
+    let relaunched = relaunch(after: 420)
     XCTAssertEqual(history.records.count, 1)
     XCTAssertEqual(relaunched.currentSessionType, .shortBreak)
     XCTAssertEqual(relaunched.state, .active)
     XCTAssertEqual(relaunched.endDate, currentTime.addingTimeInterval(2))
+  }
+
+  func testSessionThatEndedLongBeforeRelaunchIsCountedButNextSessionWaits() {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+
+    let relaunched = relaunch(after: 300 + PomodoroTimer.overdueGracePeriod + 1)
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 1)
+    XCTAssertEqual(relaunched.currentSessionType, .shortBreak)
+    XCTAssertEqual(relaunched.state, .idle)
+    XCTAssertNil(relaunched.endDate)
+    XCTAssertFalse(
+      BreakOverlayRules.shouldShowOverlay(
+        state: relaunched.state, sessionType: relaunched.currentSessionType,
+        isWaiting: relaunched.isWaitingToContinue, isPostponed: relaunched.isBreakPostponed,
+        enabled: true))
   }
 
   func testBreakThatEndedWhileClosedDoesNotOpenBreakScreen() {

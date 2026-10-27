@@ -106,11 +106,26 @@ final class PomodoroTimerExtendTests: TimerTestCase {
     startShortBreak()
     timer.postponeBreak(minutes: 1)
     workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
-    advanceClock(by: 600)
+    advanceClock(by: 120)
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
     XCTAssertFalse(timer.isBreakPostponed)
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
     XCTAssertEqual(timer.timeRemaining, 2)
+  }
+
+  func testPostponedBreakWaitsAfterLongSleep() {
+    startShortBreak()
+    timer.postponeBreak(minutes: 1)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertFalse(timer.isBreakPostponed)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertNil(timer.endDate)
+    XCTAssertEqual(timer.timeRemaining, 2)
+    XCTAssertEqual(history.records.count, 1)  // only the focus session
   }
 
   func testPostponeOnlyWorksDuringARunningBreak() {

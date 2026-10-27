@@ -21,9 +21,11 @@ enum TimerRestorePlan: Equatable {
   /// `endDate`, then move on to the next session (started if `startNext`).
   case expired(endDate: Date, duration: Int, startNext: Bool)
 
+  /// A session that ended more than `overdueGracePeriod` before `now` never
+  /// starts the next one: the user comes back to a waiting timer.
   static func make(
     from snapshot: TimerSnapshot, now: Date, autoStart: AutoStart,
-    keepBreakScreenOpen: Bool
+    keepBreakScreenOpen: Bool, overdueGracePeriod: TimeInterval
   ) -> TimerRestorePlan {
     switch snapshot.state {
     case .idle:
@@ -53,7 +55,8 @@ enum TimerRestorePlan: Equatable {
         SessionSequence.isBreak(snapshot.sessionType) ? .focus : .shortBreak
       return .expired(
         endDate: savedEndDate, duration: snapshot.totalDuration,
-        startNext: autoStart.shouldStart(next: nextType) && !waitsOnBreakScreen)
+        startNext: autoStart.shouldStart(next: nextType) && !waitsOnBreakScreen
+          && now.timeIntervalSince(savedEndDate) <= overdueGracePeriod)
     }
   }
 }

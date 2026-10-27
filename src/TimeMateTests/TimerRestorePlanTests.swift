@@ -24,7 +24,7 @@ final class TimerRestorePlanTests: XCTestCase {
     TimerRestorePlan.make(
       from: snapshot, now: now,
       autoStart: autoStartPolicy ?? AutoStart(breaks: autoStart, focus: autoStart),
-      keepBreakScreenOpen: keepBreakScreenOpen)
+      keepBreakScreenOpen: keepBreakScreenOpen, overdueGracePeriod: 300)
   }
 
   func testIdleStaysIdle() {
@@ -101,6 +101,17 @@ final class TimerRestorePlanTests: XCTestCase {
     XCTAssertEqual(
       plan(snapshot(state: .active, type: .focus, end: end), keepBreakScreenOpen: true),
       .expired(endDate: end, duration: 1500, startNext: true))
+  }
+
+  func testExpiredLongerThanGracePeriodDoesNotStartNext() {
+    let atLimit = now.addingTimeInterval(-300)
+    XCTAssertEqual(
+      plan(snapshot(state: .active, end: atLimit)),
+      .expired(endDate: atLimit, duration: 1500, startNext: true))
+    let pastLimit = now.addingTimeInterval(-301)
+    XCTAssertEqual(
+      plan(snapshot(state: .active, end: pastLimit)),
+      .expired(endDate: pastLimit, duration: 1500, startNext: false))
   }
 
   func testActiveWithoutEndDateStaysIdle() {
