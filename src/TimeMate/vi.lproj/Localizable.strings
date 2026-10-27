@@ -209,3 +209,13 @@
 
 "Next: %1$@ · %2$@" = "Tiếp theo: %1$@ · %2$@";
 "%1$@ started · %2$@" = "Đã bắt đầu %1$@ · %2$@";
+
+"Restart the cycle from the first focus session" = "Bắt đầu lại chu kỳ từ phiên tập trung đầu tiên";
+"Reset (⌘R)" = "Đặt lại (⌘R)";
+"Skip (⌘→)" = "Bỏ qua (⌘→)";
+"Settings (⌘,)" = "Cài đặt (⌘,)";
+"Settings" = "Cài đặt";
+"Expanded" = "Đã mở";
+"Collapsed" = "Đã đóng";
+"Restart the cycle?" = "Bắt đầu lại chu kỳ?";
+"The session in progress will be lost." = "Phiên đang chạy sẽ bị mất.";

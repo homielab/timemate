@@ -5,6 +5,7 @@ import SwiftUI
 /// Restart, Reset, Start/Pause and Skip under the countdown.
 struct ControlButtonsView: View {
   @EnvironmentObject var model: PopoverTimerModel
+  @State private var confirmingRestart = false
 
   private var timer: PomodoroTimer { model.timer }
 
@@ -35,19 +36,27 @@ struct ControlButtonsView: View {
   var body: some View {
     HStack(spacing: 16) {
       Button {
-        timer.restartCycle()
+        if PopoverShortcuts.restartNeedsConfirmation(state: model.state) {
+          confirmingRestart = true
+        } else {
+          timer.restartCycle()
+        }
       } label: {
         Image(systemName: "backward.end.fill")
       }
-      .buttonStyle(.bordered).controlSize(.large).accessibilityLabel("Restart")
+      .buttonStyle(.bordered).controlSize(.large)
+      .help("Restart the cycle from the first focus session")
+      .accessibilityLabel("Restart")
 
       Button {
         timer.stopTimer()
       } label: {
         Image(systemName: "arrow.counterclockwise")
       }
-      .buttonStyle(.bordered).controlSize(.large).disabled(model.state == .idle).accessibilityLabel(
-        "Reset")
+      .buttonStyle(.bordered).controlSize(.large).disabled(model.state == .idle)
+      .keyboardShortcut("r", modifiers: .command)
+      .help("Reset (⌘R)")
+      .accessibilityLabel("Reset")
 
       Button(action: model.performMainAction) {
         Image(systemName: mainButtonIconName)
@@ -61,7 +70,16 @@ struct ControlButtonsView: View {
       } label: {
         Image(systemName: "forward.end.fill")
       }
-      .buttonStyle(.bordered).controlSize(.large).accessibilityLabel("Skip")
+      .buttonStyle(.bordered).controlSize(.large)
+      .keyboardShortcut(.rightArrow, modifiers: .command)
+      .help("Skip (⌘→)")
+      .accessibilityLabel("Skip")
+    }
+    .alert("Restart the cycle?", isPresented: $confirmingRestart) {
+      Button("Restart", role: .destructive) { timer.restartCycle() }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("The session in progress will be lost.")
     }
   }
 }

@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Keyboard shortcuts in the popover: **Space** starts/pauses (not while typing in a duration
+  field), **⌘,** opens or closes Settings, **⌘→** skips the session and **⌘R** resets it. Every
+  button now has a tooltip, and VoiceOver reads the gear as "Settings" (expanded/collapsed).
+- **Restart** asks for confirmation while a session is in progress.
 - Settings → Statistics: a **7 days / 30 days** switch (remembered). 30 days shows a compact
   bar strip with the total and the change against the previous 30 days, e.g. "+4 pomodoros
   (+12%), +100 min"; the comparison is hidden when the previous period is empty. **Export

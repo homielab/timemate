@@ -158,6 +158,10 @@ private struct SettingsButton: View {
     .foregroundColor(.secondary)
     .background(Color.secondary.opacity(0.1))
     .cornerRadius(5)
+    .keyboardShortcut(",", modifiers: .command)
+    .help("Settings (⌘,)")
+    .accessibilityLabel("Settings")
+    .accessibilityValue(settingsVisible ? "Expanded" : "Collapsed")
   }
 }
 

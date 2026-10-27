@@ -10,6 +10,7 @@ struct ContentView: View {
   @EnvironmentObject var model: PopoverTimerModel
   @EnvironmentObject var appDelegate: AppDelegate
   @State private var settingsVisible = false
+  @State private var spaceMonitor: Any?
 
   @AppStorage(SettingsKey.backgroundColorHex) private var backgroundColorHex: String = ""
   @AppStorage(SettingsKey.showProgressCircle) private var showProgressCircle = true
@@ -40,5 +41,27 @@ struct ContentView: View {
     .onReceive(appDelegate.openSettingsRequests) { _ in
       settingsVisible = true
     }
+    .onAppear(perform: installSpaceMonitor)
+    .onDisappear(perform: removeSpaceMonitor)
+  }
+
+  /// Space = Start/Pause while the popover is key and nothing else wants the key.
+  private func installSpaceMonitor() {
+    guard spaceMonitor == nil else { return }
+    spaceMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
+      [model, appDelegate] event in
+      guard let window = event.window, window === appDelegate.popoverWindow,
+        PopoverShortcuts.spaceStartsOrPauses(
+          keyCode: event.keyCode, modifiers: event.modifierFlags,
+          firstResponder: window.firstResponder)
+      else { return event }
+      model.performMainAction()
+      return nil
+    }
+  }
+
+  private func removeSpaceMonitor() {
+    if let monitor = spaceMonitor { NSEvent.removeMonitor(monitor) }
+    spaceMonitor = nil
   }
 }

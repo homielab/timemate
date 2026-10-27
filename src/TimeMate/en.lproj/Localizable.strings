@@ -209,3 +209,13 @@
 
 "Next: %1$@ · %2$@" = "Next: %1$@ · %2$@";
 "%1$@ started · %2$@" = "%1$@ started · %2$@";
+
+"Restart the cycle from the first focus session" = "Restart the cycle from the first focus session";
+"Reset (⌘R)" = "Reset (⌘R)";
+"Skip (⌘→)" = "Skip (⌘→)";
+"Settings (⌘,)" = "Settings (⌘,)";
+"Settings" = "Settings";
+"Expanded" = "Expanded";
+"Collapsed" = "Collapsed";
+"Restart the cycle?" = "Restart the cycle?";
+"The session in progress will be lost." = "The session in progress will be lost.";

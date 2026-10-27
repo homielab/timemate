@@ -11,6 +11,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 {
   private var statusItemController: StatusItemController!
   private var popover: NSPopover!
+  /// The popover's window, for key handlers that must ignore other windows.
+  var popoverWindow: NSWindow? { popover?.contentViewController?.view.window }
   private let timer = PomodoroTimer.shared
   private lazy var popoverModel = PopoverTimerModel(timer: timer)
   private var hostingController: NSHostingController<AnyView>!
