@@ -96,6 +96,7 @@ private struct CountdownView: View {
 /// goal "Today: N/G pomodoros · X min" above a small progress bar.
 private struct TodayStatsView: View {
   @ObservedObject var history: SessionHistory
+  @EnvironmentObject var appDelegate: AppDelegate
   @AppStorage(SettingsKey.dailyGoal) private var storedGoal = DailyGoal.off
 
   var body: some View {
@@ -108,6 +109,9 @@ private struct TodayStatsView: View {
         .monospacedDigit()
     } else {
       let reached = DailyGoal.isReached(completed: totals.pomodoros, goal: goal)
+      let streak = history.goalStreak(goal: goal)
+      let showsStreak = DailyGoal.showsStreak(streak: streak, goal: goal)
+      let streakText = StatisticsText.streak(days: streak)
       let spoken = StatisticsText.spokenToday(
         pomodoros: totals.pomodoros, goal: goal, minutes: totals.focusMinutes)
       VStack(spacing: 4) {
@@ -129,15 +133,27 @@ private struct TodayStatsView: View {
           .tint(reached ? .green : .accentColor)
           .controlSize(.small)
           .frame(width: 140)
+
+        if showsStreak {
+          Label(streakText, systemImage: "flame.fill")
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .monospacedDigit()
+        }
       }
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(
         Text(
-          reached
-            ? String(
-              format: NSLocalizedString("%@, goal reached", comment: "Day that met the goal"),
-              spoken)
-            : spoken))
+          DailyGoal.accessibilityLabel(
+            today: reached
+              ? String(
+                format: NSLocalizedString("%@, goal reached", comment: "Day that met the goal"),
+                spoken)
+              : spoken,
+            streak: showsStreak ? streakText : nil))
+      )
+      // The extra line changes the popover's height; resize it in one step.
+      .onChange(of: showsStreak) { _ in appDelegate.updatePopoverSize() }
     }
   }
 }

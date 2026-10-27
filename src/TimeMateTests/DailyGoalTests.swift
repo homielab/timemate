@@ -172,4 +172,20 @@ final class DailyGoalTests: XCTestCase {
     run(timer, until: 1)
     XCTAssertEqual(goalNotifications.count, 2)
   }
+
+  func testStreakLineShowsOnlyWithGoalAndStreak() {
+    XCTAssertTrue(DailyGoal.showsStreak(streak: 1, goal: 4))
+    XCTAssertTrue(DailyGoal.showsStreak(streak: 12, goal: 1))
+    XCTAssertFalse(DailyGoal.showsStreak(streak: 0, goal: 4))
+    XCTAssertFalse(DailyGoal.showsStreak(streak: 3, goal: DailyGoal.off))
+    XCTAssertFalse(DailyGoal.showsStreak(streak: 0, goal: DailyGoal.off))
+  }
+
+  func testAccessibilityLabelJoinsTodayAndStreak() {
+    XCTAssertEqual(
+      DailyGoal.accessibilityLabel(today: "Today: 3 of 4", streak: "Streak: 2 days"),
+      "Today: 3 of 4, Streak: 2 days")
+    XCTAssertEqual(
+      DailyGoal.accessibilityLabel(today: "Today: 3 of 4", streak: nil), "Today: 3 of 4")
+  }
 }

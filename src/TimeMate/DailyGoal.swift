@@ -37,4 +37,15 @@ enum DailyGoal {
     guard let lastNotified else { return false }
     return calendar.isDate(lastNotified, inSameDayAs: today)
   }
+
+  /// Whether the popover shows the streak line: a goal is on and at least one day is in the streak.
+  static func showsStreak(streak: Int, goal: Int) -> Bool {
+    goal > off && streak >= 1
+  }
+
+  /// One VoiceOver label for the progress block: today's text, then the streak when shown.
+  static func accessibilityLabel(today: String, streak: String?) -> String {
+    guard let streak else { return today }
+    return today + ", " + streak
+  }
 }
