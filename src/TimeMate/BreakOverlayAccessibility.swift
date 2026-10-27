@@ -40,6 +40,12 @@ enum BreakOverlayAccessibility {
     reduceMotion ? nil : 1.5
   }
 
+  /// Opacity of the white hint texts on the break screen (Esc hint, Skip countdown,
+  /// Postpone): readable by default, fully opaque with Increase Contrast.
+  static func hintOpacity(increaseContrast: Bool) -> Double {
+    increaseContrast ? 1.0 : 0.7
+  }
+
   /// Minutes the break screen offers to postpone the break by.
   static let postponeOptions = [1, 3, 5]
   /// Minutes the "+5 min" button adds to the break.

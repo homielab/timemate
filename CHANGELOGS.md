@@ -122,6 +122,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The break screen's hints ("Press Esc twice to skip", "Skip available in…", Postpone) are no longer dimmed to 40–50%, and turn fully opaque with Increase Contrast. VoiceOver now reads the seconds of the "Skip button delay" stepper.
 - One unreadable record in the session history (for example from a newer or older version)
   no longer wipes all your history and goal streak: that record is skipped and the rest is kept.
 - **Auto-start on launch** only starts a focus session. If the session restored from last time

@@ -62,4 +62,9 @@ final class BreakOverlayAccessibilityTests: XCTestCase {
       BreakOverlayAccessibility.postponeLabel(minutes: 3), "Postpone break by 3 minutes")
     XCTAssertEqual(BreakOverlayAccessibility.postponeOptions, [1, 3, 5])
   }
+
+  func testHintOpacityIsReadableAndFullWithIncreaseContrast() {
+    XCTAssertGreaterThanOrEqual(BreakOverlayAccessibility.hintOpacity(increaseContrast: false), 0.6)
+    XCTAssertEqual(BreakOverlayAccessibility.hintOpacity(increaseContrast: true), 1.0)
+  }
 }

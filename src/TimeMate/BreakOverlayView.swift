@@ -157,6 +157,10 @@ private struct BreakOverlayCountdownTextView: View {
 }
 
 private struct BreakOverlayBottomActionsView: View {
+  @Environment(\.colorSchemeContrast) private var contrast
+  private var hintOpacity: Double {
+    BreakOverlayAccessibility.hintOpacity(increaseContrast: contrast == .increased)
+  }
   @ObservedObject var model: BreakOverlayModel
   @ObservedObject var countdown: BreakOverlayCountdown
   let reduceMotion: Bool
@@ -194,7 +198,7 @@ private struct BreakOverlayBottomActionsView: View {
     HStack(spacing: 8) {
       Text(LocalizedStringKey("Postpone"))
         .font(.subheadline)
-        .foregroundColor(.white.opacity(0.7))
+        .foregroundColor(.white.opacity(hintOpacity))
         .accessibilityHidden(true)
       ForEach(BreakOverlayAccessibility.postponeOptions, id: \.self) { minutes in
         Button(action: {
@@ -247,7 +251,7 @@ private struct BreakOverlayBottomActionsView: View {
           } else {
             Text(countdown.skipAvailableText)
               .font(.body)
-              .foregroundColor(.white.opacity(0.5))
+              .foregroundColor(.white.opacity(hintOpacity))
               .padding(.vertical, 12)
           }
         }
@@ -256,12 +260,12 @@ private struct BreakOverlayBottomActionsView: View {
       if model.isWaitingToContinue {
         Text(LocalizedStringKey("Press Esc twice or click to continue"))
           .font(.caption)
-          .foregroundColor(.white.opacity(0.4))
+          .foregroundColor(.white.opacity(hintOpacity))
           .padding(.top, 8)
       } else {
         Text(LocalizedStringKey("Press Esc twice to skip"))
           .font(.caption)
-          .foregroundColor(.white.opacity(0.4))
+          .foregroundColor(.white.opacity(hintOpacity))
           .padding(.top, 8)
       }
     }

@@ -65,6 +65,8 @@ struct AlertsSection: View {
         Stepper("", value: $skipDelay, in: BreakOverlayAccessibility.skipDelayRange)
           .labelsHidden()
           .accessibilityLabel(Text("Skip button delay"))
+          .accessibilityValue(
+            Text(String(format: NSLocalizedString("%d s", comment: ""), skipDelay)))
       }
       .help("Seconds before the Skip button appears on the break screen (0 shows it right away).")
 
