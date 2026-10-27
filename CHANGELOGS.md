@@ -22,10 +22,12 @@ All notable changes to TimeMate will be documented in this file.
   field), **⌘,** opens or closes Settings, **⌘→** skips the session and **⌘R** resets it. Every
   button now has a tooltip, and VoiceOver reads the gear as "Settings" (expanded/collapsed).
 - **Restart** asks for confirmation while a session is in progress.
-- Settings → Statistics: a **7 days / 30 days** switch (remembered). 30 days shows a compact
-  bar strip with the total and the change against the previous 30 days, e.g. "+4 pomodoros
-  (+12%), +100 min"; the comparison is hidden when the previous period is empty. **Export
-  CSV…** now saves the chosen period (30 rows for 30 days, 7 for 7 days).
+- Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day) with the
+  period's total and the change against the previous 7 days. A **7 days / 30 days** switch
+  (remembered) shows 30 days as a compact bar strip with the total and the change against the
+  previous 30 days, e.g. "+4 pomodoros (+12%), +100 min"; the comparison is hidden when the
+  previous period is empty. **Export CSV…** saves the chosen period as `date,pomodoros,minutes`,
+  one row per day (7 rows for 7 days, 30 for 30 days).
 - Settings → Automation → **Pause when the Mac sleeps or the screen locks** (off by default):
   a running session pauses when the Mac sleeps, the display turns off or the screen locks, and
   stays paused until you resume it, so a lunch break no longer counts as a pomodoro. With it
@@ -40,7 +42,6 @@ All notable changes to TimeMate will be documented in this file.
 - A **Reset** keyboard shortcut (⌃⌥R, off by default; turn it on or record your own in
   Settings → Keyboard Shortcuts) and a **Reset Timer** Shortcuts action ("Reset TimeMate").
   Key names such as Space now show in the app's language.
-
 - A **Get Today's Progress** Shortcuts action (Siri: "Today's progress in TimeMate") that
   returns the pomodoros completed today and says e.g. "Today: 3 of 8 pomodoros, 75 minutes";
   use it to turn off a Focus mode once the daily goal is reached.
@@ -65,16 +66,13 @@ All notable changes to TimeMate will be documented in this file.
   pauses the timer (and continues past a waiting break screen), ⌃⌥S skips to the next
   session. Change or turn off each one in Settings → Keyboard Shortcuts; a shortcut
   already taken by another app is flagged there. No Accessibility permission needed.
-- Settings → Statistics shows the last 7 days (pomodoros and focus minutes per day),
-  the week's total and the change against the previous 7 days. **Export CSV…** saves
-  the whole 90-day history as `date,pomodoros,minutes`, one row per day.
 - Today's statistics: the popover shows "Today: N pomodoros · X min" for completed
   focus sessions. Completed sessions (skipped ones don't count) are saved for 90 days
   and survive restarts; Settings → Statistics → "Reset Statistics" clears them.
-- Unit test suite (`TimeMateTests`, 19 tests) for the Pomodoro state machine: session
-  progression and long-break cycles, auto-start, pause/resume, and the break screen's
-  "continue" flow. The timer now takes its `UserDefaults` and clock through its
-  initializer, and settings keys live in one shared `SettingsKey` enum.
+- Unit test suite (`TimeMateTests`) covering the Pomodoro state machine, statistics,
+  notifications, the break screen and the saved session. The timer now takes its
+  `UserDefaults` and clock through its initializer, and settings keys live in one shared
+  `SettingsKey` enum.
 - Settings → System → "Show timer when started at login" (off by default).
 - Session-complete notifications are time-sensitive, so they still show during a Focus mode
   or Do Not Disturb; Settings → Alerts & Sound → "Break through Focus" (on by default).
@@ -88,27 +86,28 @@ All notable changes to TimeMate will be documented in this file.
   data collected; declares user defaults (CA92.1, the app's own settings) and the system
   uptime used to time sessions (35F9.1). The Lottie package brings its own manifest.
 - Daily goal: set how many pomodoros you want each day (Settings → Statistics, 1–24, off
-  by default). The popover shows "Today: 3/8 pomodoros" with a progress bar, the last 7 days
-  mark the days you met it, the CSV export gets a `goal_reached` column, and a notification
-  tells you once a day when you reach it.
+  by default). The popover shows "Today: 3/8 pomodoros" with a progress bar, the 7-day and
+  30-day statistics mark the days you met it, the CSV export gets a `goal_reached` column, and
+  a notification tells you once a day when you reach it.
 
 ### Changed
 
-- The menu bar time redraws once a second instead of twice (measured: 2 updates per tick
-  before, 1 now, none when the shown second doesn't change), using less energy all day.
+- The menu bar time redraws once per update instead of twice (measured: 2 updates per tick
+  before, 1 now, none when the shown time doesn't change), using less energy all day.
 - Toggling the break screen setting in Alerts & Sound now immediately shows or hides
   the break screen during an active break.
 - Uses less energy during breaks: only the countdown and skip counter re-render every
   second instead of redrawing the entire break screen and animations on all displays.
 - The end-of-session notification now says what comes next: "Next: Short Break · 5 min", or
-  "Short Break started · 5 min" when Auto-start next session is on. In that case it has no
+  "Short Break started · 5 min" when the next session starts by itself. In that case it has no
   **Start Next** button (only **Skip**), since the next session is already running.
 - Under the hood: the session order, break extend/postpone and restore-after-relaunch rules moved
   out of the timer into small tested pieces; behaviour is unchanged.
 - TimeMate no longer opens its popover and takes focus when it starts at login; it still
   opens on the first launch and when you open the app yourself. No Dock icon flashes at launch.
-- Uses less energy: the countdown ticks every second only while you can see it (time in the
-  menu bar, popover open, break screen), otherwise the app wakes once when the session ends.
+- Uses less energy: the countdown ticks every second only while you can see it (seconds in the
+  menu bar, popover open, break screen, VoiceOver running), once a minute with minutes only,
+  and otherwise the app wakes once when the session ends.
 - Build number is now 15, matching the 3.5 release commit.
 - README: correct requirements (macOS 13.5, Xcode 26), command-line build and test commands.
 - Internal: the popover and settings code is split into `Views/` and one file per
@@ -129,7 +128,6 @@ All notable changes to TimeMate will be documented in this file.
 - Waking the Mac from a long sleep no longer rings the alarm or shows a "session complete" notification for a session that ended more than 5 minutes ago; the session just ends quietly.
 - The break screen no longer rescans the system window list on every unrelated settings write
   (timer state, alarm volume, colors); dragging the volume slider is smooth again during a break.
-
 - Start at Login: if macOS refuses to register or remove the login item, the switch goes back
   to its real state and shows the reason with an Open System Settings button; it also updates
   when you change the login item in System Settings and return to TimeMate.
@@ -155,21 +153,21 @@ All notable changes to TimeMate will be documented in this file.
 - Changing a session length in Settings → Durations updates the idle timer right away
   instead of on the next Start. Clicking a TimeMate notification opens the popover.
 - English statistics use singular and plural forms: "Today: 1 pomodoro" instead of
-  "1 pomodoros" (also the week total, the change against the previous week and VoiceOver's
+  "1 pomodoros" (also the period total, the change against the previous period and VoiceOver's
   "1 minute"). Vietnamese is unchanged.
 - An unreadable statistics file no longer gets overwritten and lose its sessions: it is
   kept as `session-history.corrupt-<date>.json` next to it (the latest one only) and
   statistics start over.
 - A broken "Cycles" value in the preferences (below 1 or above 8) no longer crashes the
   popover; it is treated as 1–8.
-- "Today" in the popover and the Statistics week roll over at midnight and after a change of
+- "Today" in the popover and the Statistics days roll over at midnight and after a change of
   the system time or time zone; setting the clock no longer cuts short or stretches a running
   session.
 - Quitting, updating or a crash no longer loses the session: a running timer keeps
   counting down after relaunch, a paused one stays paused, and the pomodoro count is
   kept. A session that ended while TimeMate was closed is added to the statistics on
-  the day it ended and the next session follows (started only if "Auto-start next
-  session" is on), without a late alarm or notification.
+  the day it ended and the next session follows (started only if auto-start is on
+  for it), without a late alarm or notification.
 - "Review on App Store" now opens TimeMate's review page in the App Store, and
   the unused push-notification entitlement was removed.
 - The "session complete" notification now shows as a banner even when TimeMate is
@@ -180,7 +178,7 @@ All notable changes to TimeMate will be documented in this file.
 - Changing the language or resetting all settings relaunches the app through Launch
   Services instead of a shell command, so it works inside the App Sandbox.
 - Less CPU while the timer runs: the closed popover no longer redraws every
-  second, and the menu bar item updates in place when "Hide time" is toggled.
+  second, and the menu bar item updates in place when its time display is changed.
 - Default settings are now registered before they are read, so the Dock icon is
   hidden on a fresh install as intended.
 - "Keep Mac awake" now holds the Mac awake only while a focus session is running,

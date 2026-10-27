@@ -75,7 +75,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 
 ### Running the Tests
 
-The Pomodoro state machine is covered by unit tests in the `TimeMateTests` target:
+The timer, statistics, notifications and break screen are covered by unit tests in the `TimeMateTests` target:
 
 ```bash
 xcodebuild -project src/TimeMate.xcodeproj -scheme TimeMate -configuration Debug \
@@ -118,9 +118,12 @@ Sources are in `src/TimeMate/`:
   The rules that need no timer are pure and unit-tested: `SessionSequence.swift` (next session,
   long-break count, what happens when a session ends, "+5 min" and "Postpone") and
   `TimerRestorePlan.swift` (what to do with the saved session at launch).
-- `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
-  `StatusItemController.swift` owns the status item; `MenuBarView.swift` draws it from
-  `MenuBarModel.swift`, which publishes only what the menu bar shows (one update per tick).
+- `AppDelegate.swift` — app start-up and the popover; it wires the status item, the global
+  shortcuts (`HotKeyManager.swift`), the break screen, keep-awake and notification responses.
+  `StatusItemController.swift` owns the status item and its right-click menu
+  (`StatusItemMenu.swift`); `MenuBarView.swift` draws it from `MenuBarModel.swift`, which
+  publishes only what the menu bar shows (one update per tick), in the style chosen in
+  `MenuBarTimeStyle.swift`.
   `LaunchBehavior.swift` decides whether the popover opens at launch (not at login);
   `TickMode.swift` decides whether the timer ticks every second or only at the session's end.
 - `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,
