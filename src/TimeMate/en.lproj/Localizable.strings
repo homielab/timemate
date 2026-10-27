@@ -4,7 +4,6 @@
 "Focus" = "Focus";
 "Short Break" = "Short Break";
 "Long Break" = "Long Break";
-"cycle_format" = "Cycle %d / %d";
 
 // Controls
 "Pause" = "Pause";
@@ -93,7 +92,6 @@
 "Enable Break Overlay" = "Enable Break Overlay";
 "Enable Notifications" = "Enable Notifications";
 "Relax your eyes..." = "Relax your eyes...";
-"Take a deep breath" = "Take a deep breath";
 "Skip Break" = "Skip Break";
 "Press Esc twice to skip" = "Press Esc twice to skip";
 "Skip available in %d" = "Skip available in %d";

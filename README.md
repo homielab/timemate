@@ -40,7 +40,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Pause on Sleep or Lock**: Turn on Settings → Automation → "Pause when the Mac sleeps or the screen locks" (off by default) and a running session pauses when the Mac sleeps, the display turns off or the screen locks. It stays paused until you resume it, so closing the lid for lunch doesn't count as a pomodoro. With it off the session keeps counting while the Mac sleeps. Reset All Settings keeps a running session.
 - **Survives Quit & Updates**: Quit, update or restart your Mac and the session picks up where it was — a running timer keeps counting from when it should end, a paused one stays paused, and the pomodoro count is kept. A session that ended while TimeMate was closed or the Mac slept still counts in your statistics; if it ended more than 5 minutes ago, the next session waits for you to press Start instead of opening the break screen.
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
-- **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
+- **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior; pick the app language (System Default, English or Vietnamese; takes effect after restarting the app), a background color and whether the window stays on top ("Keep window on top").
 - **Multilingual Support**: Available in both English and Vietnamese.
 - **Native & Efficient**: Built specifically for macOS with minimal system resource usage. The countdown ticks every second only while you can see it; with the menu bar time hidden and the popover closed, TimeMate wakes just once when the session ends (once a minute with minutes only). Starting at login stays quiet (no popover, no stolen focus) unless you turn on "Show timer when started at login"; "Today" rolls over at midnight and setting the clock never changes a running session's length.
 
@@ -94,6 +94,8 @@ condition instead of sleeping for a fixed time. Move the clock forward and call 
 rather than waiting a second. Put new logic in a pure type with the clock and defaults passed in,
 as `SessionSequence` does, so it needs no timer to test.
 
+Debug builds run session minutes as seconds (`PomodoroTimer.seconds(forMinutes:)`, `PomodoroTimer+Settings.swift`): a 25 minute focus session lasts 25 seconds, so you can try the whole cycle quickly. Release builds use real minutes.
+
 Debug builds sign with `src/TimeMate/TimeMateDebug.entitlements` (no extra capabilities), so they build with any development team. Release builds use `src/TimeMate/TimeMate.entitlements`, which adds the Time Sensitive Notifications entitlement: the App ID needs that capability enabled in the Apple Developer portal.
 
 ### Code Style
@@ -139,7 +141,8 @@ Sources are in `src/TimeMate/`:
 - `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,
   `ControlButtonsView`).
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
-  building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`.
+  building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`;
+  `Settings/LoginItemState.swift` decides what the Start at Login switch shows (pure, unit-tested).
 - `BreakOverlay*.swift` and `BreakSkipCountdown.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
   shows and what a double Esc does, `OverlayPolicy.swift` holds it back while a full-screen app is in front (unit-tested).
 - `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared

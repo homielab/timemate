@@ -45,6 +45,21 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// Strings the code builds by hand (`Text(LocalizedStringKey(tip))`, `rawValue`s,
+  /// `NSLocalizedString(key)`) reach no table check on their own: a missing one shows English.
+  func testStringsBuiltInCodeExistInBothLanguages() throws {
+    let english = try strings("Localizable", "en")
+    let vietnamese = try strings("Localizable", "vi")
+    let used =
+      RelaxationTips.all
+      + SessionType.allCases.map(\.rawValue)
+      + SessionNotificationAction.allCases.map(\.titleKey)
+      + ["Break postponed"]
+    XCTAssertEqual(Set(used).count, used.count, "duplicate string")
+    XCTAssertEqual(used.filter { english[$0] == nil }, [], "missing in en.lproj")
+    XCTAssertEqual(used.filter { vietnamese[$0] == nil }, [], "missing in vi.lproj")
+  }
+
   /// Siri phrases have no English table: the phrase itself is the English. Each one
   /// listed in `TimeMateShortcutPhrases` needs a Vietnamese translation, and no stray one.
   func testSiriPhrasesHaveAVietnameseTranslation() throws {

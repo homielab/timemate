@@ -4,7 +4,6 @@
 "Focus" = "Tập trung";
 "Short Break" = "Nghỉ ngắn";
 "Long Break" = "Nghỉ dài";
-"cycle_format" = "Chu kỳ %d / %d";
 
 // Controls
 "Pause" = "Tạm dừng";
@@ -93,7 +92,6 @@
 "Enable Break Overlay" = "Bật màn hình nghỉ ngơi";
 "Enable Notifications" = "Bật thông báo";
 "Relax your eyes..." = "Thư giãn đôi mắt...";
-"Take a deep breath" = "Hít thở thật sâu";
 "Skip Break" = "Bỏ qua nghỉ ngơi";
 "Press Esc twice to skip" = "Nhấn Esc 2 lần để bỏ qua";
 "Skip available in %d" = "Bỏ qua sau %d";
