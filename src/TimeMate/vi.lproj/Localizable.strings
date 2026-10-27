@@ -182,6 +182,8 @@
 "Statistics period" = "Khoảng thống kê";
 "%lld min" = "%lld phút";
 "Export CSV…" = "Xuất CSV…";
+"Export sessions CSV…" = "Xuất phiên ra CSV…";
+"Saves every completed session of the last 90 days with its label, one row each." = "Lưu mọi phiên đã hoàn thành trong 90 ngày qua kèm nhãn, mỗi phiên một dòng.";
 "Break through Focus" = "Hiện cả khi đang Tập trung";
 "Show the session-complete notification even while a Focus mode or Do Not Disturb is on." = "Vẫn hiện thông báo hết phiên khi đang bật chế độ Tập trung hoặc Không làm phiền.";
 "Focus minutes" = "Số phút tập trung";

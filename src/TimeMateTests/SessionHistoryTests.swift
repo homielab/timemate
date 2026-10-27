@@ -284,4 +284,47 @@ final class SessionHistoryTests: XCTestCase {
       history.todayTotals(), SessionHistory.DayTotals(pomodoros: 0, focusSeconds: 0))
     cancellable.cancel()
   }
+
+  // MARK: - Sessions CSV
+
+  func testSessionsCSVWithoutSessionsIsOnlyTheHeader() {
+    XCTAssertEqual(makeHistory().sessionsCSV(), "start,end,kind,minutes,label\r\n")
+  }
+
+  func testSessionsCSVRowsKindsAndEmptyLabel() {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 25 * 60, end: hoursAgo(2))
+    history.recordCompletedSession(.shortBreak, duration: 5 * 60, end: hoursAgo(1))
+    history.recordCompletedSession(.longBreak, duration: 15 * 60, end: currentTime)
+    let lines = history.sessionsCSV().components(separatedBy: "\r\n")
+    XCTAssertEqual(
+      lines,
+      [
+        "start,end,kind,minutes,label",
+        "2026-03-10T12:35:00Z,2026-03-10T13:00:00Z,focus,25,",
+        "2026-03-10T13:55:00Z,2026-03-10T14:00:00Z,short_break,5,",
+        "2026-03-10T14:45:00Z,2026-03-10T15:00:00Z,long_break,15,",
+        "",
+      ])
+  }
+
+  func testSessionsCSVQuotesCommasQuotesAndNewlines() {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 60, end: hoursAgo(3), label: "a, b")
+    history.recordCompletedSession(.focus, duration: 60, end: hoursAgo(2), label: "say \"hi\"")
+    let rows = history.sessionsCSV().components(separatedBy: "\r\n")
+    XCTAssertTrue(rows[1].hasSuffix(",1,\"a, b\""))
+    XCTAssertTrue(rows[2].hasSuffix(",1,\"say \"\"hi\"\"\""))
+    XCTAssertEqual(SessionHistory.csvField(label: "x\ny"), "\"x\ny\"")
+  }
+
+  func testSessionsCSVNeutralisesFormulaLabels() {
+    XCTAssertEqual(SessionHistory.csvField(label: "=SUM(A1)"), "'=SUM(A1)")
+    XCTAssertEqual(SessionHistory.csvField(label: "+1"), "'+1")
+    XCTAssertEqual(SessionHistory.csvField(label: "-1"), "'-1")
+    XCTAssertEqual(SessionHistory.csvField(label: "@cmd"), "'@cmd")
+    XCTAssertEqual(SessionHistory.csvField(label: "=a,b"), "\"'=a,b\"")
+    XCTAssertEqual(SessionHistory.csvField(label: "plain = ok"), "plain = ok")
+    XCTAssertEqual(SessionHistory.csvField(label: nil), "")
+  }
 }

@@ -182,6 +182,8 @@
 "Statistics period" = "Statistics period";
 "%lld min" = "%lld min";
 "Export CSV…" = "Export CSV…";
+"Export sessions CSV…" = "Export sessions CSV…";
+"Saves every completed session of the last 90 days with its label, one row each." = "Saves every completed session of the last 90 days with its label, one row each.";
 "Break through Focus" = "Break through Focus";
 "Show the session-complete notification even while a Focus mode or Do Not Disturb is on." = "Show the session-complete notification even while a Focus mode or Do Not Disturb is on.";
 "Focus minutes" = "Focus minutes";

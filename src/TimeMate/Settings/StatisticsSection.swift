@@ -36,6 +36,12 @@ struct StatisticsSection: View {
           model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)))
       }
 
+      MenuItemButton(title: "Export sessions CSV…", systemImage: "list.bullet.rectangle") {
+        StatisticsExporter.export(
+          model.timer.history.sessionsCSV(), fileName: StatisticsExporter.sessionsFileName())
+      }
+      .help("Saves every completed session of the last 90 days with its label, one row each.")
+
       MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
         showingResetAlert = true
       }
@@ -281,10 +287,15 @@ enum StatisticsExporter {
       parts.day ?? 0)
   }
 
-  static func export(_ csv: String) {
+  static func sessionsFileName(today: Date = Date(), calendar: Calendar = .current) -> String {
+    defaultFileName(today: today, calendar: calendar)
+      .replacingOccurrences(of: "statistics", with: "sessions")
+  }
+
+  static func export(_ csv: String, fileName: String = defaultFileName()) {
     let panel = NSSavePanel()
     panel.allowedContentTypes = [.commaSeparatedText]
-    panel.nameFieldStringValue = defaultFileName()
+    panel.nameFieldStringValue = fileName
     panel.canCreateDirectories = true
     NSApp.activate(ignoringOtherApps: true)
     guard panel.runModal() == .OK, let url = panel.url else { return }

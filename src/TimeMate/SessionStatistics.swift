@@ -194,4 +194,41 @@ extension SessionHistory {
     }
     return SessionStatistics.csv(for: rows, calendar: calendar, goal: goal)
   }
+
+  /// One row per completed session kept in the history, oldest first:
+  /// `start,end,kind,minutes,label`. Times are ISO 8601 in the history calendar's time
+  /// zone, `kind` is `focus`, `short_break` or `long_break`, `minutes` is rounded. Fields are
+  /// quoted as RFC 4180 asks and lines end in CRLF. A label that would be read as a formula
+  /// by a spreadsheet (starting with `=`, `+`, `-`, `@`, tab or CR) gets a leading `'`.
+  func sessionsCSV() -> String {
+    let formatter = ISO8601DateFormatter()
+    formatter.timeZone = calendar.timeZone
+    formatter.formatOptions = [.withInternetDateTime]
+    var lines = ["start,end,kind,minutes,label"]
+    for record in records.filter(\.completed).sorted(by: { $0.start < $1.start }) {
+      let kind: String
+      switch record.kind {
+      case .focus: kind = "focus"
+      case .short: kind = "short_break"
+      case .long: kind = "long_break"
+      }
+      let minutes = Int((record.duration / 60).rounded())
+      lines.append(
+        [
+          formatter.string(from: record.start), formatter.string(from: record.end), kind,
+          String(minutes), Self.csvField(label: record.label),
+        ].joined(separator: ","))
+    }
+    return lines.joined(separator: "\r\n") + "\r\n"
+  }
+
+  static func csvField(label: String?) -> String {
+    guard var text = label, !text.isEmpty else { return "" }
+    // Compared by unicode scalar: "\r\n" is one Character in Swift.
+    let formulaStarts = "=+-@\t\r".unicodeScalars
+    let needsQuotes = ",\"\r\n".unicodeScalars
+    if let first = text.unicodeScalars.first, formulaStarts.contains(first) { text = "'" + text }
+    guard text.unicodeScalars.contains(where: needsQuotes.contains) else { return text }
+    return "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+  }
 }
