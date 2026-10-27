@@ -9,6 +9,24 @@ import CoreGraphics
 /// The break screen activates the app and covers everything, which would throw a
 /// presentation or a video call out of full screen. With "Don't interrupt full-screen
 /// apps" on, it waits until the app in front leaves full screen (or the break ends).
+/// The settings the break screen reacts to. Compared on every defaults change so that
+/// unrelated writes (timer snapshot, volume, colors) don't re-evaluate the overlay.
+struct OverlaySettings: Equatable {
+  var enabled: Bool
+  var skipFullscreen: Bool
+
+  init(enabled: Bool, skipFullscreen: Bool) {
+    self.enabled = enabled
+    self.skipFullscreen = skipFullscreen
+  }
+
+  init(defaults: UserDefaults) {
+    self.init(
+      enabled: defaults.bool(forKey: SettingsKey.overlayEnabled),
+      skipFullscreen: defaults.bool(forKey: SettingsKey.overlaySkipFullscreen))
+  }
+}
+
 enum OverlayPolicy {
   enum Presentation: Equatable {
     /// Show the break screen.

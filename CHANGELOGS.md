@@ -107,6 +107,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The break screen no longer rescans the system window list on every unrelated settings write
+  (timer state, alarm volume, colors); dragging the volume slider is smooth again during a break.
+
 - Start at Login: if macOS refuses to register or remove the login item, the switch goes back
   to its real state and shows the reason with an Open System Settings button; it also updates
   when you change the login item in System Settings and return to TimeMate.

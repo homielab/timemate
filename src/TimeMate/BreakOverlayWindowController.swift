@@ -55,6 +55,12 @@ class BreakOverlayWindowController: NSObject {
   /// Re-checks whether the frontmost app left full screen while the break screen waits.
   private var fullscreenPoll: Timer?
   private var lastState: (PomodoroState, SessionType, Bool, Bool)?
+  /// The two settings the break screen depends on, as of the last evaluation.
+  private var lastSettings: OverlaySettings?
+  /// Whether the app in front is full screen; replaced in tests to count the (costly) lookups.
+  let isFullscreenProbe: () -> Bool
+  /// How many times the break screen's visibility was evaluated (for tests).
+  private(set) var evaluationCount = 0
   private var escDetector = DoubleEscDetector()
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
@@ -65,8 +71,10 @@ class BreakOverlayWindowController: NSObject {
   init(
     timer: PomodoroTimer,
     defaults: UserDefaults = .standard,
-    animated: Bool = true
+    animated: Bool = true,
+    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen
   ) {
+    self.isFullscreenProbe = isFullscreenProbe
     self.timer = timer
     self.defaults = defaults
     self.animated = animated
@@ -173,6 +181,9 @@ class BreakOverlayWindowController: NSObject {
   }
 
   private func handleDefaultsChange() {
+    // Every defaults write (timer snapshot, volume, colors...) lands here; only the
+    // break screen's own settings matter.
+    guard OverlaySettings(defaults: defaults) != lastSettings else { return }
     guard let state = lastState else {
       handleStateChange(
         state: timer.state,
@@ -212,18 +223,22 @@ class BreakOverlayWindowController: NSObject {
     state: PomodoroState, sessionType: SessionType, isWaitingToContinue: Bool,
     isBreakPostponed: Bool
   ) {
+    evaluationCount += 1
     lastState = (state, sessionType, isWaitingToContinue, isBreakPostponed)
+    let settings = OverlaySettings(defaults: defaults)
+    lastSettings = settings
     let shouldShow = BreakOverlayRules.shouldShowOverlay(
       state: state, sessionType: sessionType, isWaiting: isWaitingToContinue,
-      isPostponed: isBreakPostponed,
-      enabled: defaults.bool(forKey: SettingsKey.overlayEnabled))
+      isPostponed: isBreakPostponed, enabled: settings.enabled)
 
+    let isVisible = windows.contains { $0.isVisible }
     let presentation = OverlayPolicy.presentation(
       shouldShow: shouldShow,
-      skipFullscreen: defaults.bool(forKey: SettingsKey.overlaySkipFullscreen),
-      isFrontmostFullscreen: shouldShow && defaults.bool(forKey: SettingsKey.overlaySkipFullscreen)
-        && OverlayPolicy.isFrontmostAppFullscreen(),
-      isVisible: windows.contains { $0.isVisible })
+      skipFullscreen: settings.skipFullscreen,
+      // The window list is only read when the answer can matter.
+      isFrontmostFullscreen: shouldShow && settings.skipFullscreen && !isVisible
+        && isFullscreenProbe(),
+      isVisible: isVisible)
 
     if presentation == .waitForWindowedApp {
       startFullscreenPoll()
