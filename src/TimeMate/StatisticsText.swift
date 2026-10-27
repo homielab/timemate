@@ -41,6 +41,11 @@ enum StatisticsText {
     format("Goal reached on %1$lld of %2$lld days", bundle, locale, reached, days)
   }
 
+  /// "Streak: 3 days": consecutive days that met the daily goal.
+  static func streak(days: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
+    format("Streak: %lld days", bundle, locale, days)
+  }
+
   /// "Week: 12 pomodoros · 300 min"
   static func week(pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
     -> String

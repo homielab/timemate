@@ -95,6 +95,15 @@ final class StatisticsTextTests: XCTestCase {
       "Monday, October 20: 2 pomodoros, 50 minutes, goal reached")
   }
 
+  func testStreakTextPlurals() throws {
+    let en = try bundle("en")
+    let vi = try bundle("vi")
+    XCTAssertEqual(StatisticsText.streak(days: 1, bundle: en), "Streak: 1 day")
+    XCTAssertEqual(StatisticsText.streak(days: 4, bundle: en), "Streak: 4 days")
+    XCTAssertEqual(StatisticsText.streak(days: 1, bundle: vi), "Chuỗi: 1 ngày")
+    XCTAssertEqual(StatisticsText.streak(days: 4, bundle: vi), "Chuỗi: 4 ngày")
+  }
+
   func testVietnameseDailyGoalTexts() throws {
     let vi = try bundle("vi")
     XCTAssertEqual(

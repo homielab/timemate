@@ -76,6 +76,20 @@
 			<string>%lld ngày</string>
 		</dict>
 	</dict>
+	<key>Streak: %lld days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Chuỗi: %#@days@</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld ngày</string>
+		</dict>
+	</dict>
 	<key>Today: %1$lld of %2$lld pomodoros, %3$lld minutes</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- **Goal streak**: Settings → Statistics shows "Streak: N days", the days in a row that met your daily goal (up to the 90 kept days; today not done yet doesn't break it). The Shortcuts action **Get Today's Progress** says it too.
 - Settings → Automation: **Auto-start next session** is now two switches, **Auto-start breaks** and
   **Auto-start focus**, so breaks can run by themselves while you decide when to get back to
   work (or the other way round). Until you change them, both follow your old setting.

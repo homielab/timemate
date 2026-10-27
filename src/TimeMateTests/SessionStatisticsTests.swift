@@ -341,4 +341,76 @@ final class SessionStatisticsTests: XCTestCase {
       StatisticsExporter.defaultFileName(today: date(2026, 3, 10, 15, in: utc), calendar: utc),
       "TimeMate-statistics-2026-03-10.csv")
   }
+  // MARK: - Goal streak
+
+  /// Days oldest first ending 2026-03-10, with the given pomodoro counts.
+  private func streakDays(
+    _ counts: [Int], endingOn end: (Int, Int, Int) = (2026, 3, 10),
+    in calendar: Calendar
+  ) -> [SessionStatistics.Day] {
+    let today = date(end.0, end.1, end.2, 12, in: calendar)
+    let records = counts.reversed().enumerated().flatMap { offset, count in
+      (0..<count).map { _ in
+        focus(end: calendar.date(byAdding: .day, value: -offset, to: today)!)
+      }
+    }
+    return SessionStatistics.days(
+      from: records, endingOn: today, count: counts.count, calendar: calendar)
+  }
+
+  func testStreakStartsFromYesterdayWhileTodayIsNotReached() {
+    let utc = calendar("UTC")
+    let days = streakDays([0, 4, 4, 1], in: utc)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: days, goal: 4), 2)
+  }
+
+  func testStreakIncludesTodayOnceReached() {
+    let utc = calendar("UTC")
+    let days = streakDays([0, 4, 4, 5], in: utc)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: days, goal: 4), 3)
+  }
+
+  func testAnEmptyDayBreaksTheStreak() {
+    let utc = calendar("UTC")
+    let days = streakDays([4, 4, 0, 4, 4], in: utc)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: days, goal: 4), 2)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: streakDays([4, 4, 3, 4], in: utc), goal: 4), 1)
+  }
+
+  func testNoGoalOrNoDaysMeansNoStreak() {
+    let utc = calendar("UTC")
+    XCTAssertEqual(SessionStatistics.goalStreak(days: streakDays([5, 5], in: utc), goal: 0), 0)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: [], goal: 3), 0)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: streakDays([0, 0], in: utc), goal: 3), 0)
+  }
+
+  func testStreakAcrossTheDaylightSavingChangeInNewYork() {
+    let newYork = calendar("America/New_York")
+    // 2026-11-01 has 25 hours; 2026-03-08 has 23.
+    let fall = streakDays([2, 2, 2, 2, 0], endingOn: (2026, 11, 3), in: newYork)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: fall, goal: 2), 4)
+    let spring = streakDays([2, 2, 2, 2], endingOn: (2026, 3, 10), in: newYork)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: spring, goal: 2), 4)
+  }
+
+  func testStreakAcrossTheNewYear() {
+    let utc = calendar("UTC")
+    let days = streakDays([1, 1, 1, 1, 1], endingOn: (2027, 1, 2), in: utc)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: days, goal: 1), 5)
+    XCTAssertEqual(days.first?.date, date(2026, 12, 29, in: utc))
+  }
+
+  func testHistoryStreakIsCappedByTheKeptNinetyDays() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 12, in: utc)
+    let history = SessionHistory(
+      fileURL: nil, now: { today }, calendar: utc, notificationCenter: NotificationCenter())
+    for offset in 0..<120 {
+      history.recordCompletedSession(
+        .focus, duration: 25 * 60, end: utc.date(byAdding: .day, value: -offset, to: today)!)
+    }
+    XCTAssertEqual(history.goalStreak(goal: 1), SessionHistory.retentionDays)
+    XCTAssertEqual(history.goalStreak(goal: 2), 0)
+  }
 }

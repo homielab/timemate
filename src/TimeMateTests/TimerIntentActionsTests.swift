@@ -170,4 +170,20 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertTrue(TimerIntentActions.todayProgress(history: history, goal: 2).goalReached)
     XCTAssertFalse(TimerIntentActions.todayProgress(history: history, goal: 4).goalReached)
   }
+
+  func testProgressTextMentionsTheStreak() {
+    let history = makeHistory()
+    for day in 0..<3 {
+      let end = currentTime.addingTimeInterval(-Double(day) * 86_400)
+      history.recordCompletedSession(.focus, duration: 25 * 60, end: end)
+    }
+
+    let progress = TimerIntentActions.todayProgress(history: history, goal: 1)
+
+    XCTAssertEqual(progress.streak, 3)
+    XCTAssertEqual(
+      TimerIntentActions.progressText(progress),
+      "Today: 1 of 1 pomodoro, 25 minutes. Streak: 3 days")
+    XCTAssertEqual(TimerIntentActions.todayProgress(history: history, goal: 0).streak, 0)
+  }
 }

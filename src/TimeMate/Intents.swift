@@ -50,6 +50,8 @@ enum TimerIntentActions {
     let focusMinutes: Int
     /// True once a goal is set and `completed` has reached it.
     var goalReached: Bool { goal.map { completed >= $0 } ?? false }
+    /// Consecutive days that met the goal (0 with no goal).
+    var streak = 0
   }
 
   /// Today's completed pomodoros and focus minutes from `history`, measured
@@ -58,16 +60,20 @@ enum TimerIntentActions {
     let totals = history.todayTotals()
     return TodayProgress(
       completed: totals.pomodoros, goal: goal > DailyGoal.off ? goal : nil,
-      focusMinutes: totals.focusMinutes)
+      focusMinutes: totals.focusMinutes, streak: history.goalStreak(goal: goal))
   }
 
-  /// Spoken / shown answer of "Get Today's Progress", e.g. "Today: 3 of 8 pomodoros, 75 minutes".
+  /// Spoken / shown answer of "Get Today's Progress", e.g. "Today: 3 of 8 pomodoros, 75 minutes. Streak: 4 days".
   static func progressText(_ progress: TodayProgress) -> String {
+    var text: String
     if let goal = progress.goal {
-      return StatisticsText.spokenToday(
+      text = StatisticsText.spokenToday(
         pomodoros: progress.completed, goal: goal, minutes: progress.focusMinutes)
+    } else {
+      text = StatisticsText.today(pomodoros: progress.completed, minutes: progress.focusMinutes)
     }
-    return StatisticsText.today(pomodoros: progress.completed, minutes: progress.focusMinutes)
+    if progress.streak > 0 { text += ". " + StatisticsText.streak(days: progress.streak) }
+    return text
   }
 
   /// Spoken / shown answer of "Get Timer Status", e.g. "Focus, running, 12 min left".

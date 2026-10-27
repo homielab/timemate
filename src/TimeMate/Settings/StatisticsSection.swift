@@ -16,6 +16,8 @@ struct StatisticsSection: View {
     SettingsSection(titleKey: "Statistics", systemImage: "chart.bar.fill") {
       DailyGoalRow(goal: $dailyGoal)
 
+      GoalStreakLabel(history: model.timer.history, goal: DailyGoal.sanitized(dailyGoal))
+
       Picker(selection: $storedDays) {
         Text("7 days").tag(SessionStatistics.weekLength)
         Text("30 days").tag(SessionStatistics.monthLength)
@@ -46,6 +48,22 @@ struct StatisticsSection: View {
       } message: {
         Text("This will delete the history of completed sessions. Are you sure?")
       }
+    }
+  }
+}
+
+/// "Streak: N days" under the goal row; hidden with no goal or no streak.
+private struct GoalStreakLabel: View {
+  @ObservedObject var history: SessionHistory
+  let goal: Int
+
+  var body: some View {
+    let streak = history.goalStreak(goal: goal)
+    if streak > 0 {
+      Text(StatisticsText.streak(days: streak))
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
     }
   }
 }

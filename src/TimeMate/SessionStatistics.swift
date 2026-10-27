@@ -115,6 +115,23 @@ enum SessionStatistics {
     days.filter { DailyGoal.isReached(completed: $0.pomodoros, goal: goal) }.count
   }
 
+  /// Consecutive days that met `goal`, counted back from the last of `days`
+  /// (oldest first, today last). A today that hasn't met the goal yet doesn't break
+  /// the streak, it just isn't part of it. 0 with no goal. The same goal applies to
+  /// every day, since the goal isn't stored per day.
+  static func goalStreak(days: [Day], goal: Int) -> Int {
+    guard goal > DailyGoal.off else { return 0 }
+    var streak = 0
+    for (offset, day) in days.reversed().enumerated() {
+      if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
+        streak += 1
+      } else if offset > 0 {
+        break
+      }
+    }
+    return streak
+  }
+
   /// `date,pomodoros,minutes` with one row per day, dates as `yyyy-MM-dd` in the
   /// calendar's time zone, lines ending in CRLF (RFC 4180). With a daily goal
   /// (`goal` > 0) a `goal_reached` column says 1 or 0 for each day.
@@ -154,6 +171,14 @@ extension SessionHistory {
   func statistics(days: Int) -> SessionStatistics.Period {
     SessionStatistics.period(
       from: records, today: currentDate, length: days, calendar: calendar)
+  }
+
+  /// Consecutive days up to today that met `goal`, from the kept history.
+  func goalStreak(goal: Int) -> Int {
+    SessionStatistics.goalStreak(
+      days: SessionStatistics.days(
+        from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
+      goal: goal)
   }
 
   /// The CSV export, with the `goal_reached` column when `goal` is set: the last
