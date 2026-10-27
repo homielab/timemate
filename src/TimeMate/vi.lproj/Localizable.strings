@@ -37,7 +37,10 @@
 "Open the timer popover when TimeMate starts at login." = "Mở cửa sổ hẹn giờ khi TimeMate tự khởi động lúc đăng nhập.";
 "Hide Dock icon" = "Ẩn biểu tượng trên Dock";
 "Show Progress Circle" = "Hiển thị vòng tiếng trình";
-"Hide time in menu bar" = "Ẩn thời gian trên thanh menu";
+"Menu bar time" = "Thời gian trên thanh menu";
+"Minutes and seconds" = "Phút và giây";
+"Minutes only" = "Chỉ phút";
+"Icon only" = "Chỉ biểu tượng";
 "Keep window on top" = "Giữ cửa sổ luôn hiện trên";
 "Keep Mac awake" = "Giữ Mac luôn mở";
 "Start at Login" = "Tự khởi động khi đăng nhập";

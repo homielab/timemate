@@ -1103,6 +1103,17 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertEqual(timer.timeRemaining, 500)
   }
 
+  func testEveryMinuteModeCatchesUpWhenSwitchedBackToEverySecond() {
+    timer = makeTimer(focus: 600)
+    timer.startTimer()
+    timer.tickMode = .everyMinute
+    advanceClock(by: 100)
+    XCTAssertEqual(timer.timeRemaining, 600)
+    XCTAssertEqual(timer.secondsRemaining, 500)
+    timer.tickMode = .everySecond
+    XCTAssertEqual(timer.timeRemaining, 500)
+  }
+
   func testSwitchingTickModeAfterTheEndFinishesTheSessionOnce() {
     timer = makeTimer(focus: 3, autoStart: false)
     timer.startTimer()

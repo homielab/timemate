@@ -6,11 +6,14 @@ import XCTest
 @testable import TimeMate
 
 final class MenuBarLayoutTests: XCTestCase {
-  func testWidthWithAndWithoutTime() {
-    XCTAssertEqual(MenuBarLayout.width(hideTime: true), 24)
-    XCTAssertEqual(MenuBarLayout.width(hideTime: false), 90)
-    XCTAssertEqual(MenuBarView.width(hideTime: true), 24)
-    XCTAssertEqual(MenuBarView.width(hideTime: false), 90)
+  func testWidthForEachStyle() {
+    XCTAssertEqual(MenuBarLayout.width(style: .iconOnly), 24)
+    XCTAssertEqual(MenuBarLayout.width(style: .minutesSeconds), 90)
+    XCTAssertEqual(MenuBarLayout.width(style: .minutesOnly), 64)
+    XCTAssertEqual(MenuBarView.width(style: .iconOnly), 24)
+    XCTAssertEqual(MenuBarView.width(style: .minutesSeconds), 90)
+    XCTAssertGreaterThan(MenuBarLayout.width(style: .minutesOnly), 24)
+    XCTAssertLessThan(MenuBarLayout.width(style: .minutesOnly), 90)
   }
 
   func testIconNameForStates() {

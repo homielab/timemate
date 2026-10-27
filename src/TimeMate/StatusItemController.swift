@@ -25,7 +25,7 @@ final class StatusItemController: NSObject {
 
   init(
     timer: PomodoroTimer,
-    hideMenuBarTime: Bool,
+    menuBarStyle: MenuBarTimeStyle,
     statusItem: NSStatusItem? = nil,
     onTogglePopover: (() -> Void)? = nil,
     onOpenSettings: (() -> Void)? = nil,
@@ -37,7 +37,7 @@ final class StatusItemController: NSObject {
     self.menuBarModel = MenuBarModel(timer: timer)
     let item =
       statusItem
-      ?? NSStatusBar.system.statusItem(withLength: MenuBarLayout.width(hideTime: hideMenuBarTime))
+      ?? NSStatusBar.system.statusItem(withLength: MenuBarLayout.width(style: menuBarStyle))
     self.statusItem = item
     self.menuBarHostingView = PassThroughHostingView(rootView: AnyView(EmptyView()))
     self.onTogglePopover = onTogglePopover
@@ -53,7 +53,7 @@ final class StatusItemController: NSObject {
       }
     }
     item.button?.addSubview(menuBarHostingView)
-    layoutMenuBar(hideTime: hideMenuBarTime)
+    layoutMenuBar(style: menuBarStyle)
     item.button?.target = self
     item.button?.action = #selector(statusItemClicked)
     item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -65,10 +65,10 @@ final class StatusItemController: NSObject {
   }
 
   /// Sizes the status item and updates the menu bar view in place.
-  func layoutMenuBar(hideTime: Bool) {
-    let width = MenuBarLayout.width(hideTime: hideTime)
+  func layoutMenuBar(style: MenuBarTimeStyle) {
+    let width = MenuBarLayout.width(style: style)
     statusItem.length = width
-    menuBarHostingView.rootView = AnyView(MenuBarView(model: menuBarModel, hideTime: hideTime))
+    menuBarHostingView.rootView = AnyView(MenuBarView(model: menuBarModel, style: style))
     menuBarHostingView.frame = NSRect(
       x: 0, y: 0, width: width, height: NSStatusBar.system.thickness)
   }

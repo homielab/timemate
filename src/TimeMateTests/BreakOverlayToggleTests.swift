@@ -74,7 +74,7 @@ final class BreakOverlayToggleTests: XCTestCase {
   func testTickModeUsesBreakOverlayRules() {
     let modeWithOverlay = TickMode.mode(
       popoverOpen: false,
-      menuBarShowsTime: false,
+      menuBarStyle: .iconOnly,
       breakOverlayShown: BreakOverlayRules.shouldShowOverlay(
         state: .active,
         sessionType: .shortBreak,
@@ -88,7 +88,7 @@ final class BreakOverlayToggleTests: XCTestCase {
 
     let modeWithoutOverlay = TickMode.mode(
       popoverOpen: false,
-      menuBarShowsTime: false,
+      menuBarStyle: .iconOnly,
       breakOverlayShown: BreakOverlayRules.shouldShowOverlay(
         state: .active,
         sessionType: .shortBreak,

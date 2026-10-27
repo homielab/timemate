@@ -24,12 +24,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private(set) lazy var hotKeyManager = HotKeyManager { [weak self] in self?.timer.perform($0) }
   private var cancellables = Set<AnyCancellable>()
   let openSettingsRequests = PassthroughSubject<Void, Never>()
-  @AppStorage(SettingsKey.hideMenuBarTime) private var hideMenuBarTime = false
+  private var menuBarStyle = MenuBarTimeStyle.minutesSeconds
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
 
     SettingsKey.registerDefaults()
+    MenuBarTimeStyle.migrate()
+    menuBarStyle = MenuBarTimeStyle.current()
     setDockIcon(hidden: UserDefaults.standard.hideDockIcon)
     observeTimerForKeepAwake()
     setKeepAwake(enabled: UserDefaults.standard.keepAwake)
@@ -38,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     statusItemController = StatusItemController(
       timer: timer,
-      hideMenuBarTime: hideMenuBarTime,
+      menuBarStyle: menuBarStyle,
       onTogglePopover: { [weak self] in self?.togglePopover() },
       onOpenSettings: { [weak self] in self?.openSettings() },
       onTickModeNeedsUpdate: { [weak self] in self?.updateTickMode() },
@@ -95,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     )
     timer.tickMode = TickMode.mode(
       popoverOpen: isPopoverOpen,
-      menuBarShowsTime: !hideMenuBarTime,
+      menuBarStyle: menuBarStyle,
       breakOverlayShown: overlayShown,
       voiceOverRunning: statusItemController?.isVoiceOverRunning ?? false
     )
@@ -170,11 +172,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     escapeKeyMonitor = nil
   }
 
-  func updateMenuBarWidth(hideTime: Bool) {
+  func updateMenuBarStyle(_ style: MenuBarTimeStyle) {
     let wasShown = popover.isShown
     if wasShown { popover.performClose(nil) }
-    statusItemController.layoutMenuBar(hideTime: hideTime)
-    hideMenuBarTime = hideTime
+    menuBarStyle = style
+    statusItemController.layoutMenuBar(style: style)
     updateTickMode()
     if wasShown {
       DispatchQueue.main.async { self.togglePopover() }

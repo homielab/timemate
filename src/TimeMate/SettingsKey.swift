@@ -28,7 +28,9 @@ enum SettingsKey {
   static let overlaySkipDelay = "overlaySkipDelay"
   static let backgroundColorHex = "backgroundColorHex"
   static let showProgressCircle = "showProgressCircle"
+  /// Old on/off switch; read once to migrate to `menuBarTimeStyle`, then left alone.
   static let hideMenuBarTime = "hideMenuBarTime"
+  static let menuBarTimeStyle = "menuBarTimeStyle"
   static let hideDockIcon = "hideDockIcon"
   static let keepAwake = "keepAwake"
   /// Pause a running session when the Mac sleeps or the screen locks (off by default).

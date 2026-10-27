@@ -8,16 +8,29 @@ struct AppearanceSection: View {
   @Binding var showProgressCircle: Bool
   @Binding var backgroundColorHex: String
 
-  @AppStorage(SettingsKey.hideMenuBarTime) private var hideMenuBarTime = false
+  @AppStorage(SettingsKey.menuBarTimeStyle) private var menuBarTimeStyle =
+    MenuBarTimeStyle.minutesSeconds.rawValue
   @AppStorage(SettingsKey.alwaysVisible) private var alwaysVisible = false
 
   var body: some View {
     SettingsSection(titleKey: "Appearance", systemImage: "paintbrush.fill") {
       SettingsToggleRow(titleKey: "Show Progress Circle", isOn: $showProgressCircle)
-      SettingsToggleRow(titleKey: "Hide time in menu bar", isOn: $hideMenuBarTime)
-        .onChange(of: hideMenuBarTime) { newValue in
-          appDelegate.updateMenuBarWidth(hideTime: newValue)
+      HStack {
+        Text("Menu bar time")
+        Spacer(minLength: 12)
+        Picker("", selection: $menuBarTimeStyle) {
+          Text("Minutes and seconds").tag(MenuBarTimeStyle.minutesSeconds.rawValue)
+          Text("Minutes only").tag(MenuBarTimeStyle.minutesOnly.rawValue)
+          Text("Icon only").tag(MenuBarTimeStyle.iconOnly.rawValue)
         }
+        .labelsHidden()
+        .accessibilityLabel(Text("Menu bar time"))
+        .fixedSize()
+        .onChange(of: menuBarTimeStyle) { newValue in
+          appDelegate.updateMenuBarStyle(
+            MenuBarTimeStyle.resolved(stored: newValue, legacyHide: false))
+        }
+      }
       SettingsToggleRow(titleKey: "Keep window on top", isOn: $alwaysVisible)
         .onChange(of: alwaysVisible) { newValue in
           appDelegate.setPopoverBehavior(alwaysVisible: newValue)

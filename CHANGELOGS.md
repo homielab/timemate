@@ -6,6 +6,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Appearance → **Menu bar time** replaces "Hide time in menu bar" with three
+  choices: minutes and seconds ("12:34"), **minutes only** ("13m", rounded up, a compact
+  item for crowded menu bars that also wakes the app only once a minute) or icon only. If you had
+  hidden the time, it starts as icon only. VoiceOver still reads minutes and seconds.
 - **What are you working on?**: an optional one-line label in the popover during focus
   sessions. It is saved with each completed focus session in the history and shown in the
   "session complete" notification; it stays until you change it. Older history files load as

@@ -117,7 +117,7 @@ final class MenuBarModelTests: XCTestCase {
     let statusItem = NSStatusBar.system.statusItem(withLength: 90)
     defer { NSStatusBar.system.removeStatusItem(statusItem) }
     let controller = StatusItemController(
-      timer: timer, hideMenuBarTime: false, statusItem: statusItem)
+      timer: timer, menuBarStyle: .minutesSeconds, statusItem: statusItem)
     // Let the controller read the real VoiceOver state first, then pretend it's on.
     RunLoop.main.run(until: Date().addingTimeInterval(0.1))
     controller.setAccessibilityLabelUpdates(enabled: true)
@@ -127,5 +127,24 @@ final class MenuBarModelTests: XCTestCase {
     XCTAssertEqual(
       statusItem.button?.accessibilityLabel(), controller.menuBarModel.accessibilityLabel)
     XCTAssertEqual(controller.menuBarModel.timeRemaining, 29)
+  }
+
+  func testStatusItemLabelFollowsTheModelWithVoiceOverInMinutesOnlyStyle() {
+    let statusItem = NSStatusBar.system.statusItem(withLength: 90)
+    defer { NSStatusBar.system.removeStatusItem(statusItem) }
+    let controller = StatusItemController(
+      timer: timer, menuBarStyle: .minutesOnly, statusItem: statusItem)
+    // Let the controller read the real VoiceOver state first, then pretend it's on.
+    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    controller.setAccessibilityLabelUpdates(enabled: true)
+    timer.startTimer()
+    tick()
+    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+    XCTAssertEqual(
+      statusItem.button?.accessibilityLabel(), controller.menuBarModel.accessibilityLabel)
+    XCTAssertEqual(controller.menuBarModel.timeRemaining, 29)
+    // The label keeps the full time even though the bar shows minutes only.
+    XCTAssertTrue(
+      (statusItem.button?.accessibilityLabel() ?? "").contains(String(29)))
   }
 }

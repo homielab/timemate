@@ -5,7 +5,13 @@ import SwiftUI
 
 /// Layout and appearance decisions for the menu bar item.
 enum MenuBarLayout {
-  static func width(hideTime: Bool) -> CGFloat { hideTime ? 24 : 90 }
+  static func width(style: MenuBarTimeStyle) -> CGFloat {
+    switch style {
+    case .minutesSeconds: return 90
+    case .minutesOnly: return 64
+    case .iconOnly: return 24
+    }
+  }
 
   static func iconName(state: PomodoroState, sessionType: SessionType) -> String {
     switch state {
@@ -52,10 +58,10 @@ class PassThroughHostingView: NSHostingView<AnyView> {
 struct MenuBarView: View {
   /// Not the timer itself: that would redraw the menu bar twice every tick.
   @ObservedObject var model: MenuBarModel
-  let hideTime: Bool
+  let style: MenuBarTimeStyle
 
-  static func width(hideTime: Bool) -> CGFloat {
-    MenuBarLayout.width(hideTime: hideTime)
+  static func width(style: MenuBarTimeStyle) -> CGFloat {
+    MenuBarLayout.width(style: style)
   }
 
   private var iconName: String {
@@ -83,14 +89,14 @@ struct MenuBarView: View {
         )
         .foregroundColor(model.state == .active ? .white : Color(nsColor: .headerTextColor))
 
-      if !hideTime {
-        Text(model.timeRemaining.toMinuteSecondString())
+      if style.showsTime {
+        Text(style.text(seconds: model.timeRemaining))
           .font(.system(size: NSFont.systemFontSize + 1, design: .monospaced).weight(.bold))
           .foregroundColor(foregroundColor)
       }
     }
     .frame(
-      width: MenuBarLayout.width(hideTime: hideTime), height: NSStatusBar.system.thickness,
+      width: MenuBarLayout.width(style: style), height: NSStatusBar.system.thickness,
       alignment: .center
     )
     .accessibilityHidden(true)

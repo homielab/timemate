@@ -54,7 +54,7 @@ class PomodoroTimer: ObservableObject {
   private var endUptime: TimeInterval?
 
   /// How the running session refreshes `timeRemaining`. With `.atEnd` the
-  /// countdown is only brought up to date when the mode changes back, on
+  /// countdown is only brought up to date (`.everyMinute`: once a minute) when the mode changes back, on
   /// pause, wake or a clock change, and when the session ends.
   var tickMode: TickMode = .everySecond {
     didSet {
@@ -137,8 +137,8 @@ class PomodoroTimer: ObservableObject {
     startTicking()
   }
 
-  /// Schedules `handleTick` for the current `tickMode`: every second, or
-  /// once at `endDate` when nothing shows the countdown.
+  /// Schedules `handleTick` for the current `tickMode`: every second, at each
+  /// change of the minutes shown, or once at `endDate` when nothing shows the countdown.
   private func startTicking() {
     timer?.cancel()
     switch tickMode {
@@ -148,9 +148,12 @@ class PomodoroTimer: ObservableObject {
         .sink { [weak self] _ in
           self?.handleTick()
         }
-    case .atEnd:
+    case .atEnd, .everyMinute:
       guard let endDate else { return }
-      let delay = max(0, endDate.timeIntervalSince(now()))
+      let untilEnd = max(0, endDate.timeIntervalSince(now()))
+      let delay =
+        tickMode == .everyMinute
+        ? MenuBarTimeStyle.secondsUntilMinuteChange(remaining: untilEnd) : untilEnd
       let endTimer = Timer(fire: Date().addingTimeInterval(delay), interval: 0, repeats: false) {
         [weak self] _ in
         guard let self else { return }

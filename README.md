@@ -24,7 +24,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 
 ## Key Features
 
-- **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter. Right-click (or Control-click) the menu bar item for a quick menu: Start/Pause, Skip, Reset, Settings… and Quit. VoiceOver reads the item with the session and the time remaining, e.g. "TimeMate, Focus, 12 minutes, 34 seconds remaining".
+- **Menu Bar Integration**: Access your timer instantly from the macOS menu bar with zero desktop clutter. Right-click (or Control-click) the menu bar item for a quick menu: Start/Pause, Skip, Reset, Settings… and Quit. VoiceOver reads the item with the session and the time remaining, e.g. "TimeMate, Focus, 12 minutes, 34 seconds remaining". Settings → Appearance → Menu bar time picks "12:34", minutes only ("13m", for crowded menu bars) or icon only; the old `hideMenuBarTime` default is read once to pick the initial choice and then left untouched.
 - **Automated Workflow**: Seamlessly cycles between Focus, Short Break, and Long Break sessions. A long break comes after every 2–8 focus sessions (default 4); "Auto-start breaks", "Auto-start focus" and "Auto-start on launch" keep the timer going without clicks.
 - **Custom Session Durations**: Set any focus or break length from 1 to 180 minutes (e.g. 50/10 or 90-minute deep work) by typing it or with the stepper; an idle timer shows the new length right away.
 - **Session Label**: Type what you're working on in the "What are you working on?" field under the cycle dots (focus sessions only). It is saved with each focus session you complete (a `label` in `session-history.json`), shown as the first line of the "session complete" notification, and kept until you change it, also across relaunches and Reset All Settings. Leave it empty for no label. Press Return to leave the field so **Space** starts/pauses again.
@@ -42,7 +42,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior.
 - **Multilingual Support**: Available in both English and Vietnamese.
-- **Native & Efficient**: Built specifically for macOS with minimal system resource usage. The countdown ticks every second only while you can see it; with the menu bar time hidden and the popover closed, TimeMate wakes just once when the session ends. Starting at login stays quiet (no popover, no stolen focus) unless you turn on "Show timer when started at login"; "Today" rolls over at midnight and setting the clock never changes a running session's length.
+- **Native & Efficient**: Built specifically for macOS with minimal system resource usage. The countdown ticks every second only while you can see it; with the menu bar time hidden and the popover closed, TimeMate wakes just once when the session ends (once a minute with minutes only). Starting at login stays quiet (no popover, no stolen focus) unless you turn on "Show timer when started at login"; "Today" rolls over at midnight and setting the clock never changes a running session's length.
 
 ## Screenshots
 

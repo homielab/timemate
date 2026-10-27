@@ -6,11 +6,11 @@ import XCTest
 
 final class TickModeTests: XCTestCase {
   private func mode(
-    popover: Bool = false, menuBarTime: Bool = false, overlay: Bool = false,
+    popover: Bool = false, menuBarTime: MenuBarTimeStyle = .iconOnly, overlay: Bool = false,
     voiceOver: Bool = false
   ) -> TickMode {
     TickMode.mode(
-      popoverOpen: popover, menuBarShowsTime: menuBarTime, breakOverlayShown: overlay,
+      popoverOpen: popover, menuBarStyle: menuBarTime, breakOverlayShown: overlay,
       voiceOverRunning: voiceOver)
   }
 
@@ -19,7 +19,18 @@ final class TickModeTests: XCTestCase {
   }
 
   func testTimeInTheMenuBarTicksEverySecond() {
-    XCTAssertEqual(mode(menuBarTime: true), .everySecond)
+    XCTAssertEqual(mode(menuBarTime: .minutesSeconds), .everySecond)
+  }
+
+  func testMinutesOnlyTicksOncePerMinuteWhenNothingElseShowsSeconds() {
+    XCTAssertEqual(mode(menuBarTime: .minutesOnly), .everyMinute)
+  }
+
+  func testMinutesOnlyTicksEverySecondWhileSecondsAreVisible() {
+    XCTAssertEqual(mode(popover: true, menuBarTime: .minutesOnly), .everySecond)
+    XCTAssertEqual(mode(menuBarTime: .minutesOnly, overlay: true), .everySecond)
+    // VoiceOver reads the full minutes and seconds.
+    XCTAssertEqual(mode(menuBarTime: .minutesOnly, voiceOver: true), .everySecond)
   }
 
   func testOpenPopoverTicksEverySecondWithTheMenuBarTimeHidden() {
