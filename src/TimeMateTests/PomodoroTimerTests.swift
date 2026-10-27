@@ -440,20 +440,57 @@ final class PomodoroTimerTests: XCTestCase {
     cancellable.cancel()
   }
 
-  func testWakeAfterEndDateFinishesSessionOnceWithoutATick() {
-    timer.startTimer()
+  /// A timer whose alarm and notification are recorded: (sounds, notifications).
+  private func makeAlertTimer() -> (PomodoroTimer, () -> Int, () -> Int) {
+    var sounds = 0
+    var posts = 0
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(2, forKey: SettingsKey.shortBreakDuration)
+    defaults.set(true, forKey: SettingsKey.notificationsEnabled)
+    defaults.set(true, forKey: SettingsKey.autoStartNextSession)
+    let alertTimer = PomodoroTimer(
+      defaults: defaults,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      workspaceNotificationCenter: workspaceCenter,
+      distributedNotificationCenter: distributedCenter,
+      history: history,
+      notificationCenter: clockCenter,
+      uptime: { [weak self] in self?.currentUptime ?? 0 },
+      postNotification: { _ in posts += 1 },
+      playSound: { _, _ in sounds += 1 })
+    return (alertTimer, { sounds }, { posts })
+  }
+
+  func testWakeAfterLongSleepFinishesSessionOnceAndSilently() {
+    let (alertTimer, sounds, posts) = makeAlertTimer()
+    alertTimer.startTimer()
     workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
     advanceClock(by: 3600)
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
-    XCTAssertEqual(timer.focusSessionsCompleted, 1)
-    XCTAssertEqual(timer.currentSessionType, .shortBreak)
-    XCTAssertEqual(timer.state, .active)
-    XCTAssertEqual(timer.timeRemaining, 2)
+    XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
+    XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
+    XCTAssertEqual(alertTimer.state, .active)
+    XCTAssertEqual(alertTimer.timeRemaining, 2)
+    XCTAssertEqual(sounds(), 0)
+    XCTAssertEqual(posts(), 0)
     // A second wake (or the timer's late fire) must not finish the next session.
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
-    timer.handleTick()
-    XCTAssertEqual(timer.currentSessionType, .shortBreak)
-    XCTAssertEqual(timer.timeRemaining, 2)
+    alertTimer.handleTick()
+    XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
+    XCTAssertEqual(alertTimer.timeRemaining, 2)
+    XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
+  }
+
+  func testWakeAfterShortSleepPastTheEndStillAlerts() {
+    let (alertTimer, sounds, posts) = makeAlertTimer()
+    alertTimer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 120)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
+    XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
+    XCTAssertEqual(sounds(), 1)
+    XCTAssertEqual(posts(), 1)
   }
 
   func testWakeBeforeEndDateShowsRealRemainingTime() {

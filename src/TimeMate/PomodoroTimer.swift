@@ -34,6 +34,10 @@ class PomodoroTimer: ObservableObject {
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
 
+  /// How long after its end a session may still sound the alarm and notify.
+  /// Later than this (waking from a long sleep) it ends silently.
+  static let overdueGracePeriod: TimeInterval = 5 * 60
+
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
   private var timer: AnyCancellable?
@@ -203,10 +207,14 @@ class PomodoroTimer: ObservableObject {
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(totalDuration), end: endDate)
-      playSound(
-        AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
-      sendNotification()
-      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      // A session that ended long ago (the Mac slept through it) finishes
+      // silently, like one restored after quitting the app.
+      if tickTime.timeIntervalSince(endDate) <= Self.overdueGracePeriod {
+        playSound(
+          AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
+        sendNotification()
+        sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      }
 
       switch SessionSequence.completion(
         of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen)

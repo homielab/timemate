@@ -111,6 +111,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Waking the Mac from a long sleep no longer rings the alarm or shows a "session complete" notification for a session that ended more than 5 minutes ago; the session just ends quietly.
 - The break screen no longer rescans the system window list on every unrelated settings write
   (timer state, alarm volume, colors); dragging the volume slider is smooth again during a break.
 
