@@ -193,6 +193,6 @@ final class HotKeyTests: XCTestCase {
     let timer = makeTimer()
     timer.perform(.skip)
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
-    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)  // skipped while idle: not counted
   }
 }

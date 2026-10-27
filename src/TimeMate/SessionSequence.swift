@@ -15,10 +15,15 @@ enum SessionSequence {
 
   /// The session after `position`. Finishing (or skipping) a focus session
   /// counts it; the `interval`-th one leads to a long break and restarts the
-  /// count. Any break leads back to focus.
-  static func next(after position: Position, interval: Int) -> Position {
+  /// count. Any break leads back to focus. A focus session that never ran
+  /// (`counts: false`, skipped while idle) moves on without being counted.
+  static func next(after position: Position, interval: Int, counts: Bool = true) -> Position {
     guard position.sessionType == .focus else {
       return Position(sessionType: .focus, focusSessionsCompleted: position.focusSessionsCompleted)
+    }
+    guard counts else {
+      return Position(
+        sessionType: .shortBreak, focusSessionsCompleted: position.focusSessionsCompleted)
     }
     let completed = position.focusSessionsCompleted + 1
     if completed >= interval {

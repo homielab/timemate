@@ -334,11 +334,13 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
+    let wasRunning = state != .idle
     removeSessionNotifications()
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
-    advanceToNextSession()
+    // A focus session skipped before it ran a second is not counted.
+    advanceToNextSession(counts: wasRunning)
   }
 
   func restartCycle() {
@@ -365,11 +367,11 @@ class PomodoroTimer: ObservableObject {
 
   /// Moves on to the session after the current one and starts it when
   /// `start` (by default the auto-start setting for that kind of session) is on.
-  private func advanceToNextSession(start: Bool? = nil) {
+  private func advanceToNextSession(start: Bool? = nil, counts: Bool = true) {
     let next = SessionSequence.next(
       after: .init(
         sessionType: currentSessionType, focusSessionsCompleted: focusSessionsCompleted),
-      interval: longBreakInterval)
+      interval: longBreakInterval, counts: counts)
     currentSessionType = next.sessionType
     focusSessionsCompleted = next.focusSessionsCompleted
     resetForCurrentSession()

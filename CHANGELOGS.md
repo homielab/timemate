@@ -122,6 +122,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Skip while idle** no longer counts a focus session you never started: the cycle dots and VoiceOver ("1 of 4 focus sessions done") stay put and the long break does not come early. Skipping a running or paused focus session still counts it.
 - **Exported CSV files** (daily and sessions) now start with a UTF-8 byte order mark, so Excel shows Vietnamese and other accented labels correctly instead of garbled text.
 - **Auto-start focus** now works when the break screen is off (or held back by a full-screen app): a finished break no longer waits silently for "Continue Work". With the break screen showing and "Keep break screen open until continued" on, nothing changes. Settings → Automation explains it under Auto-start focus.
 - The break screen's hints ("Press Esc twice to skip", "Skip available in…", Postpone) are no longer dimmed to 40–50%, and turn fully opaque with Increase Contrast. VoiceOver now reads the seconds of the "Skip button delay" stepper.
