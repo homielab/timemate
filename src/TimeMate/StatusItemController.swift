@@ -8,6 +8,9 @@ import SwiftUI
 /// the right-click menu, and VoiceOver accessibility labels.
 final class StatusItemController: NSObject {
   private let timer: PomodoroTimer
+  /// What the menu bar view and the VoiceOver label follow; changes only when
+  /// something they show changes.
+  let menuBarModel: MenuBarModel
   let statusItem: NSStatusItem
   private let menuBarHostingView: PassThroughHostingView
   private var accessibilityLabelUpdates: AnyCancellable?
@@ -31,6 +34,7 @@ final class StatusItemController: NSObject {
     onClosePopover: (() -> Void)? = nil
   ) {
     self.timer = timer
+    self.menuBarModel = MenuBarModel(timer: timer)
     let item =
       statusItem
       ?? NSStatusBar.system.statusItem(withLength: MenuBarLayout.width(hideTime: hideMenuBarTime))
@@ -64,7 +68,7 @@ final class StatusItemController: NSObject {
   func layoutMenuBar(hideTime: Bool) {
     let width = MenuBarLayout.width(hideTime: hideTime)
     statusItem.length = width
-    menuBarHostingView.rootView = AnyView(MenuBarView(timer: timer, hideTime: hideTime))
+    menuBarHostingView.rootView = AnyView(MenuBarView(model: menuBarModel, hideTime: hideTime))
     menuBarHostingView.frame = NSRect(
       x: 0, y: 0, width: width, height: NSStatusBar.system.thickness)
   }
@@ -157,16 +161,13 @@ final class StatusItemController: NSObject {
     }
     updateStatusItemAccessibilityLabel()
     // objectWillChange fires before the new values land; read them on the next pass.
-    accessibilityLabelUpdates = timer.objectWillChange
+    accessibilityLabelUpdates = menuBarModel.objectWillChange
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.updateStatusItemAccessibilityLabel() }
   }
 
   func updateStatusItemAccessibilityLabel() {
-    let label = StatusItemMenu.accessibilityLabel(
-      sessionType: timer.currentSessionType, state: timer.state,
-      secondsRemaining: timer.timeRemaining, isBreakPostponed: timer.isBreakPostponed,
-      isWaitingToContinue: timer.isWaitingToContinue)
+    let label = menuBarModel.accessibilityLabel
     if statusItem.button?.accessibilityLabel() != label {
       statusItem.button?.setAccessibilityLabel(label)
     }

@@ -118,6 +118,8 @@ Sources are in `src/TimeMate/`:
   long-break count, what happens when a session ends, "+5 min" and "Postpone") and
   `TimerRestorePlan.swift` (what to do with the saved session at launch).
 - `AppDelegate.swift` — menu bar item, popover, global shortcuts, break overlay.
+  `StatusItemController.swift` owns the status item; `MenuBarView.swift` draws it from
+  `MenuBarModel.swift`, which publishes only what the menu bar shows (one update per tick).
   `LaunchBehavior.swift` decides whether the popover opens at launch (not at login);
   `TickMode.swift` decides whether the timer ticks every second or only at the session's end.
 - `ContentView.swift` — the popover; its parts are in `Views/` (`TimerDisplayView`,

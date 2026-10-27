@@ -86,6 +86,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- The menu bar time redraws once a second instead of twice (measured: 2 updates per tick
+  before, 1 now, none when the shown second doesn't change), using less energy all day.
 - Toggling the break screen setting in Alerts & Sound now immediately shows or hides
   the break screen during an active break.
 - Uses less energy during breaks: only the countdown and skip counter re-render every

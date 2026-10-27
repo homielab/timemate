@@ -50,7 +50,8 @@ class PassThroughHostingView: NSHostingView<AnyView> {
 }
 
 struct MenuBarView: View {
-  @ObservedObject var timer: PomodoroTimer
+  /// Not the timer itself: that would redraw the menu bar twice every tick.
+  @ObservedObject var model: MenuBarModel
   let hideTime: Bool
 
   static func width(hideTime: Bool) -> CGFloat {
@@ -58,15 +59,15 @@ struct MenuBarView: View {
   }
 
   private var iconName: String {
-    MenuBarLayout.iconName(state: timer.state, sessionType: timer.currentSessionType)
+    MenuBarLayout.iconName(state: model.state, sessionType: model.currentSessionType)
   }
 
   private var accentColor: Color {
-    MenuBarLayout.accentColor(state: timer.state, sessionType: timer.currentSessionType)
+    MenuBarLayout.accentColor(state: model.state, sessionType: model.currentSessionType)
   }
 
   private var foregroundColor: Color {
-    MenuBarLayout.foregroundColor(state: timer.state)
+    MenuBarLayout.foregroundColor(state: model.state)
   }
 
   var body: some View {
@@ -78,12 +79,12 @@ struct MenuBarView: View {
         .padding(.horizontal, 4)
         .background(
           RoundedRectangle(cornerRadius: 4)
-            .fill(timer.state == .active ? accentColor : .clear)
+            .fill(model.state == .active ? accentColor : .clear)
         )
-        .foregroundColor(timer.state == .active ? .white : Color(nsColor: .headerTextColor))
+        .foregroundColor(model.state == .active ? .white : Color(nsColor: .headerTextColor))
 
       if !hideTime {
-        Text(timer.timeRemaining.toMinuteSecondString())
+        Text(model.timeRemaining.toMinuteSecondString())
           .font(.system(size: NSFont.systemFontSize + 1, design: .monospaced).weight(.bold))
           .foregroundColor(foregroundColor)
       }
