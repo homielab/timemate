@@ -98,6 +98,19 @@ final class SessionCycleTests: XCTestCase {
       SessionCycle.accessibilityLabel(completed: 0, total: 4, isLongBreak: true), "Long Break")
   }
 
+  func testClockSpeechIsSpelledOutWithFixedLabel() {
+    let ring = SessionCycle.clockAccessibility(secondsRemaining: 1500, progress: 0.75)
+    XCTAssertEqual(ring.label, "Time remaining")
+    XCTAssertTrue(ring.value.contains("25 minutes"), ring.value)
+    XCTAssertFalse(ring.value.contains(":"), ring.value)
+    XCTAssertTrue(ring.value.hasSuffix("75% remaining"), ring.value)
+
+    let plain = SessionCycle.clockAccessibility(secondsRemaining: 45, progress: nil)
+    XCTAssertEqual(plain.label, ring.label)
+    XCTAssertTrue(plain.value.contains("45"), plain.value)
+    XCTAssertFalse(plain.value.contains("%"), plain.value)
+  }
+
   func testProgressValueIsPercentRemaining() {
     XCTAssertEqual(SessionCycle.progressAccessibilityValue(0.75), "75% remaining")
     XCTAssertEqual(SessionCycle.progressAccessibilityValue(1), "100% remaining")

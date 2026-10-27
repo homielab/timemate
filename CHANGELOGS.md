@@ -121,6 +121,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- VoiceOver reads the popover clock as "Time remaining" with a spelled-out value such as "24
+  minutes, 30 seconds" (like the menu bar and the break screen), with or without the progress ring.
 - **Start Next** / **Skip** on an old "session complete" notification no longer act on the
   session you are running: TimeMate removes that notification from Notification Center when you
   start, skip, reset or restart, and a new one replaces the previous.

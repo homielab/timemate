@@ -37,4 +37,17 @@ enum SessionCycle {
       format: NSLocalizedString("%lld%% remaining", comment: "Progress ring in the popover"),
       percent)
   }
+
+  /// VoiceOver label and value of the popover clock. The label is fixed so it is
+  /// not re-announced every second; the value is spelled out, e.g.
+  /// "4 minutes, 30 seconds" (with "75% remaining" when the progress ring is shown).
+  static func clockAccessibility(secondsRemaining: Int, progress: Double?) -> (
+    label: String, value: String
+  ) {
+    var value = BreakOverlayAccessibility.countdownValue(secondsRemaining: secondsRemaining)
+    if let progress {
+      value += ", " + progressAccessibilityValue(progress)
+    }
+    return (NSLocalizedString("Time remaining", comment: "Popover clock, VoiceOver"), value)
+  }
 }

@@ -78,11 +78,22 @@ private struct CountdownView: View {
       }
       .frame(width: 120, height: 120)
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel(Text(countdown.timeRemaining.toMinuteSecondString()))
-      .accessibilityValue(Text(SessionCycle.progressAccessibilityValue(countdown.progress)))
+      .accessibilityLabel(Text(ringSpeech.label))
+      .accessibilityValue(Text(ringSpeech.value))
     } else {
       timeText
+        .accessibilityLabel(Text(plainSpeech.label))
+        .accessibilityValue(Text(plainSpeech.value))
     }
+  }
+
+  private var ringSpeech: (label: String, value: String) {
+    SessionCycle.clockAccessibility(
+      secondsRemaining: countdown.timeRemaining, progress: countdown.progress)
+  }
+
+  private var plainSpeech: (label: String, value: String) {
+    SessionCycle.clockAccessibility(secondsRemaining: countdown.timeRemaining, progress: nil)
   }
 
   private var timeText: some View {
