@@ -60,4 +60,21 @@ final class LaunchBehaviorTests: XCTestCase {
       NSAppleEventDescriptor(enumCode: keyAELaunchedAsLogInItem), forKeyword: keyAEPropData)
     XCTAssertFalse(LaunchBehavior.isLoginLaunch(reopen))
   }
+
+  func testAutoStartOnLaunchOnlyStartsAnIdleFocusSession() {
+    func start(
+      _ enabled: Bool = true, _ state: PomodoroState = .idle, _ type: SessionType = .focus,
+      waiting: Bool = false
+    ) -> Bool {
+      LaunchBehavior.shouldAutoStartOnLaunch(
+        enabled: enabled, state: state, sessionType: type, isWaiting: waiting)
+    }
+    XCTAssertTrue(start())
+    XCTAssertFalse(start(false))
+    XCTAssertFalse(start(true, .idle, .shortBreak))
+    XCTAssertFalse(start(true, .idle, .longBreak))
+    XCTAssertFalse(start(true, .idle, .focus, waiting: true))
+    XCTAssertFalse(start(true, .active))
+    XCTAssertFalse(start(true, .paused))
+  }
 }

@@ -120,6 +120,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Auto-start on launch** only starts a focus session. If the session restored from last time
+  is a break, TimeMate waits for you instead of opening the break screen when the app starts.
 - VoiceOver reads the popover clock as "Time remaining" with a spelled-out value such as "24
   minutes, 30 seconds" (like the menu bar and the break screen), with or without the progress ring.
 - **Start Next** / **Skip** on an old "session complete" notification no longer act on the

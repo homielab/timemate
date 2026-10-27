@@ -13,6 +13,15 @@ enum LaunchBehavior {
     isFirstLaunch || !isLoginLaunch || showTimerAtLogin
   }
 
+  /// Whether "Auto-start on launch" starts a session now. Only a focus session
+  /// starts: a restored break (or one waiting for a click) is left for the user,
+  /// so opening the Mac never puts the break screen over their work.
+  static func shouldAutoStartOnLaunch(
+    enabled: Bool, state: PomodoroState, sessionType: SessionType, isWaiting: Bool
+  ) -> Bool {
+    enabled && state == .idle && sessionType == .focus && !isWaiting
+  }
+
   /// Whether `event` (the Apple event that opened the app) comes from the
   /// login item: macOS marks it with `keyAELaunchedAsLogInItem`.
   static func isLoginLaunch(_ event: NSAppleEventDescriptor?) -> Bool {

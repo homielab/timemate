@@ -51,7 +51,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     setupPopover()
     checkInitialLaunchBehavior()
 
-    if UserDefaults.standard.bool(forKey: SettingsKey.autoStartOnLaunch), timer.state == .idle {
+    if LaunchBehavior.shouldAutoStartOnLaunch(
+      enabled: UserDefaults.standard.bool(forKey: SettingsKey.autoStartOnLaunch),
+      state: timer.state, sessionType: timer.currentSessionType,
+      isWaiting: timer.isWaitingToContinue)
+    {
       timer.startTimer()
     }
 

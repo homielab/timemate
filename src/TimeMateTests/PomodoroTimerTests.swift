@@ -902,6 +902,18 @@ final class PomodoroTimerTests: XCTestCase {
     return makeTimer(focus: focus, autoStart: autoStart, keepBreakOpen: keepBreakOpen)
   }
 
+  func testRestoredBreakIsNotAutoStartedOnLaunch() {
+    timer = makeTimer(focus: 300, autoStart: false)
+    timer.startTimer()
+    let restored = relaunch(after: 400, autoStart: false)
+    XCTAssertEqual(restored.currentSessionType, .shortBreak)
+    XCTAssertEqual(restored.state, .idle)
+    XCTAssertFalse(
+      LaunchBehavior.shouldAutoStartOnLaunch(
+        enabled: true, state: restored.state, sessionType: restored.currentSessionType,
+        isWaiting: restored.isWaitingToContinue))
+  }
+
   func testRunningSessionKeepsCountingAfterRelaunch() {
     timer = makeTimer(focus: 300)
     timer.startTimer()
