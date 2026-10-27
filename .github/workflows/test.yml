@@ -26,8 +26,7 @@ jobs:
         run: xcodebuild -version
 
       - name: Lint (swift-format)
-        # Not strict yet: a few files still have style findings (see README).
-        run: swift format lint -r src/TimeMate src/TimeMateTests
+        run: swift format lint --strict -r src/TimeMate src/TimeMateTests
 
       - name: Build and test
         # Signed ad hoc: CI has no Apple Development certificate.

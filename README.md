@@ -82,7 +82,17 @@ xcodebuild -project src/TimeMate.xcodeproj -scheme TimeMate -configuration Debug
   -derivedDataPath build/DerivedData test
 ```
 
-Or press `Cmd + U` in Xcode.
+Or press `Cmd + U` in Xcode. To run one test class, add `-only-testing:TimeMateTests/<ClassName>`
+(for example `-only-testing:TimeMateTests/SessionSequenceTests`).
+
+Tests live in `src/TimeMateTests/`, one `<Type>Tests.swift` per type. The tests never wait for real
+time. The `PomodoroTimer` tests (`PomodoroTimer*Tests.swift`) subclass `TimerTestCase`, which gives
+each test a fake wall clock and uptime clock (`currentTime`, `currentUptime`), isolated user
+defaults, an in-memory `SessionHistory`, and helpers: `makeTimer`, `relaunch(after:)` (simulates a
+quit and relaunch), `makeAlertTimer`, `drainMainQueue`, and `waitUntil(timeout:)`, which polls a
+condition instead of sleeping for a fixed time. Move the clock forward and call `handleTick()`
+rather than waiting a second. Put new logic in a pure type with the clock and defaults passed in,
+as `SessionSequence` does, so it needs no timer to test.
 
 Debug builds sign with `src/TimeMate/TimeMateDebug.entitlements` (no extra capabilities), so they build with any development team. Release builds use `src/TimeMate/TimeMate.entitlements`, which adds the Time Sensitive Notifications entitlement: the App ID needs that capability enabled in the Apple Developer portal.
 
@@ -92,10 +102,10 @@ The code is formatted with [swift-format](https://github.com/swiftlang/swift-for
 `.swift-format`: 2-space indent, 100 columns). Check it with:
 
 ```bash
-swift format lint -r src/TimeMate src/TimeMateTests
+swift format lint --strict -r src/TimeMate src/TimeMateTests
 ```
 
-A few older files still have warnings, so the check doesn't fail the build yet.
+CI runs it with `--strict`, so any finding fails the build; run the same command with `--strict` before you commit.
 
 ### Continuous Integration
 
@@ -130,7 +140,7 @@ Sources are in `src/TimeMate/`:
   `ControlButtonsView`).
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
   building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`.
-- `BreakOverlay*.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
+- `BreakOverlay*.swift` and `BreakSkipCountdown.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
   shows and what a double Esc does, `OverlayPolicy.swift` holds it back while a full-screen app is in front (unit-tested).
 - `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared
   `PomodoroTimer.shared` through `TimerIntentActions` (unit-tested). Vietnamese phrases are in
@@ -139,6 +149,23 @@ Sources are in `src/TimeMate/`:
   required-reason APIs: user defaults, system uptime). Declare any new required-reason API there.
 - `AlarmSound.swift` — which sound plays when a session ends ("None", the alarm, the break-end
   sound) and playing it; a sound that fails to load is logged (unit-tested).
+- Pure, unit-tested helpers by topic:
+  - History and statistics: `SessionHistory.swift` (JSON file, completed sessions, 90 days),
+    `SessionStatistics.swift` (days, periods, streak, CSV), `StatisticsText.swift` (localized
+    texts, plural forms), `DailyGoal.swift` (goal and streak display).
+  - Sessions: `SessionCycle.swift` (cycle dots, VoiceOver clock), `SessionDuration.swift` (typed
+    minutes), `SessionLabel.swift` and `Views/SessionLabelField.swift` ("What are you working
+    on?"), `SessionNotification.swift` (the "session complete" notification and its actions),
+    `AutoStart.swift` (auto-start rules), `SessionType+Style.swift` (color and icon per session).
+  - Popover: `PopoverTimerModel.swift` (what the popover observes), `PopoverShortcuts.swift`
+    (keys and the Restart confirmation).
+  - System: `SleepPreventer.swift` (keep Mac awake), `AppLanguage.swift` (in-app language, About
+    link), `RelaxationTips.swift` (break screen tips), `Color+Hex.swift` and `Extensions.swift`
+    (helpers and `SettingsReset`).
+- `PomodoroTimer+Settings.swift`, `+Notifications.swift`, `+ScreenLock.swift` — the parts of
+  `PomodoroTimer` that react to settings changes, send notifications, and pause on sleep or lock.
+- `TimeMateApp.swift` — the SwiftUI entry point; `TimeMate.entitlements` and
+  `TimeMateDebug.entitlements` — Release and Debug entitlements.
 - `Log.swift` — `os.Logger` categories (`app`, `history`); use them instead of `print`.
 
 ## Feedback & Contributions
