@@ -45,7 +45,10 @@ class BreakOverlayWindowController: NSObject {
   private var windows: [NSWindow] = []
   /// The window on the screen the user works on: it gets focus and the animation.
   private var primaryWindow: NSWindow?
-  private var timer: PomodoroTimer
+  private let timer: PomodoroTimer
+  let defaults: UserDefaults
+  let animated: Bool
+  let model: BreakOverlayModel
   private var cancellables = Set<AnyCancellable>()
   private var eventMonitor: Any?
   private var screenObserver: NSObjectProtocol?
@@ -55,8 +58,19 @@ class BreakOverlayWindowController: NSObject {
   private var escDetector = DoubleEscDetector()
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
-  init(timer: PomodoroTimer) {
+  var isShowingOverlay: Bool {
+    !windows.isEmpty && !visibilityGeneration.isClosePending
+  }
+
+  init(
+    timer: PomodoroTimer,
+    defaults: UserDefaults = .standard,
+    animated: Bool = true
+  ) {
     self.timer = timer
+    self.defaults = defaults
+    self.animated = animated
+    self.model = BreakOverlayModel(timer: timer, defaults: defaults)
     super.init()
     setupSubscriptions()
   }
@@ -119,7 +133,7 @@ class BreakOverlayWindowController: NSObject {
       window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
       window.isReleasedWhenClosed = false
 
-      let contentView = BreakOverlayView(timer: timer, isPrimary: isPrimary)
+      let contentView = BreakOverlayView(model: model, isPrimary: isPrimary)
       window.contentView = NSHostingView(rootView: contentView)
 
       windows.append(window)
@@ -130,7 +144,7 @@ class BreakOverlayWindowController: NSObject {
   }
 
   private func closeAllWindows() {
-    windows.forEach { $0.close() }
+    for window in windows { window.close() }
     windows.removeAll()
     primaryWindow = nil
     stopObserving()
@@ -146,6 +160,30 @@ class BreakOverlayWindowController: NSObject {
         isBreakPostponed: isPostponed)
     }
     .store(in: &cancellables)
+
+    NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: defaults)
+      .sink { [weak self] _ in
+        if Thread.isMainThread {
+          self?.handleDefaultsChange()
+        } else {
+          DispatchQueue.main.async { self?.handleDefaultsChange() }
+        }
+      }
+      .store(in: &cancellables)
+  }
+
+  private func handleDefaultsChange() {
+    guard let state = lastState else {
+      handleStateChange(
+        state: timer.state,
+        sessionType: timer.currentSessionType,
+        isWaitingToContinue: timer.isWaitingToContinue,
+        isBreakPostponed: timer.isBreakPostponed)
+      return
+    }
+    handleStateChange(
+      state: state.0, sessionType: state.1, isWaitingToContinue: state.2,
+      isBreakPostponed: state.3)
   }
 
   private func setupEventMonitor() {
@@ -178,9 +216,8 @@ class BreakOverlayWindowController: NSObject {
     let shouldShow = BreakOverlayRules.shouldShowOverlay(
       state: state, sessionType: sessionType, isWaiting: isWaitingToContinue,
       isPostponed: isBreakPostponed,
-      enabled: UserDefaults.standard.bool(forKey: SettingsKey.overlayEnabled))
+      enabled: defaults.bool(forKey: SettingsKey.overlayEnabled))
 
-    let defaults = UserDefaults.standard
     let presentation = OverlayPolicy.presentation(
       shouldShow: shouldShow,
       skipFullscreen: defaults.bool(forKey: SettingsKey.overlaySkipFullscreen),
@@ -200,12 +237,12 @@ class BreakOverlayWindowController: NSObject {
       if windows.isEmpty {
         createWindows()
       }
-      showWindows(animated: true)
+      showWindows(animated: animated)
       if isNewlyShown && !isWaitingToContinue {
         announceBreakStart()
       }
     } else {
-      hideWindows(animated: true)
+      hideWindows(animated: animated)
     }
   }
 
@@ -302,13 +339,13 @@ class BreakOverlayWindowController: NSObject {
     if let fadeDuration {
       NSAnimationContext.runAnimationGroup { context in
         context.duration = fadeDuration
-        windowsToClose.forEach { $0.animator().alphaValue = 0 }
+        for window in windowsToClose { window.animator().alphaValue = 0 }
       } completionHandler: { [weak self] in
         // Ensure we are on main thread and self exists
         DispatchQueue.main.async {
           // The overlay was shown again during the fade-out: keep it.
           guard let self, self.visibilityGeneration.shouldClose(token) else { return }
-          windowsToClose.forEach { $0.close() }
+          for window in windowsToClose { window.close() }
           self.windows.removeAll(where: { windowsToClose.contains($0) })
           if let primary = self.primaryWindow, windowsToClose.contains(primary) {
             self.primaryWindow = nil
@@ -318,7 +355,7 @@ class BreakOverlayWindowController: NSObject {
       }
     } else {
       _ = visibilityGeneration.shouldClose(token)
-      windowsToClose.forEach { $0.close() }
+      for window in windowsToClose { window.close() }
       windows.removeAll()
       primaryWindow = nil
       stopObserving()

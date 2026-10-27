@@ -78,6 +78,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- Toggling the break screen setting in Alerts & Sound now immediately shows or hides
+  the break screen during an active break.
+- Uses less energy during breaks: only the countdown and skip counter re-render every
+  second instead of redrawing the entire break screen and animations on all displays.
 - The end-of-session notification now says what comes next: "Next: Short Break · 5 min", or
   "Short Break started · 5 min" when Auto-start next session is on. In that case it has no
   **Start Next** button (only **Skip**), since the next session is already running.

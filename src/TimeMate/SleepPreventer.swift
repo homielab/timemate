@@ -13,6 +13,14 @@ class SleepPreventer {
     keepAwake && state == .active && sessionType == .focus
   }
 
+  func update(keepAwake: Bool, state: PomodoroState, sessionType: SessionType) {
+    if Self.shouldHoldAssertion(keepAwake: keepAwake, state: state, sessionType: sessionType) {
+      enable()
+    } else {
+      disable()
+    }
+  }
+
   func enable() {
     guard !isEnabled else { return }
 

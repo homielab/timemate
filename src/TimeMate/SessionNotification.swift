@@ -2,6 +2,7 @@
 
 import Foundation
 import UserNotifications
+import os
 
 /// Buttons on the "session complete" notification.
 enum SessionNotificationAction: String, CaseIterable {
@@ -45,6 +46,18 @@ enum SessionNotification {
     "com.homielab.timemate.category.sessionCompleteAutoStarted"
   /// Groups all TimeMate session notifications into one stack in Notification Center.
   static let threadIdentifier = "com.homielab.timemate.sessions"
+
+  /// Registers categories and requests notification authorization.
+  static func configure(delegate: UNUserNotificationCenterDelegate) {
+    let center = UNUserNotificationCenter.current()
+    center.delegate = delegate
+    center.setNotificationCategories(categories())
+    center.requestAuthorization(options: [.alert, .badge, .sound]) { _, error in
+      if let error {
+        os.Logger.app.error("Notification authorization failed: \(error.localizedDescription)")
+      }
+    }
+  }
 
   /// The category with the "Start Next" and "Skip" buttons.
   static func category() -> UNNotificationCategory {

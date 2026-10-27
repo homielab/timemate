@@ -1,5 +1,7 @@
 //  Created by homielab.com
 
+import Foundation
+
 /// Keys of the user-defaults-backed settings, shared by the settings UI, the
 /// app delegate and the timer, so they can never drift apart on the raw strings.
 enum SettingsKey {
@@ -51,4 +53,26 @@ enum SettingsKey {
   static let statisticsDays = "statisticsDays"
   /// The timer's saved session (`TimerSnapshot` as JSON), restored at launch.
   static let timerSnapshot = "timerSnapshot"
+
+  /// Registers default settings before the first read of any setting.
+  static func registerDefaults(in defaults: UserDefaults = .standard) {
+    defaults.register(defaults: [
+      SettingsKey.overlayEnabled: true,
+      SettingsKey.overlaySkipFullscreen: true,
+      SettingsKey.notificationsEnabled: true,
+      SettingsKey.breakThroughFocus: true,
+      SettingsKey.keepAwake: false,
+      SettingsKey.hideDockIcon: true,
+      SettingsKey.alwaysVisible: false,
+      SettingsKey.hotKeyStartPauseEnabled: true,
+      SettingsKey.hotKeySkipEnabled: true,
+      SettingsKey.showProgressCircle: true,
+      SettingsKey.autoStartNextSession: true,
+      SettingsKey.autoStartOnLaunch: false,
+      SettingsKey.showTimerAtLogin: false,
+      SettingsKey.keepBreakScreenOpen: true,
+      SettingsKey.dailyGoal: DailyGoal.off,
+      SettingsKey.statisticsDays: SessionStatistics.weekLength,
+    ])
+  }
 }
