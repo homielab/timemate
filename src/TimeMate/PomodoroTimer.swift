@@ -206,7 +206,8 @@ class PomodoroTimer: ObservableObject {
       // Only sessions that run to the end count; skipping never reaches here.
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
-        currentSessionType, duration: TimeInterval(totalDuration), end: endDate)
+        currentSessionType, duration: TimeInterval(totalDuration), end: endDate,
+        label: label(for: currentSessionType))
       // A session that ended long ago (the Mac slept through it) finishes
       // silently, like one restored after quitting the app.
       if tickTime.timeIntervalSince(endDate) <= Self.overdueGracePeriod {
@@ -438,7 +439,8 @@ class PomodoroTimer: ObservableObject {
       state = .idle
     case .expired(let end, let duration, let startNext):
       history.recordCompletedSession(
-        currentSessionType, duration: TimeInterval(duration), end: end)
+        currentSessionType, duration: TimeInterval(duration), end: end,
+        label: label(for: currentSessionType))
       advanceToNextSession(start: startNext)
     }
   }

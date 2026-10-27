@@ -2,8 +2,8 @@
 
 import SwiftUI
 
-/// The top of the popover: session title, settings toggle, countdown, cycle dots
-/// and today's statistics.
+/// The top of the popover: session title, settings toggle, countdown, cycle dots,
+/// the focus session's label and today's statistics.
 struct TimerDisplayView: View {
   @EnvironmentObject var model: PopoverTimerModel
   @Binding var settingsVisible: Bool
@@ -40,6 +40,10 @@ struct TimerDisplayView: View {
         total: SessionCycle.sanitizedInterval(longBreakInterval),
         isLongBreak: model.currentSessionType == .longBreak
       )
+
+      if model.currentSessionType == .focus {
+        SessionLabelField()
+      }
 
       TodayStatsView(history: model.timer.history)
     }

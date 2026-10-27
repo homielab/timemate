@@ -188,6 +188,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     } else {
       NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+      // Don't start typing in the label field: Space should start the timer.
+      DispatchQueue.main.async { self.popoverWindow?.makeFirstResponder(nil) }
     }
   }
 

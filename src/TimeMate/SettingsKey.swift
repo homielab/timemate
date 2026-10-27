@@ -58,6 +58,8 @@ enum SettingsKey {
   static let statisticsDays = "statisticsDays"
   /// The timer's saved session (`TimerSnapshot` as JSON), restored at launch.
   static let timerSnapshot = "timerSnapshot"
+  /// What the user works on in focus sessions (`SessionLabel`), saved with each one.
+  static let sessionLabel = "sessionLabel"
 
   /// Registers default settings before the first read of any setting.
   static func registerDefaults(in defaults: UserDefaults = .standard) {

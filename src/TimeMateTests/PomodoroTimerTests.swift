@@ -384,6 +384,49 @@ final class PomodoroTimerTests: XCTestCase {
     XCTAssertFalse(timer.isWaitingToContinue)
   }
 
+  // MARK: - Session label
+
+  func testCompletedFocusSessionKeepsItsLabel() {
+    defaults.set("  Write report ", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    finishSession(timer)  // focus
+    finishSession(timer)  // short break
+    XCTAssertEqual(history.records.map(\.kind), [.focus, .short])
+    XCTAssertEqual(history.records.map(\.label), ["Write report", nil])
+  }
+
+  func testEmptyLabelIsStoredAsNil() {
+    defaults.set("   ", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertNil(history.records.first?.label)
+  }
+
+  func testSkippedOrResetSessionRecordsNothing() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.stopTimer()
+    timer.startTimer()
+    timer.skipSession()
+    XCTAssertTrue(history.records.isEmpty)
+  }
+
+  func testSessionExpiredWhileClosedKeepsItsLabel() {
+    timer = makeTimer(focus: 300)
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    _ = relaunch(after: 400)
+    XCTAssertEqual(history.records.map(\.label), ["Write report"])
+  }
+
+  func testSettingsResetKeepsTheLabel() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    SettingsReset.perform(on: defaults, domain: Self.suiteName)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Write report")
+  }
+
   // MARK: - Injected clock
 
   func testInjectedClockStampsEachTick() {

@@ -28,6 +28,15 @@ final class PopoverShortcutsTests: XCTestCase {
         keyCode: space, modifiers: [], firstResponder: NSButton()))
   }
 
+  func testSpaceIsTypedIntoTheSessionLabelField() {
+    // A focused text field types through the window's field editor.
+    let fieldEditor = NSTextView()
+    fieldEditor.isFieldEditor = true
+    XCTAssertFalse(
+      PopoverShortcuts.spaceStartsOrPauses(
+        keyCode: space, modifiers: [], firstResponder: fieldEditor))
+  }
+
   func testOtherKeysAndModifiedSpaceDoNotApply() {
     XCTAssertFalse(
       PopoverShortcuts.spaceStartsOrPauses(keyCode: 0, modifiers: [], firstResponder: nil))

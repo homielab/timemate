@@ -26,6 +26,8 @@ final class SessionHistory: ObservableObject {
     let end: Date
     let kind: Kind
     let completed: Bool
+    /// What the focus session was for; missing in files written before labels.
+    var label: String? = nil
 
     var duration: TimeInterval { max(0, end.timeIntervalSince(start)) }
   }
@@ -95,11 +97,13 @@ final class SessionHistory: ObservableObject {
   }
 
   /// Records a completed session that ended at `end` after running `duration`
-  /// seconds.
-  func recordCompletedSession(_ sessionType: SessionType, duration: TimeInterval, end: Date) {
+  /// seconds, with an optional `label` (see `SessionLabel.normalized`).
+  func recordCompletedSession(
+    _ sessionType: SessionType, duration: TimeInterval, end: Date, label: String? = nil
+  ) {
     let record = Record(
       start: end.addingTimeInterval(-max(0, duration)), end: end,
-      kind: Record.Kind(sessionType), completed: true)
+      kind: Record.Kind(sessionType), completed: true, label: SessionLabel.normalized(label))
     records = trimmed(records + [record])
     save()
   }

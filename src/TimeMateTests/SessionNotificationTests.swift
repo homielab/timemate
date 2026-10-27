@@ -108,6 +108,22 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(c.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
   }
 
+  func testLabelIsTheFirstLineOfTheBody() {
+    let c = SessionNotification.content(
+      forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false,
+      label: " Write report ")
+    XCTAssertEqual(c.body, "Write report\nNext: Short Break · 5 min")
+    let blank = SessionNotification.content(
+      forCompleted: .focus, next: .shortBreak, minutes: 5, autoStarted: false, label: " ")
+    XCTAssertEqual(blank.body, "Next: Short Break · 5 min")
+  }
+
+  func testTimerPutsTheLabelOnTheFocusNotification() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    let posted = postedRequests(breakThroughFocus: nil)
+    XCTAssertEqual(posted.first?.content.body, "Write report\nNext: Short Break · 5 min")
+  }
+
   func testTimerPostsTheNextSessionFollowingItsSettings() {
     var posted: [UNNotificationRequest] = []
     defaults.set(3, forKey: SettingsKey.focusDuration)

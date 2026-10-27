@@ -29,6 +29,14 @@ extension PomodoroTimer {
   var breakThroughFocus: Bool {
     defaults.object(forKey: SettingsKey.breakThroughFocus) as? Bool ?? true
   }
+  /// The label of the focus session, typed in the popover; `nil` when empty.
+  var sessionLabel: String? {
+    SessionLabel.normalized(defaults.string(forKey: SettingsKey.sessionLabel))
+  }
+  /// The label that goes with a session of `sessionType`: breaks have none.
+  func label(for sessionType: SessionType) -> String? {
+    sessionType == .focus ? sessionLabel : nil
+  }
   var dailyGoal: Int {
     DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)
   }

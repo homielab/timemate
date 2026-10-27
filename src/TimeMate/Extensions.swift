@@ -72,10 +72,11 @@ private func showRestartFailedAlert() {
 enum SettingsReset {
   static let preservedKeys = [
     SettingsKey.timerSnapshot, SettingsKey.dailyGoalNotifiedAt, SettingsKey.hasLaunchedBefore,
+    SettingsKey.sessionLabel,
   ]
 
   /// Clears every setting but keeps the running session, the date of the last
-  /// daily-goal notification and the first-launch marker.
+  /// daily-goal notification, the first-launch marker and the session label.
   static func perform(on defaults: UserDefaults, domain: String) {
     let kept = preservedKeys.compactMap { key in
       defaults.object(forKey: key).map { (key, $0) }

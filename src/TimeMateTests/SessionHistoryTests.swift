@@ -72,6 +72,38 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(json[0]["completed"] as? Bool, true)
   }
 
+  func testLabelIsSavedAndReadBack() throws {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime, label: " Report ")
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime, label: "  ")
+
+    let json = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(contentsOf: fileURL)) as? [[String: Any]])
+    XCTAssertEqual(json[0]["label"] as? String, "Report")
+    XCTAssertNil(json[1]["label"], "no label is left out of the file")
+    XCTAssertEqual(makeHistory().records.map(\.label), ["Report", nil])
+  }
+
+  func testFileWithoutLabelsStillLoads() throws {
+    let old = """
+      [
+        {"completed": true, "end": "2026-03-10T14:00:00Z", "kind": "focus",
+         "start": "2026-03-10T13:35:00Z"},
+        {"completed": true, "end": "2026-03-10T14:05:00Z", "kind": "short",
+         "start": "2026-03-10T14:00:00Z"}
+      ]
+      """
+    try FileManager.default.createDirectory(
+      at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try Data(old.utf8).write(to: fileURL)
+
+    let records = makeHistory().records
+    XCTAssertEqual(records.map(\.kind), [.focus, .short])
+    XCTAssertEqual(records.map(\.label), [nil, nil])
+    XCTAssertEqual(records.first?.duration, 1500)
+    XCTAssertEqual(SessionHistory.corruptBackups(in: fileURL.deletingLastPathComponent()), [])
+  }
+
   func testMissingOrEmptyFileStartsEmpty() throws {
     XCTAssertEqual(makeHistory().records, [])
 

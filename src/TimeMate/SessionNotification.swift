@@ -103,10 +103,11 @@ enum SessionNotification {
   ///
   /// With `breakThroughFocus` the notification is time-sensitive, so a Focus
   /// mode (or Do Not Disturb) still shows it unless the user turned that off
-  /// for TimeMate in System Settings.
+  /// for TimeMate in System Settings. A focus session's `label` is the first
+  /// line of the body.
   static func content(
     forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
-    autoStarted: Bool, breakThroughFocus: Bool = true
+    autoStarted: Bool, breakThroughFocus: Bool = true, label: String? = nil
   ) -> UNMutableNotificationContent {
     let content = UNMutableNotificationContent()
     content.title = "TimeMate"
@@ -116,7 +117,12 @@ enum SessionNotification {
       format: NSLocalizedString("%@ session complete!", comment: "Notification format string"),
       localizedSessionTitle
     )
-    content.body = body(next: next, minutes: minutes, autoStarted: autoStarted)
+    let nextLine = body(next: next, minutes: minutes, autoStarted: autoStarted)
+    if let label = SessionLabel.normalized(label) {
+      content.body = label + "\n" + nextLine
+    } else {
+      content.body = nextLine
+    }
     content.sound = nil
     content.categoryIdentifier = autoStarted ? autoStartedCategoryIdentifier : categoryIdentifier
     content.threadIdentifier = threadIdentifier
@@ -149,13 +155,14 @@ enum SessionNotification {
   /// The request that shows the notification right away.
   static func request(
     forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
-    autoStarted: Bool, breakThroughFocus: Bool, identifier: String = UUID().uuidString
+    autoStarted: Bool, breakThroughFocus: Bool, label: String? = nil,
+    identifier: String = UUID().uuidString
   ) -> UNNotificationRequest {
     UNNotificationRequest(
       identifier: identifier,
       content: content(
         forCompleted: sessionType, next: next, minutes: minutes, autoStarted: autoStarted,
-        breakThroughFocus: breakThroughFocus),
+        breakThroughFocus: breakThroughFocus, label: label),
       trigger: nil)
   }
 }

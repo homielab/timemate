@@ -38,6 +38,10 @@ struct ContentView: View {
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
       appDelegate.updatePopoverSize()
     }
+    // The label field shows only in focus sessions.
+    .onChange(of: model.currentSessionType) { _ in
+      appDelegate.updatePopoverSize()
+    }
     .onReceive(appDelegate.openSettingsRequests) { _ in
       settingsVisible = true
     }
