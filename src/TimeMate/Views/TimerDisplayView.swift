@@ -56,6 +56,7 @@ private struct CountdownView: View {
   @ObservedObject var countdown: PopoverCountdown
   let accentColor: Color
   let showProgressCircle: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     if showProgressCircle {
@@ -72,7 +73,9 @@ private struct CountdownView: View {
           .stroke(style: .init(lineWidth: 10, lineCap: .round, lineJoin: .round))
           .foregroundColor(accentColor)
           .rotationEffect(Angle(degrees: 270.0))
-          .animation(.linear, value: countdown.progress)
+          .animation(
+            PopoverMotion.animation(.progress, reduceMotion: reduceMotion),
+            value: countdown.progress)
 
         timeText
       }
@@ -171,6 +174,7 @@ private struct TodayStatsView: View {
 
 private struct SettingsButton: View {
   @Binding var settingsVisible: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     Button {
@@ -180,7 +184,9 @@ private struct SettingsButton: View {
         Image(systemName: "gearshape.fill")
         Image(systemName: settingsVisible ? "chevron.up" : "chevron.down")
           .font(.system(size: 10, weight: .bold))
-          .animation(.easeInOut(duration: 0.3), value: settingsVisible)
+          .animation(
+            PopoverMotion.animation(.settingsChevron, reduceMotion: reduceMotion),
+            value: settingsVisible)
       }
       .padding(5)
       .contentShape(Rectangle())
@@ -200,6 +206,7 @@ private struct CycleIndicatorView: View {
   let completed: Int
   let total: Int
   let isLongBreak: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     ZStack {
@@ -222,7 +229,10 @@ private struct CycleIndicatorView: View {
         .opacity(isLongBreak ? 1.0 : 0.0)
     }
     .frame(height: 20, alignment: .center)
-    .animation(.easeInOut(duration: 0.2), value: isLongBreak)
+    .animation(
+      PopoverMotion.animation(.longBreak, reduceMotion: reduceMotion),
+      value: isLongBreak
+    )
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
       Text(

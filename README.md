@@ -164,7 +164,8 @@ Sources are in `src/TimeMate/`:
     on?" and its Recent labels menu), `SessionNotification.swift` (the "session complete" notification and its actions),
     `AutoStart.swift` (auto-start rules), `SessionType+Style.swift` (color and icon per session).
   - Popover: `PopoverTimerModel.swift` (what the popover observes), `PopoverShortcuts.swift`
-    (keys and the Restart confirmation).
+    (keys and the Restart confirmation), `PopoverMotion.swift` (its animations, off with Reduce
+    Motion).
   - System: `SleepPreventer.swift` (keep Mac awake), `AppLanguage.swift` (in-app language, About
     link), `RelaxationTips.swift` (break screen tips), `Color+Hex.swift` and `Extensions.swift`
     (helpers and `SettingsReset`).

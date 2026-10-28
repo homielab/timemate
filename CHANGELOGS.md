@@ -130,6 +130,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Reduce Motion in the popover**: with Reduce Motion on (System Settings → Accessibility → Display), the progress ring, the Settings chevron and the long-break cup now change without animating, like the break screen already did.
 - **Readable text on a custom background**: the popover now picks dark or light text and controls from the background color you chose, so a white background in Dark Mode (or a black one in Light Mode) no longer hides the text. Mostly transparent colors keep the system appearance.
 - The scheduled "session complete" notification now follows settings changed during a session (auto-start, the next session's length, the long break interval), so it no longer says "Next: Short Break" when the break starts by itself or runs longer.
 - Break screen with several displays: VoiceOver reads the buttons and countdown only on the screen you work on instead of once per display, and announces "Break over. Continue Work to start focusing." when the break ends.
