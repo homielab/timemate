@@ -45,6 +45,14 @@ final class SessionSequenceTests: XCTestCase {
     }
   }
 
+  func testSkipCountsFromHalfOfTheSession() {
+    XCTAssertFalse(SessionSequence.skipCounts(elapsed: 0, total: 1500))
+    XCTAssertFalse(SessionSequence.skipCounts(elapsed: 735, total: 1500))  // 49 %
+    XCTAssertTrue(SessionSequence.skipCounts(elapsed: 750, total: 1500))  // 50 %
+    XCTAssertTrue(SessionSequence.skipCounts(elapsed: 1500, total: 1500))
+    XCTAssertFalse(SessionSequence.skipCounts(elapsed: 0, total: 0))
+  }
+
   // MARK: - Completion
 
   func testCompletionWaitsOnlyForBreaksWhenScreenStaysOpen() {

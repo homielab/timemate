@@ -320,6 +320,7 @@ final class PomodoroTimerTests: TimerTestCase {
 
   func testSkipSessionCountsFocusAndAdvances() {
     timer.startTimer()
+    runTicks(timer, 2)
     timer.skipSession()
     XCTAssertEqual(timer.focusSessionsCompleted, 1)
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
@@ -332,12 +333,31 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.focusSessionsCompleted, 0)
   }
 
-  func testSkipPausedFocusStillCountsIt() {
+  func testSkipPausedFocusPastHalfCountsIt() {
     timer.startTimer()
+    runTicks(timer, 2)
     timer.pauseTimer()
     timer.skipSession()
     XCTAssertEqual(timer.focusSessionsCompleted, 1)
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testSkipPausedFocusBeforeHalfDoesNotCountIt() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    timer.skipSession()
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testSkipFocusAfterOneSecondDoesNotCountIt() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.skipSession()
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
   }
 
   func testStopTimerResetsSession() {

@@ -403,15 +403,19 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
-    let wasRunning = state != .idle
+    let counts =
+      state != .idle
+      && SessionSequence.skipCounts(
+        elapsed: TimeInterval(totalDuration - secondsRemaining),
+        total: TimeInterval(totalDuration))
     clearSessionNotifications()
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
     // Skipping picks the next session on purpose: Start must not undo it.
     lastActivity = now()
-    // A focus session skipped before it ran a second is not counted.
-    advanceToNextSession(counts: wasRunning)
+    // A focus session skipped before half of it ran is not counted.
+    advanceToNextSession(counts: counts)
   }
 
   func restartCycle() {

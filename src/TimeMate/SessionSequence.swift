@@ -14,9 +14,9 @@ enum SessionSequence {
   }
 
   /// The session after `position`. Finishing (or skipping) a focus session
-  /// counts it; the `interval`-th one leads to a long break and restarts the
+  /// counts it (see `skipCounts`); the `interval`-th one leads to a long break and restarts the
   /// count. Any break leads back to focus. A focus session that never ran
-  /// (`counts: false`, skipped while idle) moves on without being counted.
+  /// (`counts: false`, skipped while idle or too early) moves on without being counted.
   static func next(after position: Position, interval: Int, counts: Bool = true) -> Position {
     guard position.sessionType == .focus else {
       return Position(sessionType: .focus, focusSessionsCompleted: position.focusSessionsCompleted)
@@ -30,6 +30,13 @@ enum SessionSequence {
       return Position(sessionType: .longBreak, focusSessionsCompleted: 0)
     }
     return Position(sessionType: .shortBreak, focusSessionsCompleted: completed)
+  }
+
+  /// Whether skipping a focus session that ran `elapsed` of `total` seconds
+  /// still counts it towards the long break: only once half of it has passed,
+  /// so a mis-clicked Start followed by Skip does not move the cycle on.
+  static func skipCounts(elapsed: TimeInterval, total: TimeInterval) -> Bool {
+    total > 0 && elapsed >= total / 2
   }
 
   static func isBreak(_ type: SessionType) -> Bool {

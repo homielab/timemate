@@ -90,7 +90,7 @@ final class PomodoroTimerSettingsTests: TimerTestCase {
 
   func testSkippedSessionsAreNotRecorded() {
     timer.startTimer()
-    runTicks(timer, 1)
+    runTicks(timer, 2)
     timer.skipSession()  // focus skipped
     timer.skipSession()  // short break skipped
 

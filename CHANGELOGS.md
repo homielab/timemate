@@ -127,6 +127,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Skipping a Focus session before half of it has passed (for example a mis-clicked Start) no longer counts it towards the long break, so the cycle dots match Today and the history. Skipping later still counts it, as before; this also applies to the Skip shortcut and the Skip action in Shortcuts.
 - The long-break cycle no longer carries over to the next day: when you start (or open TimeMate) with the timer idle and your last session was on an earlier day or more than 4 hours ago, the cycle begins again at focus, so three pomodoros last night no longer make this morning's first one end in a long break. A running or paused session keeps its cycle.
 - Battery: while the display is off or the screen is locked and the Mac stays awake, the timer no longer ticks every second (even with the menu bar showing minutes and seconds); it catches up the moment the screen is back.
 - **Reset** (⌃⌥R shortcut or the Shortcuts action) on a finished break that waits on the break screen now returns to a fresh focus session instead of starting the break over.
