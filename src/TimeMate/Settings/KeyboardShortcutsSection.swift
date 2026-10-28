@@ -48,6 +48,12 @@ struct KeyboardShortcutsSection: View {
     switch refusals[action] {
     case .reserved:
       return NSLocalizedString("Reserved by macOS. Record a different one.", comment: "")
+    case .conflict(let other) where !hotKeys.isEnabled(action):
+      // Turning the action on was refused; its own recorder is off.
+      return String(
+        format: NSLocalizedString(
+          "Already used by %@. Change or turn off that shortcut first.", comment: ""),
+        other.title(bundle: .main))
     case .conflict(let other):
       return String(
         format: NSLocalizedString("Already used by %@. Record a different one.", comment: ""),
@@ -60,7 +66,12 @@ struct KeyboardShortcutsSection: View {
   private func enabledBinding(for action: HotKeyAction) -> Binding<Bool> {
     Binding(
       get: { hotKeys.isEnabled(action) },
-      set: { hotKeys.setEnabled($0, for: action) }
+      set: { isOn in
+        let result = hotKeys.setEnabled(isOn, for: action)
+        refusals[action] = result == .ok ? nil : result
+        // Turning this action off may free the combination another one wanted.
+        if !isOn { refusals = refusals.filter { $0.value != .conflict(action) } }
+      }
     )
   }
 }

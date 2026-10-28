@@ -352,14 +352,13 @@ final class HotKeyManager: ObservableObject {
 
   /// Saves a new combination and applies it right away. Refused, with the
   /// reason, when it lacks ⌘ or ⌃, is reserved by macOS, or is the combination
-  /// of another action (so two actions never fight over one key).
+  /// of another enabled action (so two actions never fight over one key). A
+  /// turned-off action does not hold on to its combination.
   @discardableResult
   func setShortcut(_ shortcut: HotKeyShortcut, for action: HotKeyAction) -> HotKeyAssignment {
     guard shortcut.isValidGlobalHotKey else { return .invalid }
     guard !shortcut.isReserved else { return .reserved }
-    if let other = HotKeyAction.allCases.first(where: {
-      $0 != action && self.shortcut(for: $0) == shortcut
-    }) {
+    if let other = enabledAction(using: shortcut, besides: action) {
       return .conflict(other)
     }
     shortcuts[action] = shortcut
@@ -369,10 +368,26 @@ final class HotKeyManager: ObservableObject {
     return .ok
   }
 
-  func setEnabled(_ isOn: Bool, for action: HotKeyAction) {
+  /// Turns an action's shortcut on or off. Turning it on is refused with
+  /// `.conflict` while another enabled action uses the same combination; the
+  /// action then stays off.
+  @discardableResult
+  func setEnabled(_ isOn: Bool, for action: HotKeyAction) -> HotKeyAssignment {
+    if isOn, let other = enabledAction(using: shortcut(for: action), besides: action) {
+      return .conflict(other)
+    }
     enabled[action] = isOn
     defaults.set(isOn, forKey: action.enabledKey)
     reregister()
+    return .ok
+  }
+
+  private func enabledAction(using shortcut: HotKeyShortcut, besides action: HotKeyAction)
+    -> HotKeyAction?
+  {
+    HotKeyAction.allCases.first {
+      $0 != action && isEnabled($0) && self.shortcut(for: $0) == shortcut
+    }
   }
 
   // MARK: Recording

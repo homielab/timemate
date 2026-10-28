@@ -177,6 +177,33 @@ final class HotKeyTests: XCTestCase {
     XCTAssertEqual(HotKeyAction.startPause.title(bundle: .main), "Start / Pause")
   }
 
+  func testShortcutOfATurnedOffActionIsFree() {
+    let manager = HotKeyManager(defaults: defaults)
+    let resetDefault = HotKeyAction.reset.defaultShortcut
+    XCTAssertFalse(manager.isEnabled(.reset))
+    XCTAssertEqual(manager.setShortcut(resetDefault, for: .skip), .ok)
+    XCTAssertEqual(manager.shortcut(for: .skip), resetDefault)
+  }
+
+  func testTurningOnAnActionWhoseShortcutIsTakenIsRefused() {
+    let fake = FakeHotKeys()
+    let manager = HotKeyManager(defaults: defaults, registrar: fake.registrar)
+    manager.activate()
+    XCTAssertEqual(manager.setShortcut(HotKeyAction.reset.defaultShortcut, for: .skip), .ok)
+
+    XCTAssertEqual(manager.setEnabled(true, for: .reset), .conflict(.skip))
+    XCTAssertFalse(manager.isEnabled(.reset))
+    XCTAssertNil(defaults.object(forKey: SettingsKey.hotKeyResetEnabled))
+    XCTAssertEqual(fake.registered, [.startPause, .skip])
+
+    // Once Skip lets go of the combination, Reset can be turned on.
+    manager.setEnabled(false, for: .skip)
+    XCTAssertEqual(manager.setEnabled(true, for: .reset), .ok)
+    XCTAssertEqual(fake.registered, [.startPause, .reset])
+    // Turning it off is never refused.
+    XCTAssertEqual(manager.setEnabled(false, for: .reset), .ok)
+  }
+
   func testConflictNamesTheActionInBothLanguages() throws {
     XCTAssertEqual(HotKeyAction.skip.title(bundle: try bundle("en")), "Skip Session")
     XCTAssertNotEqual(
