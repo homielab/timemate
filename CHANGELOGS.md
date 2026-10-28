@@ -126,6 +126,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Battery: while the display is off or the screen is locked and the Mac stays awake, the timer no longer ticks every second (even with the menu bar showing minutes and seconds); it catches up the moment the screen is back.
 - **Reset** (⌃⌥R shortcut or the Shortcuts action) on a finished break that waits on the break screen now returns to a fresh focus session instead of starting the break over.
 - The "session complete" notification no longer goes missing when TimeMate has quit or crashed, or is late because the Mac slept: it is scheduled for the end of the session and still shows once, on time.
 - **Reset All Settings** now also turns off Start at Login, so the Mac no longer opens TimeMate at login after a reset.

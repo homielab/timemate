@@ -16,11 +16,14 @@ enum TickMode: Equatable {
 
   /// Ticks every second only while the seconds are on screen: the popover is open,
   /// the menu bar shows them, the break screen is up, or VoiceOver may read the
-  /// menu bar item. A menu bar with minutes only ticks once a minute.
+  /// menu bar item. A menu bar with minutes only ticks once a minute. While the
+  /// display is asleep or the screen is locked nobody can see any of it, so the
+  /// timer only wakes up at the end of the session.
   static func mode(
     popoverOpen: Bool, menuBarStyle: MenuBarTimeStyle, breakOverlayShown: Bool,
-    voiceOverRunning: Bool
+    voiceOverRunning: Bool, screenAsleep: Bool = false
   ) -> TickMode {
+    if screenAsleep { return .atEnd }
     if popoverOpen || breakOverlayShown || voiceOverRunning || menuBarStyle == .minutesSeconds {
       return .everySecond
     }

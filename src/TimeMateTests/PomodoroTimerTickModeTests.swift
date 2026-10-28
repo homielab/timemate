@@ -54,6 +54,51 @@ final class PomodoroTimerTickModeTests: TimerTestCase {
     XCTAssertEqual(history.records.count, 1)
   }
 
+  func testWakeAfterAtEndShowsTheRightTimeAndBreakOverlayKeepsTickingEverySecond() {
+    timer = makeTimer(focus: 3, short: 1200)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    let overlayMode = TickMode.mode(
+      popoverOpen: false, menuBarStyle: .iconOnly, breakOverlayShown: true,
+      voiceOverRunning: false)
+    XCTAssertEqual(overlayMode, .everySecond)
+    // Screen off: only the end wakes the timer; 10 minutes pass unseen.
+    timer.tickMode = TickMode.mode(
+      popoverOpen: false, menuBarStyle: .minutesSeconds, breakOverlayShown: true,
+      voiceOverRunning: true, screenAsleep: true)
+    XCTAssertEqual(timer.tickMode, .atEnd)
+    advanceClock(by: 600)
+    XCTAssertEqual(timer.timeRemaining, 1200)
+    // Screen back: the countdown catches up at once and ticks every second.
+    timer.tickMode = overlayMode
+    XCTAssertEqual(timer.timeRemaining, 600)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  // MARK: - Screen inactive
+
+  func testScreenInactivePausesRunningFocusOnlyWithPauseOnSleep() {
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    timer.handleScreenInactive()
+    XCTAssertEqual(timer.state, .active)
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer.handleScreenInactive()
+    XCTAssertEqual(timer.state, .paused)
+  }
+
+  func testScreenInactiveLeavesBreakAndIdleAlone() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer.handleScreenInactive()
+    XCTAssertEqual(timer.state, .idle)
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    finishSession(timer)
+    timer.handleScreenInactive()
+    XCTAssertEqual(timer.state, .active)
+  }
+
   // MARK: - Old "session complete" notifications
 
   func testStartSkipResetAndRestartRemoveTheSessionNotification() {

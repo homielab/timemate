@@ -21,6 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private var escapeKeyMonitor: Any?
   private var keepAwakeEnabled = false
   private var isPopoverOpen = false
+  private var isDisplayAsleep = false
+  private var isScreenLocked = false
   private(set) lazy var hotKeyManager = HotKeyManager { [weak self] in self?.timer.perform($0) }
   private var cancellables = Set<AnyCancellable>()
   let openSettingsRequests = PassthroughSubject<Void, Never>()
@@ -108,7 +110,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       popoverOpen: isPopoverOpen,
       menuBarStyle: menuBarStyle,
       breakOverlayShown: overlayShown,
-      voiceOverRunning: statusItemController?.isVoiceOverRunning ?? false
+      voiceOverRunning: statusItemController?.isVoiceOverRunning ?? false,
+      screenAsleep: isDisplayAsleep || isScreenLocked
     )
   }
 
@@ -119,6 +122,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     .receive(on: DispatchQueue.main)
     .sink { [weak self] _ in self?.updateTickMode() }
     .store(in: &cancellables)
+
+    observeScreenState()
 
     NotificationCenter.default.publisher(
       for: UserDefaults.didChangeNotification, object: UserDefaults.standard
@@ -132,6 +137,35 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       }
     }
     .store(in: &cancellables)
+  }
+
+  /// With the display off or the screen locked nothing shows the countdown, so
+  /// ticking drops to `.atEnd`; on wake or unlock it catches up right away.
+  private func observeScreenState() {
+    let workspaceCenter = NSWorkspace.shared.notificationCenter
+    let distributedCenter = DistributedNotificationCenter.default()
+    let lockedName = Notification.Name(PomodoroTimer.screenLockedNotificationName)
+    let unlockedName = Notification.Name("com.apple.screenIsUnlocked")
+    workspaceCenter.publisher(for: NSWorkspace.screensDidSleepNotification)
+      .sink { [weak self] _ in self?.setScreenState(displayAsleep: true) }
+      .store(in: &cancellables)
+    workspaceCenter.publisher(for: NSWorkspace.screensDidWakeNotification)
+      .sink { [weak self] _ in self?.setScreenState(displayAsleep: false) }
+      .store(in: &cancellables)
+    distributedCenter.publisher(for: lockedName)
+      .sink { [weak self] _ in self?.setScreenState(locked: true) }
+      .store(in: &cancellables)
+    distributedCenter.publisher(for: unlockedName)
+      .sink { [weak self] _ in self?.setScreenState(locked: false) }
+      .store(in: &cancellables)
+  }
+
+  private func setScreenState(displayAsleep: Bool? = nil, locked: Bool? = nil) {
+    if let displayAsleep { isDisplayAsleep = displayAsleep }
+    if let locked { isScreenLocked = locked }
+    updateTickMode()
+    // Show the right time the moment the screen is back.
+    if !(isDisplayAsleep || isScreenLocked) { timer.handleTick() }
   }
 
   func updatePopoverSize() {

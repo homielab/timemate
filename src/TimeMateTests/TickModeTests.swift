@@ -7,11 +7,12 @@ import XCTest
 final class TickModeTests: XCTestCase {
   private func mode(
     popover: Bool = false, menuBarTime: MenuBarTimeStyle = .iconOnly, overlay: Bool = false,
-    voiceOver: Bool = false
+    voiceOver: Bool = false, asleep: Bool = false
   ) -> TickMode {
     TickMode.mode(
       popoverOpen: popover, menuBarStyle: menuBarTime, breakOverlayShown: overlay,
-      voiceOverRunning: voiceOver)
+      voiceOverRunning: voiceOver,
+      screenAsleep: asleep)
   }
 
   func testNothingShowingTheCountdownTicksOnlyAtTheEnd() {
@@ -40,6 +41,15 @@ final class TickModeTests: XCTestCase {
   func testBreakScreenAndVoiceOverTickEverySecond() {
     XCTAssertEqual(mode(overlay: true), .everySecond)
     XCTAssertEqual(mode(voiceOver: true), .everySecond)
+  }
+
+  func testSleepingOrLockedScreenTicksOnlyAtTheEndWhateverTheStyle() {
+    for style in [MenuBarTimeStyle.minutesSeconds, .minutesOnly, .iconOnly] {
+      XCTAssertEqual(mode(menuBarTime: style, asleep: true), .atEnd)
+      XCTAssertEqual(
+        mode(popover: true, menuBarTime: style, overlay: true, voiceOver: true, asleep: true),
+        .atEnd)
+    }
   }
 
   func testTicksMayRunLateByAFifthOfASecond() {
