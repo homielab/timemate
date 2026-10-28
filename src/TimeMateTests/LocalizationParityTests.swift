@@ -90,7 +90,7 @@ final class LocalizationParityTests: XCTestCase {
       RelaxationTips.all
       + SessionType.allCases.map(\.rawValue)
       + SessionNotificationAction.allCases.map(\.titleKey)
-      + ["Break postponed"]
+      + ["Break postponed", BreakOverlayAccessibility.windowTitleKey]
     XCTAssertEqual(Set(used).count, used.count, "duplicate string")
     XCTAssertEqual(used.filter { english[$0] == nil }, [], "missing in en.lproj")
     XCTAssertEqual(used.filter { vietnamese[$0] == nil }, [], "missing in vi.lproj")

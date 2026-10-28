@@ -18,6 +18,14 @@ enum BreakOverlayAccessibility {
       minutes)
   }
 
+  /// Localization key of the break screen window title.
+  static let windowTitleKey = "Break"
+
+  /// Title of the break screen windows: VoiceOver names each window with it.
+  static func windowTitle() -> String {
+    NSLocalizedString(windowTitleKey, comment: "Break screen window title for VoiceOver")
+  }
+
   /// What VoiceOver announces when the break ends and the break screen waits for the user.
   static func endAnnouncement() -> String {
     NSLocalizedString(

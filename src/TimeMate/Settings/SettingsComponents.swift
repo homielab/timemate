@@ -19,10 +19,13 @@ struct SettingsSection<Content: View>: View {
       HStack(spacing: 6) {
         Image(systemName: systemImage)
           .font(.system(size: 11, weight: .semibold))
+          .accessibilityHidden(true)
         Text(titleKey)
           .font(.system(size: 13, weight: .semibold))
       }
       .foregroundColor(.secondary)
+      .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.isHeader)
 
       VStack(alignment: .leading, spacing: 12) {
         content

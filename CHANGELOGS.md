@@ -132,6 +132,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- VoiceOver: the break screen window is named "Break" instead of an untitled window, and each Settings section title is a heading, so the rotor can jump between sections.
 - Keyboard Shortcuts: a turned-off shortcut no longer blocks its combination, so ⌃⌥R can be recorded for Skip while Reset is off. Turning on a shortcut whose combination another one uses is refused with "Already used by … Change or turn off that shortcut first."
 - **Continue Work** after a break screen left waiting overnight (or over 4 hours) now starts a fresh cycle on focus, so the morning's first pomodoro no longer ends in a long break.
 - Shortcuts → **Add Time** now says what happened: "Added 5 minutes", or "No session to extend" when the timer is idle or the break is postponed, instead of finishing silently as if time was added.

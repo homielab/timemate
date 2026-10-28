@@ -307,6 +307,17 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertEqual(Set(controller.windowTips), [tip])
   }
 
+  func testEveryBreakWindowHasATitleForVoiceOver() {
+    let controller = makeController(animated: false)
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertFalse(controller.windowTitles.isEmpty)
+    XCTAssertTrue(controller.windowTitles.allSatisfy { !$0.isEmpty })
+    XCTAssertEqual(Set(controller.windowTitles), [BreakOverlayAccessibility.windowTitle()])
+  }
+
   func testNextBreakPicksANewTip() {
     let controller = makeController(animated: false, tip: makeCountingTips())
     timer.startTimer()

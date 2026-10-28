@@ -103,6 +103,9 @@ class BreakOverlayWindowController: NSObject {
     windows.compactMap { ($0.contentView as? NSHostingView<BreakOverlayView>)?.rootView.model.tip }
   }
 
+  /// The titles of the break screen windows, one per screen.
+  var windowTitles: [String] { windows.map(\.title) }
+
   init(
     timer: PomodoroTimer,
     defaults: UserDefaults = .standard,
@@ -201,6 +204,8 @@ class BreakOverlayWindowController: NSObject {
       window.ignoresMouseEvents = false
       window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
       window.isReleasedWhenClosed = false
+      // Borderless windows show no title, but VoiceOver reads it to name the window.
+      window.title = BreakOverlayAccessibility.windowTitle()
 
       let contentView = BreakOverlayView(model: model, isPrimary: isPrimary)
       window.contentView = NSHostingView(rootView: contentView)
