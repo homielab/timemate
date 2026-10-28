@@ -446,9 +446,19 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  /// Ends a break that waits on the break screen and starts the next session.
+  /// A break left waiting overnight or for over four hours starts a fresh cycle
+  /// on focus instead, like Start on a stale idle timer.
   func continueWork() {
     defer { saveSnapshot() }
     clearSessionNotifications()
+    if isWaitingToContinue,
+      SessionCycle.isStale(lastActivity: lastActivity, now: now(), calendar: history.calendar)
+    {
+      restartCycleIfStale()
+      beginSession()
+      return
+    }
     isWaitingToContinue = false
     advanceToNextSession()
     if state != .active {

@@ -378,6 +378,42 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(timer.focusSessionsCompleted, 0)
   }
 
+  /// Three focus sessions, then the third short break waits on the break screen.
+  private func waitAfterThreeFocusSessions() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    for round in 0..<3 {
+      if round > 0 { timer.continueWork() }
+      finishSession(timer)  // focus -> short break, auto-started
+      finishSession(timer)  // short break waits on the break screen
+    }
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+  }
+
+  func testContinueWorkAfterAStaleWaitingBreakStartsAFreshCycle() {
+    waitAfterThreeFocusSessions()
+    advanceClock(by: 10 * 3600)
+    timer.continueWork()
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testContinueWorkAfterARecentWaitingBreakKeepsTheCycle() {
+    waitAfterThreeFocusSessions()
+    advanceClock(by: 3600)
+    timer.continueWork()
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .longBreak)
+  }
+
   func testResumingAPausedSessionNeverResetsTheCycle() {
     completeThreeFocusSessions()
     timer.startTimer()
