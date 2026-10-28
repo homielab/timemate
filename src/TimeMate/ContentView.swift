@@ -34,6 +34,13 @@ struct ContentView: View {
     .padding()
     .frame(minWidth: 280)
     .background(Color(hex: backgroundColorHex) ?? .clear)
+    // Semantic text and control colors follow the custom background, not the system
+    // appearance, so a white background in Dark Mode still gets dark text.
+    .transformEnvironment(\.colorScheme) { scheme in
+      if let dark = NSColor.prefersDarkText(onBackgroundHex: backgroundColorHex) {
+        scheme = dark ? .light : .dark
+      }
+    }
     .contentShape(Rectangle())
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
       appDelegate.updatePopoverSize()

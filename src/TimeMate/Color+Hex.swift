@@ -45,6 +45,27 @@ extension NSColor {
     return (channel(0), channel(1), channel(2), alpha)
   }
 
+  /// WCAG relative luminance (0 = black, 1 = white) of a hex color, alpha ignored;
+  /// nil when the hex doesn't parse.
+  static func relativeLuminance(fromHex hex: String) -> CGFloat? {
+    guard let (r, g, b, _) = rgba(fromHex: hex) else { return nil }
+    func linear(_ c: CGFloat) -> CGFloat {
+      c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
+  }
+
+  /// Whether dark text reads better than light text on this background: true above the
+  /// luminance where black and white text have the same contrast ratio (about 0.179).
+  /// nil when the hex doesn't parse or the color is mostly transparent (alpha < 0.5),
+  /// so the system appearance shows through and decides.
+  static func prefersDarkText(onBackgroundHex hex: String) -> Bool? {
+    guard let (_, _, _, alpha) = rgba(fromHex: hex), alpha >= 0.5,
+      let luminance = relativeLuminance(fromHex: hex)
+    else { return nil }
+    return luminance > 0.179
+  }
+
   func toHex() -> String? {
     guard let srgbColor = self.usingColorSpace(.sRGB) else {
       return "#000000"

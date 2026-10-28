@@ -47,4 +47,31 @@ final class ColorHexTests: XCTestCase {
       XCTAssertEqual(NSColor(hex: hex)?.toHex(), hex)
     }
   }
+
+  func testRelativeLuminance() throws {
+    XCTAssertEqual(try XCTUnwrap(NSColor.relativeLuminance(fromHex: "#FFFFFF")), 1, accuracy: 1e-6)
+    XCTAssertEqual(try XCTUnwrap(NSColor.relativeLuminance(fromHex: "#000000")), 0, accuracy: 1e-6)
+    XCTAssertEqual(
+      try XCTUnwrap(NSColor.relativeLuminance(fromHex: "#808080")), 0.2159, accuracy: 1e-3)
+    XCTAssertNil(NSColor.relativeLuminance(fromHex: "nope"))
+  }
+
+  func testTextOnOpaqueBackgrounds() {
+    XCTAssertEqual(NSColor.prefersDarkText(onBackgroundHex: "#FFFFFF"), true)
+    XCTAssertEqual(NSColor.prefersDarkText(onBackgroundHex: "#000000"), false)
+    XCTAssertEqual(NSColor.prefersDarkText(onBackgroundHex: "#808080"), true)
+    XCTAssertEqual(NSColor.prefersDarkText(onBackgroundHex: "#1E3A8A"), false)
+  }
+
+  func testAlphaDecidesWhetherTheBackgroundCounts() {
+    XCTAssertNil(NSColor.prefersDarkText(onBackgroundHex: "#FFFFFF00"))
+    XCTAssertNil(NSColor.prefersDarkText(onBackgroundHex: "#FFFFFF7F"))
+    XCTAssertEqual(NSColor.prefersDarkText(onBackgroundHex: "#FFFFFF80"), true)
+  }
+
+  func testEmptyOrInvalidHexKeepsTheSystemAppearance() {
+    for hex in ["", "#12ab", "#gggggg"] {
+      XCTAssertNil(NSColor.prefersDarkText(onBackgroundHex: hex), hex)
+    }
+  }
 }
