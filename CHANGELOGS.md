@@ -98,6 +98,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- While the break screen waits for a full-screen app, it now looks again when you switch Spaces or apps (and every 30 s as a fallback) instead of checking the windows every 5 s, saving battery during long full-screen breaks.
 - Typing a session label or dragging the volume slider no longer makes the app re-check the break screen and tick mode; only the settings that matter trigger it.
 - The menu bar time redraws once per update instead of twice (measured: 2 updates per tick
   before, 1 now, none when the shown time doesn't change), using less energy all day.

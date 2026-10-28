@@ -53,8 +53,14 @@ class BreakOverlayWindowController: NSObject {
   private var defaultsObserver: DefaultsObserver?
   private var eventMonitor: Any?
   private var screenObserver: NSObjectProtocol?
-  /// Re-checks whether the frontmost app left full screen while the break screen waits.
+  /// While the break screen waits for the frontmost app to leave full screen: the
+  /// Space and app-switch observers, plus a slow fallback poll.
+  private let workspaceNotificationCenter: NotificationCenter
+  private let fallbackPollInterval: TimeInterval?
+  private var frontmostAppObservers: [NSObjectProtocol] = []
   private var fullscreenPoll: Timer?
+  /// Whether the break screen is waiting for the frontmost app to leave full screen.
+  var isWaitingForWindowedApp: Bool { !frontmostAppObservers.isEmpty }
   private var lastState: (PomodoroState, SessionType, Bool, Bool)?
   /// The two settings the break screen depends on, as of the last evaluation.
   private var lastSettings: OverlaySettings?
@@ -83,9 +89,13 @@ class BreakOverlayWindowController: NSObject {
     defaults: UserDefaults = .standard,
     animated: Bool = true,
     isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
+    workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
+    fallbackPollInterval: TimeInterval? = OverlayPolicy.fallbackPollInterval,
     runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade
   ) {
     self.isFullscreenProbe = isFullscreenProbe
+    self.workspaceNotificationCenter = workspaceNotificationCenter
+    self.fallbackPollInterval = fallbackPollInterval
     self.runFade = runFade
     self.timer = timer
     self.defaults = defaults
@@ -262,10 +272,10 @@ class BreakOverlayWindowController: NSObject {
       isVisible: isVisible)
 
     if presentation == .waitForWindowedApp {
-      startFullscreenPoll()
+      startWaitingForWindowedApp()
       return
     }
-    stopFullscreenPoll()
+    stopWaitingForWindowedApp()
 
     if presentation == .show {
       // Not when the overlay only comes back during its fade-out.
@@ -288,23 +298,44 @@ class BreakOverlayWindowController: NSObject {
   }
 
   /// The notification already told the user the session ended; the break screen comes
-  /// once the app in front leaves full screen, until the break is over.
-  private func startFullscreenPoll() {
-    guard fullscreenPoll == nil else { return }
-    fullscreenPoll = Timer.scheduledTimer(
-      withTimeInterval: OverlayPolicy.pollInterval, repeats: true
-    ) { [weak self] _ in
-      guard let self, let state = self.lastState else { return }
-      self.handleStateChange(
-        state: state.0, sessionType: state.1, isWaitingToContinue: state.2,
-        isBreakPostponed: state.3)
+  /// once the app in front leaves full screen, until the break is over. Looks again when
+  /// the active Space or the app in front changes, and every `fallbackPollInterval`
+  /// for what those miss, instead of reading the window list every few seconds.
+  private func startWaitingForWindowedApp() {
+    if frontmostAppObservers.isEmpty {
+      frontmostAppObservers = [
+        NSWorkspace.activeSpaceDidChangeNotification,
+        NSWorkspace.didActivateApplicationNotification,
+      ].map { name in
+        workspaceNotificationCenter.addObserver(forName: name, object: nil, queue: .main) {
+          [weak self] _ in self?.reevaluate()
+        }
+      }
     }
-    fullscreenPoll?.tolerance = TickMode.tolerance
+    guard fullscreenPoll == nil, let fallbackPollInterval else { return }
+    let poll = Timer(timeInterval: fallbackPollInterval, repeats: true) { [weak self] _ in
+      self?.reevaluate()
+    }
+    poll.tolerance = fallbackPollInterval / 10
+    RunLoop.main.add(poll, forMode: .common)
+    fullscreenPoll = poll
   }
 
-  private func stopFullscreenPoll() {
+  private func stopWaitingForWindowedApp() {
+    for observer in frontmostAppObservers {
+      workspaceNotificationCenter.removeObserver(observer)
+    }
+    frontmostAppObservers = []
     fullscreenPoll?.invalidate()
     fullscreenPoll = nil
+  }
+
+  /// Evaluates the break screen again with the last known timer state.
+  private func reevaluate() {
+    guard let state = lastState else { return }
+    handleStateChange(
+      state: state.0, sessionType: state.1, isWaitingToContinue: state.2,
+      isBreakPostponed: state.3)
   }
 
   private func showWindows(animated: Bool) {
@@ -411,7 +442,7 @@ class BreakOverlayWindowController: NSObject {
   }
 
   deinit {
-    stopFullscreenPoll()
+    stopWaitingForWindowedApp()
     stopObserving()
   }
 }

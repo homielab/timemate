@@ -45,8 +45,10 @@ enum OverlayPolicy {
     settings.enabled && !(settings.skipFullscreen && isFrontmostFullscreen())
   }
 
-  /// How often to look again while waiting for the frontmost app to leave full screen.
-  static let pollInterval: TimeInterval = 5
+  /// While the break screen waits for the frontmost app to leave full screen, it looks
+  /// again when the active Space or the app in front changes. This slow poll only catches
+  /// what those notifications miss (a video leaving full screen inside the same app).
+  static let fallbackPollInterval: TimeInterval = 30
 
   /// - Parameters:
   ///   - shouldShow: the break screen is due (`BreakOverlayRules.shouldShowOverlay`);

@@ -32,7 +32,7 @@ final class BreakOverlayDefaultsFilterTests: XCTestCase {
       isFullscreenProbe: { [unowned self] in
         self.probeCalls += 1
         return false
-      })
+      }, workspaceNotificationCenter: NotificationCenter(), fallbackPollInterval: nil)
   }
 
   override func tearDown() {
@@ -88,7 +88,7 @@ final class BreakOverlayDefaultsFilterTests: XCTestCase {
       isFullscreenProbe: { [unowned self] in
         self.probeCalls += 1
         return true
-      })
+      }, workspaceNotificationCenter: NotificationCenter(), fallbackPollInterval: nil)
     XCTAssertTrue(controller.isShowingOverlay)
     defaults.set(false, forKey: SettingsKey.overlayEnabled)
     XCTAssertFalse(controller.isShowingOverlay)
