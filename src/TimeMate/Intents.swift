@@ -128,6 +128,12 @@ enum TimerIntentActions {
     }
     return String(format: format, session, minutesRemaining(timer))
   }
+
+  /// `statusText` as the answer of a command (Start, Pause, Skip, Reset), so
+  /// Siri and Shortcuts say where the timer is after it ran.
+  static func statusDialog(_ timer: PomodoroTimer) -> IntentDialog {
+    IntentDialog(stringLiteral: statusText(timer))
+  }
 }
 
 struct StartTimerIntent: AppIntent {
@@ -136,9 +142,9 @@ struct StartTimerIntent: AppIntent {
     "Starts or resumes the current TimeMate session.")
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.start(.shared)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -149,9 +155,9 @@ struct StartFocusSessionIntent: AppIntent {
   )
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.startFocus(.shared)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -169,9 +175,9 @@ struct StartFocusIntent: AppIntent {
   }
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.startFocus(.shared, label: label)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -206,9 +212,9 @@ struct PauseTimerIntent: AppIntent {
   static var description = IntentDescription("Pauses the running TimeMate session.")
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.pause(.shared)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -218,9 +224,9 @@ struct SkipSessionIntent: AppIntent {
     "Ends the current TimeMate session and moves to the next one.")
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.skip(.shared)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -230,9 +236,9 @@ struct ResetTimerIntent: AppIntent {
     "Stops the TimeMate timer and starts the current session over.")
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     TimerIntentActions.reset(.shared)
-    return .result()
+    return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
 
@@ -246,7 +252,7 @@ struct GetTimerStatusIntent: AppIntent {
     let timer = PomodoroTimer.shared
     return .result(
       value: TimerIntentActions.minutesRemaining(timer),
-      dialog: IntentDialog(stringLiteral: TimerIntentActions.statusText(timer)))
+      dialog: TimerIntentActions.statusDialog(timer))
   }
 }
 

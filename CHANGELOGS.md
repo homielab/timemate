@@ -132,6 +132,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Shortcuts: Start Timer, Start Focus, Pause Timer, Skip Session and Reset Timer** now say where the timer is after they run (e.g. "Short Break, not started, 1 min"), instead of only "Done". Pause Timer when nothing runs says so too.
 - **Shortcuts: Start Focus** (new) and **Start Focus with Label**, and Siri "Start a focus session in TimeMate", now start a focus session when the timer waits on a break that has not started (Auto-start breaks off), instead of running the break. The finished pomodoro still counts once. **Start Timer** still starts the break.
 - VoiceOver: the break screen window is named "Break" instead of an untitled window, and each Settings section title is a heading, so the rotor can jump between sections.
 - Keyboard Shortcuts: a turned-off shortcut no longer blocks its combination, so ⌃⌥R can be recorded for Skip while Reset is off. Turning on a shortcut whose combination another one uses is refused with "Already used by … Change or turn off that shortcut first."

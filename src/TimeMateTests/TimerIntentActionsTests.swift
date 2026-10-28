@@ -329,6 +329,24 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(TimerIntentActions.minutesRemaining(timer), 0)
   }
 
+  /// Start, Pause, Skip and Reset answer with `statusText` after they ran.
+  func testStatusTextAfterEachCommand() {
+    TimerIntentActions.pause(timer)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, not started, 3 min")
+    TimerIntentActions.start(timer)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, running, 3 min left")
+    TimerIntentActions.pause(timer)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, paused, 3 min left")
+    TimerIntentActions.reset(timer)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, not started, 3 min")
+    TimerIntentActions.start(timer)
+    TimerIntentActions.skip(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Short Break, not started, 1 min")
+    TimerIntentActions.startFocus(timer)
+    XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, running, 3 min left")
+  }
+
   // MARK: - Today's progress
 
   private func makeHistory() -> SessionHistory {
