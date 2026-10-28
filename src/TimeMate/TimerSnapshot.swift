@@ -16,6 +16,9 @@ struct TimerSnapshot: Codable, Equatable {
   var focusSessionsCompleted: Int
   var isBreakPostponed: Bool
   var isWaitingToContinue: Bool
+  /// The label typed when the session began ("" = none). `nil` in snapshots saved
+  /// before this field existed: the label field is read as it stands then.
+  var label: String?
 
   /// Whether the values make sense together; anything else is treated as damaged.
   var isValid: Bool {

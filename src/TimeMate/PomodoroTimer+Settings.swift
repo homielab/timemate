@@ -42,9 +42,12 @@ extension PomodoroTimer {
   var sessionLabel: String? {
     SessionLabel.normalized(defaults.string(forKey: SettingsKey.sessionLabel))
   }
-  /// The label that goes with a session of `sessionType`: breaks have none.
-  func label(for sessionType: SessionType) -> String? {
-    sessionType == .focus ? sessionLabel : nil
+  /// The label to record for the session that ran: the one captured when it began,
+  /// or the label field as it stands when none was saved (older snapshot).
+  func sessionLabel(for sessionType: SessionType) -> String? {
+    guard sessionType == .focus else { return nil }
+    guard let startedLabel else { return sessionLabel }
+    return SessionLabel.normalized(startedLabel)
   }
   var dailyGoal: Int {
     DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)

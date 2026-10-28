@@ -20,7 +20,7 @@ extension PomodoroTimer {
         forCompleted: currentSessionType, next: next.sessionType,
         minutes: SessionDuration.sanitized(minutesFor(session: next.sessionType)),
         autoStarted: autoStarted, breakThroughFocus: breakThroughFocus,
-        label: label(for: currentSessionType)))
+        label: sessionLabel(for: currentSessionType)))
   }
 
   /// Tells the user once a day when the session that just ended took today's
@@ -34,8 +34,8 @@ extension PomodoroTimer {
     let lastNotified = defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date
     guard !DailyGoal.wasNotified(on: lastNotified, today: today, calendar: history.calendar)
     else { return }
-    defaults.set(today, forKey: SettingsKey.dailyGoalNotifiedAt)
     guard notificationsEnabled else { return }
+    defaults.set(today, forKey: SettingsKey.dailyGoalNotifiedAt)
     postNotification(SessionNotification.dailyGoalRequest(goal: goal))
   }
 

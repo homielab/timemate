@@ -156,6 +156,16 @@ final class DailyGoalTests: XCTestCase {
     XCTAssertTrue(posted.isEmpty)
   }
 
+  func testGoalNotificationStillComesWhenNotificationsAreTurnedBackOn() {
+    let timer = makeTimer(goal: 1, notificationsEnabled: false)
+    run(timer, until: 1)
+    XCTAssertTrue(goalNotifications.isEmpty)
+    defaults.set(true, forKey: SettingsKey.notificationsEnabled)
+    history.reset()
+    run(timer, until: 1)
+    XCTAssertEqual(goalNotifications.count, 1)
+  }
+
   func testResettingStatisticsDoesNotNotifyTwiceTheSameDay() {
     let timer = makeTimer(goal: 1)
     run(timer, until: 1)

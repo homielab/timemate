@@ -124,6 +124,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- A focus session keeps the "What are you working on?" label it started with: typing the next task before the bell (or while paused, or across a relaunch) no longer relabels the session that just ended in the history, the sessions CSV and the "session complete" notification. The field stays editable; the new text applies to the next session.
+- The daily goal notification still comes the same day if notifications were off when the goal was reached and you turn them on before the next session ends.
 - Pressing Esc twice on the break screen no longer skips a break before the **Skip button delay** has passed (the Skip button and the global shortcut ⌃⌥S / Shortcuts behave as before); the "Press Esc twice to skip" hint now shows only when Esc works.
 - The minutes-only menu bar time is localized ("13 ph" in Vietnamese instead of "13m").
 - Connecting or disconnecting a display (or Sidecar/AirPlay) during a break no longer restarts the "Skip available in N" countdown or stops the break screen's clock, and no longer brings back a break screen that was already closing after the break ended or was skipped.

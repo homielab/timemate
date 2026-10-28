@@ -366,6 +366,72 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertTrue(history.records.isEmpty)
   }
 
+  func testLabelChangedMidSessionDoesNotRelabelTheRunningSession() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    runTicks(timer, 1)
+    defaults.set("Review code", forKey: SettingsKey.sessionLabel)
+    finishSession(timer)
+    XCTAssertEqual(history.records.map(\.label), ["Write report"])
+  }
+
+  func testLabelClearedBeforeStartStaysEmptyWhenTypedLater() {
+    defaults.set("   ", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    defaults.set("Next task", forKey: SettingsKey.sessionLabel)
+    finishSession(timer)
+    XCTAssertNil(history.records.first?.label)
+  }
+
+  func testPausedSessionKeepsItsLabelOnResume() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    defaults.set("Review code", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(history.records.first?.label, "Write report")
+  }
+
+  func testRelaunchMidSessionKeepsTheStartLabel() {
+    timer = makeTimer(focus: 300)
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    defaults.set("Review code", forKey: SettingsKey.sessionLabel)
+    _ = relaunch(after: 400)
+    XCTAssertEqual(history.records.map(\.label), ["Write report"])
+  }
+
+  func testRelaunchMidSessionThenFinishingKeepsTheStartLabel() {
+    timer = makeTimer(focus: 300)
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    defaults.set("Review code", forKey: SettingsKey.sessionLabel)
+    let resumed = relaunch(after: 100)
+    XCTAssertEqual(resumed.startedLabel, "Write report")
+    finishSession(resumed)
+    XCTAssertEqual(history.records.first?.label, "Write report")
+  }
+
+  func testSnapshotWithoutLabelDecodesAndReadsTheFieldLive() throws {
+    let old = """
+      {"state":"active","sessionType":"Focus","remaining":100,"totalDuration":300,\
+      "focusSessionsCompleted":0,"isBreakPostponed":false,"isWaitingToContinue":false,\
+      "endDate":0}
+      """
+    let snapshot = try JSONDecoder().decode(TimerSnapshot.self, from: Data(old.utf8))
+    XCTAssertNil(snapshot.label)
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    var legacy = TimerSnapshot.load(from: defaults)!
+    legacy.label = nil
+    legacy.save(to: defaults)
+    defaults.set("Typed later", forKey: SettingsKey.sessionLabel)
+    _ = relaunch(after: 400)
+    XCTAssertEqual(history.records.map(\.label), ["Typed later"])
+  }
+
   func testSessionExpiredWhileClosedKeepsItsLabel() {
     timer = makeTimer(focus: 300)
     defaults.set("Write report", forKey: SettingsKey.sessionLabel)
