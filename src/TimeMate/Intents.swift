@@ -13,16 +13,18 @@ enum TimerIntentActions {
     timer.startOrContinue()
   }
 
-  /// Sets what the next focus session is about, then starts like `start`. The
-  /// label goes into the popover's "What are you working on?" field only when a
-  /// new session begins (idle, or past a finished break); a running or paused
-  /// session keeps the label it began with. A blank label leaves the field as it is.
-  static func startFocus(_ timer: PomodoroTimer, label: String?) {
+  /// Sets what the next focus session is about, then starts like `start`,
+  /// except that an idle timer sitting on a break starts focus instead of the
+  /// break. The label goes into the popover's "What are you working on?" field
+  /// only when a new session begins (idle, or past a finished break); a running
+  /// or paused session keeps the label it began with. A blank or missing label
+  /// leaves the field as it is.
+  static func startFocus(_ timer: PomodoroTimer, label: String? = nil) {
     let beginsNewSession = timer.isWaitingToContinue || timer.state == .idle
     if beginsNewSession, let label = SessionLabel.normalized(label) {
       timer.defaults.set(label, forKey: SettingsKey.sessionLabel)
     }
-    start(timer)
+    timer.startFocus()
   }
 
   /// Shortest and longest extension "Add Time" accepts, in minutes.
@@ -140,10 +142,23 @@ struct StartTimerIntent: AppIntent {
   }
 }
 
+struct StartFocusSessionIntent: AppIntent {
+  static var title: LocalizedStringResource = "Start Focus"
+  static var description = IntentDescription(
+    "Starts a TimeMate focus session, or resumes the current session. A break that has not started yet is skipped."
+  )
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    TimerIntentActions.startFocus(.shared)
+    return .result()
+  }
+}
+
 struct StartFocusIntent: AppIntent {
   static var title: LocalizedStringResource = "Start Focus with Label"
   static var description = IntentDescription(
-    "Sets what you are working on and starts or resumes the current TimeMate session. A running session keeps its label."
+    "Sets what you are working on and starts a TimeMate focus session, or resumes the current session. A running session keeps its label."
   )
 
   @Parameter(title: "Label", requestValueDialog: "What are you working on?")
@@ -272,8 +287,10 @@ enum TimeMateShortcutPhrases {
 struct TimeMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
-      intent: StartTimerIntent(),
-      phrases: ["Start \(.applicationName)", "Start a focus session in \(.applicationName)"])
+      intent: StartTimerIntent(), phrases: ["Start \(.applicationName)"])
+    AppShortcut(
+      intent: StartFocusSessionIntent(),
+      phrases: ["Start a focus session in \(.applicationName)"])
     AppShortcut(
       intent: StartFocusIntent(),
       phrases: ["Start focus with a label in \(.applicationName)"])

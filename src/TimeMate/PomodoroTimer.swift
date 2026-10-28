@@ -446,6 +446,16 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  /// Like `startOrContinue`, but asks for focus: an idle timer sitting on a
+  /// break (the break did not start by itself) moves on to focus first, with
+  /// the focus session before the break counted once, as it already was.
+  func startFocus() {
+    if !isWaitingToContinue, state == .idle, isBreak {
+      advanceToNextSession(start: false)
+    }
+    startOrContinue()
+  }
+
   /// Ends a break that waits on the break screen and starts the next session.
   /// A break left waiting overnight or for over four hours starts a fresh cycle
   /// on focus instead, like Start on a stale idle timer.

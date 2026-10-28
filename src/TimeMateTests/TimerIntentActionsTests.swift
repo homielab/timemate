@@ -168,6 +168,67 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.sessionLabel(for: .focus), "Design")
   }
 
+  private func finishFocusSession() {
+    TimerIntentActions.start(timer)
+    while timer.state == .active, timer.currentSessionType == .focus {
+      currentTime = currentTime.addingTimeInterval(1)
+      timer.handleTick()
+    }
+  }
+
+  func testStartFocusAfterAFinishedFocusStartsFocusInsteadOfTheBreak() {
+    finishFocusSession()
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .idle)
+
+    TimerIntentActions.startFocus(timer, label: "Writing")
+
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Writing")
+    XCTAssertEqual(timer.sessionLabel(for: .focus), "Writing")
+  }
+
+  func testStartFocusWithoutALabelAlsoSkipsTheIdleBreak() {
+    finishFocusSession()
+    TimerIntentActions.startFocus(timer)
+
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+  }
+
+  func testStartStillStartsTheIdleBreak() {
+    finishFocusSession()
+    TimerIntentActions.start(timer)
+
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testStartFocusResumesAPausedBreak() {
+    finishFocusSession()
+    TimerIntentActions.start(timer)
+    TimerIntentActions.pause(timer)
+    TimerIntentActions.startFocus(timer, label: "Writing")
+
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testStartFocusContinuesPastAFinishedBreak() {
+    finishFocusSession()
+    timer.isWaitingToContinue = true
+    TimerIntentActions.startFocus(timer, label: "Writing")
+
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Writing")
+  }
+
   func testExtendAddsTimeToARunningSession() {
     TimerIntentActions.start(timer)
     currentTime += 20
