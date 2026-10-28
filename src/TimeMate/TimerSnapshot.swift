@@ -19,6 +19,9 @@ struct TimerSnapshot: Codable, Equatable {
   /// The label typed when the session began ("" = none). `nil` in snapshots saved
   /// before this field existed: the label field is read as it stands then.
   var label: String?
+  /// When a session last began or ended. `nil` in snapshots saved before this
+  /// field existed; the cycle then counts as stale (`SessionCycle.isStale`).
+  var lastActivity: Date?
 
   /// Whether the values make sense together; anything else is treated as damaged.
   var isValid: Bool {

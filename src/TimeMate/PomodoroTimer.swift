@@ -63,6 +63,9 @@ class PomodoroTimer: ObservableObject {
   /// before the bell does not relabel the one just done. `nil` = not captured
   /// (a snapshot from an older version): the label field is read live.
   private(set) var startedLabel: String?
+  /// When a session last began or ended; an idle timer whose cycle is older
+  /// than `SessionCycle.isStale` allows starts the cycle over.
+  private(set) var lastActivity: Date?
   /// When the latest tick fired, per `now`; lets tests verify the injected clock.
   private(set) var lastTickAt: Date?
   /// Wall-clock moment the running session ends. The remaining time is always
@@ -162,6 +165,9 @@ class PomodoroTimer: ObservableObject {
   /// Starts or resumes the current session for the user.
   func startTimer() {
     clearSessionNotifications()
+    if state == .idle {
+      restartCycleIfStale()
+    }
     beginSession()
   }
 
@@ -174,8 +180,25 @@ class PomodoroTimer: ObservableObject {
       startedLabel = sessionLabel ?? ""
     }
     state = .active
+    lastActivity = now()
     endDate = now().addingTimeInterval(TimeInterval(timeRemaining))
     startTicking()
+  }
+
+  /// Starts the cycle over on focus, with no sessions counted, when the timer
+  /// is idle and the last session is from another day or over four hours old:
+  /// three pomodoros last night do not make this morning's first one end in a
+  /// long break. A running or paused session is never touched.
+  private func restartCycleIfStale() {
+    guard state == .idle,
+      focusSessionsCompleted != 0 || currentSessionType != .focus || isWaitingToContinue,
+      SessionCycle.isStale(lastActivity: lastActivity, now: now(), calendar: history.calendar)
+    else { return }
+    isWaitingToContinue = false
+    focusSessionsCompleted = 0
+    currentSessionType = .focus
+    startedLabel = nil
+    resetForCurrentSession()
   }
 
   /// Schedules `handleTick` for the current `tickMode`: every second, at each
@@ -260,6 +283,7 @@ class PomodoroTimer: ObservableObject {
       let fallbackShown = fallbackNotificationShown(forEnd: endDate, at: tickTime)
       scheduledFallbackEnd = nil
       fallbackMayBePending = false
+      lastActivity = endDate
       // Only sessions that run to the end count; skipping never reaches here.
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
@@ -384,6 +408,8 @@ class PomodoroTimer: ObservableObject {
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
+    // Skipping picks the next session on purpose: Start must not undo it.
+    lastActivity = now()
     // A focus session skipped before it ran a second is not counted.
     advanceToNextSession(counts: wasRunning)
   }
@@ -486,7 +512,7 @@ class PomodoroTimer: ObservableObject {
       state: state, sessionType: currentSessionType, endDate: endDate,
       remaining: timeRemaining, totalDuration: totalDuration,
       focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
-      isWaitingToContinue: isWaitingToContinue, label: startedLabel
+      isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity
     ).save(to: defaults)
   }
 
@@ -496,11 +522,14 @@ class PomodoroTimer: ObservableObject {
   /// ended and the next session follows, without the alarm or a late
   /// notification (the one scheduled for its end showed on time); it only starts when the session ended within
   /// `overdueGracePeriod`. A waiting break screen or a postponed break that is due
-  /// is not shown at launch: the timer waits on the next session instead.
+  /// is not shown at launch: the timer waits on the next session instead. A timer
+  /// left idle with a stale cycle (`restartCycleIfStale`) opens on a fresh one.
   private func restore(_ snapshot: TimerSnapshot) {
     currentSessionType = snapshot.sessionType
     focusSessionsCompleted = snapshot.focusSessionsCompleted
     startedLabel = snapshot.label
+    lastActivity = snapshot.lastActivity
+    defer { restartCycleIfStale() }
     resetForCurrentSession()
 
     switch TimerRestorePlan.make(
@@ -529,6 +558,7 @@ class PomodoroTimer: ObservableObject {
     case .postponedBreakDue:
       state = .idle
     case .expired(let end, let duration, let startNext):
+      lastActivity = end
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(duration), end: end,
         label: sessionLabel(for: currentSessionType))

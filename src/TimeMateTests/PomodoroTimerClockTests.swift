@@ -330,4 +330,102 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertTrue(waitUntil { timer.endDate == expected })
     XCTAssertEqual(timer.endDate, expected)
   }
+
+  // MARK: - Stale cycle
+
+  /// Runs three focus sessions (and the breaks between them) with auto-start
+  /// off, leaving the timer idle on the fourth focus session.
+  private func completeThreeFocusSessions() {
+    timer = makeTimer(autoStart: false)
+    for _ in 0..<3 {
+      timer.startTimer()
+      finishSession(timer)
+      timer.startTimer()
+      finishSession(timer)
+    }
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+  }
+
+  func testStartAfterTenIdleHoursBeginsAFreshCycle() {
+    completeThreeFocusSessions()
+    advanceClock(by: 10 * 3600)
+    timer.startTimer()
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    finishSession(timer)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testStartWithinTheHourKeepsTheCycle() {
+    completeThreeFocusSessions()
+    advanceClock(by: 3600)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .longBreak)
+  }
+
+  func testStaleIdleBreakStartsOverOnFocus() {
+    timer = makeTimer(autoStart: false)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    advanceClock(by: 10 * 3600)
+    timer.startTimer()
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
+  func testResumingAPausedSessionNeverResetsTheCycle() {
+    completeThreeFocusSessions()
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    advanceClock(by: 10 * 3600)
+    timer.startTimer()
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .longBreak)
+  }
+
+  func testStaleCycleIsResetWhenTheAppOpensIdle() {
+    completeThreeFocusSessions()
+    let relaunched = relaunch(after: 10 * 3600, focus: 3, autoStart: false)
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 0)
+    XCTAssertEqual(relaunched.currentSessionType, .focus)
+    XCTAssertEqual(relaunched.state, .idle)
+  }
+
+  func testRecentCycleSurvivesARelaunch() {
+    completeThreeFocusSessions()
+    let relaunched = relaunch(after: 600, focus: 3, autoStart: false)
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 3)
+  }
+
+  func testPausedSessionKeepsItsCycleAcrossARelaunch() {
+    completeThreeFocusSessions()
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    let relaunched = relaunch(after: 10 * 3600, focus: 3, autoStart: false)
+    XCTAssertEqual(relaunched.state, .paused)
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 3)
+  }
+
+  func testSnapshotWithoutLastActivityStillDecodes() throws {
+    let snapshot = TimerSnapshot(
+      state: .paused, sessionType: .focus, endDate: nil, remaining: 5, totalDuration: 10,
+      focusSessionsCompleted: 2, isBreakPostponed: false, isWaitingToContinue: false,
+      label: "Write", lastActivity: currentTime)
+    var json = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: JSONEncoder().encode(snapshot)) as? [String: Any])
+    json.removeValue(forKey: "lastActivity")
+    let old = try JSONDecoder().decode(
+      TimerSnapshot.self, from: JSONSerialization.data(withJSONObject: json))
+    XCTAssertNil(old.lastActivity)
+    XCTAssertEqual(old.focusSessionsCompleted, 2)
+    XCTAssertTrue(old.isValid)
+  }
 }

@@ -117,4 +117,51 @@ final class SessionCycleTests: XCTestCase {
     XCTAssertEqual(SessionCycle.progressAccessibilityValue(0.004), "0% remaining")
     XCTAssertEqual(SessionCycle.progressAccessibilityValue(1.5), "100% remaining")
   }
+
+  // MARK: - Stale cycle
+
+  private var utc: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
+    return calendar
+  }
+
+  /// 2026-03-10 at `hour`:`minute` UTC.
+  private func march10(_ hour: Int, _ minute: Int = 0) -> Date {
+    utc.date(from: DateComponents(year: 2026, month: 3, day: 10, hour: hour, minute: minute))!
+  }
+
+  func testCycleIsFreshUpToFourHoursOnTheSameDay() {
+    let last = march10(9)
+    XCTAssertFalse(SessionCycle.isStale(lastActivity: last, now: last, calendar: utc))
+    XCTAssertFalse(SessionCycle.isStale(lastActivity: last, now: march10(13), calendar: utc))
+    XCTAssertTrue(
+      SessionCycle.isStale(
+        lastActivity: last, now: march10(13).addingTimeInterval(1), calendar: utc))
+  }
+
+  func testCycleIsStaleOnTheNextCalendarDay() {
+    let lateNight = march10(23, 50)
+    let afterMidnight = lateNight.addingTimeInterval(20 * 60)
+    XCTAssertTrue(SessionCycle.isStale(lastActivity: lateNight, now: afterMidnight, calendar: utc))
+  }
+
+  func testCalendarDayFollowsTheCalendarsTimeZone() {
+    // 23:50 and 00:10 UTC are both on March 11 in Ho Chi Minh City (UTC+7).
+    var saigon = utc
+    saigon.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")!
+    let lateNight = march10(23, 50)
+    let afterMidnight = lateNight.addingTimeInterval(20 * 60)
+    XCTAssertFalse(
+      SessionCycle.isStale(lastActivity: lateNight, now: afterMidnight, calendar: saigon))
+  }
+
+  func testUnknownLastActivityIsStale() {
+    XCTAssertTrue(SessionCycle.isStale(lastActivity: nil, now: march10(9), calendar: utc))
+  }
+
+  func testClockSetBackDoesNotMakeTheCycleStale() {
+    XCTAssertFalse(
+      SessionCycle.isStale(lastActivity: march10(12), now: march10(11), calendar: utc))
+  }
 }

@@ -32,9 +32,14 @@ class TimerTestCase: XCTestCase {
     distributedCenter = NotificationCenter()
     currentUptime = 50_000
     notificationRemovals = 0
+    // A fixed calendar: the fake clock starts at 13:46 UTC, so calendar days
+    // (and the stale-cycle rule) don't depend on the Mac's time zone.
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
     history = SessionHistory(
       fileURL: nil,
-      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) })
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      calendar: calendar)
     timer = makeTimer()
   }
 
