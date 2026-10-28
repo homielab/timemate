@@ -37,6 +37,42 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// `NSDictionary` keeps the last of two equal keys, so a duplicate would hide which
+  /// translation wins: read the raw file and count every `"key" =` line.
+  func testNoKeyIsDeclaredTwice() throws {
+    // The built bundle holds a compiled plist, so read the sources next to the tests.
+    let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+      .deletingLastPathComponent().appendingPathComponent("TimeMate")
+    for localization in ["en", "vi"] {
+      let file = sources.appendingPathComponent("\(localization).lproj/Localizable.strings")
+      let text = try String(contentsOf: file, encoding: .utf8)
+      XCTAssertEqual(Self.duplicateKeys(inStringsFile: text), [], "\(localization).lproj")
+    }
+  }
+
+  func testDuplicateKeyDetection() {
+    let text = [
+      #""A" = "1";"#, #"// "A" = "in a comment";"#, #""B \"q\"" = "2";"#, #""A" = "3";"#,
+    ].joined(separator: "\n")
+    XCTAssertEqual(Self.duplicateKeys(inStringsFile: text), ["A"])
+    XCTAssertEqual(Self.duplicateKeys(inStringsFile: "\"A\" = \"1\";\n\"B\" = \"2\";"), [])
+  }
+
+  /// Keys that start more than one line of a `.strings` file (comment lines are skipped).
+  static func duplicateKeys(inStringsFile text: String) -> [String] {
+    let regex = try! NSRegularExpression(pattern: #"^\s*"((?:[^"\\]|\\.)*)"\s*="#)
+    var seen = Set<String>()
+    var duplicates = Set<String>()
+    for line in text.split(separator: "\n", omittingEmptySubsequences: true) {
+      let line = String(line)
+      guard let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
+        let range = Range(match.range(at: 1), in: line)
+      else { continue }
+      if !seen.insert(String(line[range])).inserted { duplicates.insert(String(line[range])) }
+    }
+    return duplicates.sorted()
+  }
+
   func testNoTranslationIsEmpty() throws {
     for localization in ["en", "vi"] {
       let table = try strings("Localizable", localization)
