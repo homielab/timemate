@@ -20,8 +20,10 @@ final class MenuBarModel: ObservableObject {
   @Published private(set) var isWaitingToContinue: Bool
 
   private var cancellables = Set<AnyCancellable>()
+  private weak var timer: PomodoroTimer?
 
   init(timer: PomodoroTimer) {
+    self.timer = timer
     state = timer.state
     currentSessionType = timer.currentSessionType
     timeRemaining = timer.timeRemaining
@@ -50,6 +52,16 @@ final class MenuBarModel: ObservableObject {
   var accessibilityLabel: String {
     StatusItemMenu.accessibilityLabel(
       sessionType: currentSessionType, state: state, secondsRemaining: timeRemaining,
+      isBreakPostponed: isBreakPostponed, isWaitingToContinue: isWaitingToContinue)
+  }
+
+  /// The label for the hover tooltip. `timeRemaining` only moves on a tick, and
+  /// with the popover closed and no time in the menu bar the timer ticks just at
+  /// the end of the session, so the tooltip asks the timer for the time left now.
+  func tooltipText() -> String {
+    StatusItemMenu.accessibilityLabel(
+      sessionType: currentSessionType, state: state,
+      secondsRemaining: timer?.secondsRemaining ?? timeRemaining,
       isBreakPostponed: isBreakPostponed, isWaitingToContinue: isWaitingToContinue)
   }
 }

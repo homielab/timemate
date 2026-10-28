@@ -113,6 +113,30 @@ final class MenuBarModelTests: XCTestCase {
     XCTAssertEqual(model.accessibilityLabel, expected)
   }
 
+  func testTooltipShowsTheTimeLeftWithoutATick() {
+    timer.startTimer()
+    let atStart = model.tooltipText()
+    // No tick (tick mode `.atEnd`): the published value is stale, the tooltip is not.
+    currentTime = currentTime.addingTimeInterval(10)
+    XCTAssertEqual(model.timeRemaining, 30)
+    XCTAssertEqual(model.accessibilityLabel, atStart)
+    XCTAssertNotEqual(model.tooltipText(), atStart)
+    XCTAssertEqual(
+      model.tooltipText(),
+      StatusItemMenu.accessibilityLabel(
+        sessionType: timer.currentSessionType, state: timer.state, secondsRemaining: 20,
+        isBreakPostponed: false, isWaitingToContinue: false))
+  }
+
+  func testTooltipOfAPausedTimerDoesNotMove() {
+    timer.startTimer()
+    tick(after: 5)
+    timer.pauseTimer()
+    let paused = model.tooltipText()
+    currentTime = currentTime.addingTimeInterval(60)
+    XCTAssertEqual(model.tooltipText(), paused)
+  }
+
   func testStatusItemLabelFollowsTheModelWithVoiceOver() {
     let statusItem = NSStatusBar.system.statusItem(withLength: 90)
     defer { NSStatusBar.system.removeStatusItem(statusItem) }

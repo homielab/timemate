@@ -92,7 +92,7 @@ final class StatusItemController: NSObject {
     _ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint,
     userData data: UnsafeMutableRawPointer?
   ) -> String {
-    menuBarModel.accessibilityLabel
+    menuBarModel.tooltipText()
   }
 
   /// Left click toggles the popover; right click (or Control-click) opens the menu.

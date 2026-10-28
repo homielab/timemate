@@ -240,9 +240,9 @@ private struct LabelRow: View {
 }
 
 /// One thin column per day, oldest first, today last; a day that met the daily
-/// goal is green. Hovering a column names the day. VoiceOver reads the totals
-/// below instead of 30 separate columns.
-private struct BarStrip: View {
+/// goal is green. Hovering a column names the day; VoiceOver reads each column
+/// day by day, like the rows of the 7-day view (`spokenDays`).
+struct BarStrip: View {
   let days: [SessionStatistics.Day]
   let maxPomodoros: Int
   let goal: Int
@@ -250,9 +250,24 @@ private struct BarStrip: View {
 
   private let height: CGFloat = 40
 
+  /// What VoiceOver reads for each column, in column order.
+  static func spokenDays(
+    _ days: [SessionStatistics.Day], goal: Int, calendar: Calendar,
+    locale: Locale = StatisticsFormat.appLocale, bundle: Bundle = .main
+  ) -> [String] {
+    days.map { day in
+      StatisticsText.spokenDay(
+        StatisticsFormat.spokenDay(day.date, calendar: calendar, locale: locale),
+        pomodoros: day.pomodoros, minutes: day.focusMinutes,
+        goalReached: DailyGoal.isReached(completed: day.pomodoros, goal: goal),
+        bundle: bundle)
+    }
+  }
+
   var body: some View {
+    let spoken = Self.spokenDays(days, goal: goal, calendar: calendar)
     HStack(alignment: .bottom, spacing: 2) {
-      ForEach(days, id: \.date) { day in
+      ForEach(Array(days.enumerated()), id: \.element.date) { index, day in
         let reached = DailyGoal.isReached(completed: day.pomodoros, goal: goal)
         RoundedRectangle(cornerRadius: 1.5)
           .fill(reached ? Color.green : Color.accentColor)
@@ -266,11 +281,14 @@ private struct BarStrip: View {
           .help(
             Text(
               verbatim:
-                "\(StatisticsFormat.dayLabel(day.date, calendar: calendar)): \(day.pomodoros)"))
+                "\(StatisticsFormat.dayLabel(day.date, calendar: calendar)): \(day.pomodoros)")
+          )
+          .accessibilityElement()
+          .accessibilityLabel(Text(spoken[index]))
       }
     }
     .frame(height: height, alignment: .bottom)
-    .accessibilityHidden(true)
+    .accessibilityElement(children: .contain)
   }
 }
 

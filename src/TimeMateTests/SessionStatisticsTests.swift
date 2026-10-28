@@ -335,6 +335,26 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertTrue(vietnamese.lowercased().contains("thứ hai"), vietnamese)
   }
 
+  func testBarStripSpokenDaysNameEveryColumn() throws {
+    let utc = calendar("UTC")
+    let days = [
+      SessionStatistics.Day(date: date(2026, 3, 8, in: utc), pomodoros: 0, focusSeconds: 0),
+      SessionStatistics.Day(date: date(2026, 3, 9, in: utc), pomodoros: 4, focusSeconds: 6000),
+    ]
+    let path = try XCTUnwrap(Bundle.main.path(forResource: "en", ofType: "lproj"))
+    let en = try XCTUnwrap(Bundle(path: path))
+    let spoken = BarStrip.spokenDays(
+      days, goal: 4, calendar: utc, locale: Locale(identifier: "en"), bundle: en)
+    XCTAssertEqual(spoken.count, 2)
+    XCTAssertTrue(spoken[0].contains("Sunday"), spoken[0])
+    XCTAssertTrue(spoken[0].contains("0 pomodoros"), spoken[0])
+    XCTAssertTrue(spoken[1].contains("Monday"), spoken[1])
+    XCTAssertTrue(spoken[1].contains("4 pomodoros"), spoken[1])
+    XCTAssertTrue(spoken[1].contains("100 minutes"), spoken[1])
+    XCTAssertTrue(spoken[1].hasSuffix("goal reached"), spoken[1])
+    XCTAssertFalse(spoken[0].contains("goal reached"), spoken[0])
+  }
+
   func testShortDayLabelFollowsTheGivenLocale() {
     let utc = calendar("UTC")
     let monday = date(2026, 3, 9, in: utc)
