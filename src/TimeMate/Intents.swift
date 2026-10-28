@@ -17,6 +17,29 @@ enum TimerIntentActions {
     }
   }
 
+  /// Sets what the next focus session is about, then starts like `start`. The
+  /// label goes into the popover's "What are you working on?" field only when a
+  /// new session begins (idle, or past a finished break); a running or paused
+  /// session keeps the label it began with. A blank label leaves the field as it is.
+  static func startFocus(_ timer: PomodoroTimer, label: String?) {
+    let beginsNewSession = timer.isWaitingToContinue || timer.state == .idle
+    if beginsNewSession, let label = SessionLabel.normalized(label) {
+      timer.defaults.set(label, forKey: SettingsKey.sessionLabel)
+    }
+    start(timer)
+  }
+
+  /// Shortest and longest extension "Add Time" accepts, in minutes.
+  static let extendRange = 1...60
+
+  /// Adds `minutes` (kept within `extendRange`) to a running or paused session,
+  /// or restarts a finished break waiting on the break screen for that long,
+  /// like "+5 min". Does nothing when idle or during a postponed break.
+  static func extend(_ timer: PomodoroTimer, minutes: Int) {
+    let clamped = min(max(minutes, extendRange.lowerBound), extendRange.upperBound)
+    timer.extend(by: clamped)
+  }
+
   /// Pauses a running timer; does nothing otherwise.
   static func pause(_ timer: PomodoroTimer) {
     timer.pauseTimer()
@@ -106,6 +129,46 @@ struct StartTimerIntent: AppIntent {
   }
 }
 
+struct StartFocusIntent: AppIntent {
+  static var title: LocalizedStringResource = "Start Focus with Label"
+  static var description = IntentDescription(
+    "Sets what you are working on and starts or resumes the current TimeMate session. A running session keeps its label."
+  )
+
+  @Parameter(title: "Label", requestValueDialog: "What are you working on?")
+  var label: String
+
+  static var parameterSummary: some ParameterSummary {
+    Summary("Start focus on \(\.$label)")
+  }
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    TimerIntentActions.startFocus(.shared, label: label)
+    return .result()
+  }
+}
+
+struct ExtendSessionIntent: AppIntent {
+  static var title: LocalizedStringResource = "Add Time"
+  static var description = IntentDescription(
+    "Adds minutes (1 to 60) to the running or paused TimeMate session, or restarts a finished break for that long."
+  )
+
+  @Parameter(title: "Minutes", default: 5, inclusiveRange: (1, 60))
+  var minutes: Int
+
+  static var parameterSummary: some ParameterSummary {
+    Summary("Add \(\.$minutes) minutes")
+  }
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    TimerIntentActions.extend(.shared, minutes: minutes)
+    return .result()
+  }
+}
+
 struct PauseTimerIntent: AppIntent {
   static var title: LocalizedStringResource = "Pause Timer"
   static var description = IntentDescription("Pauses the running TimeMate session.")
@@ -177,6 +240,8 @@ enum TimeMateShortcutPhrases {
   static let keys = [
     "Start ${applicationName}",
     "Start a focus session in ${applicationName}",
+    "Start focus with a label in ${applicationName}",
+    "Add time in ${applicationName}",
     "Pause ${applicationName}",
     "Skip session in ${applicationName}",
     "Reset ${applicationName}",
@@ -192,6 +257,10 @@ struct TimeMateShortcuts: AppShortcutsProvider {
     AppShortcut(
       intent: StartTimerIntent(),
       phrases: ["Start \(.applicationName)", "Start a focus session in \(.applicationName)"])
+    AppShortcut(
+      intent: StartFocusIntent(),
+      phrases: ["Start focus with a label in \(.applicationName)"])
+    AppShortcut(intent: ExtendSessionIntent(), phrases: ["Add time in \(.applicationName)"])
     AppShortcut(intent: PauseTimerIntent(), phrases: ["Pause \(.applicationName)"])
     AppShortcut(intent: SkipSessionIntent(), phrases: ["Skip session in \(.applicationName)"])
     AppShortcut(intent: ResetTimerIntent(), phrases: ["Reset \(.applicationName)"])

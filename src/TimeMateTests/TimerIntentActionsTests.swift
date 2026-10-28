@@ -108,6 +108,99 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.timeRemaining, 125)
   }
 
+  func testStartFocusSavesTheLabelAndStarts() {
+    TimerIntentActions.startFocus(timer, label: "  Write\nreport  ")
+
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Write report")
+    XCTAssertEqual(timer.sessionLabel(for: .focus), "Write report")
+  }
+
+  func testStartFocusCutsALongLabel() {
+    TimerIntentActions.startFocus(timer, label: String(repeating: "a", count: 100))
+    XCTAssertEqual(
+      defaults.string(forKey: SettingsKey.sessionLabel)?.count, SessionLabel.maxLength)
+  }
+
+  func testStartFocusWithABlankLabelKeepsTheField() {
+    defaults.set("Inbox", forKey: SettingsKey.sessionLabel)
+    TimerIntentActions.startFocus(timer, label: "   ")
+
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Inbox")
+    XCTAssertEqual(timer.sessionLabel(for: .focus), "Inbox")
+  }
+
+  func testStartFocusLeavesARunningSessionsLabel() {
+    TimerIntentActions.startFocus(timer, label: "Design")
+    TimerIntentActions.startFocus(timer, label: "Email")
+
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Design")
+    XCTAssertEqual(timer.sessionLabel(for: .focus), "Design")
+  }
+
+  func testStartFocusResumesAPausedSessionWithItsLabel() {
+    TimerIntentActions.startFocus(timer, label: "Design")
+    TimerIntentActions.pause(timer)
+    TimerIntentActions.startFocus(timer, label: "Email")
+
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Design")
+    XCTAssertEqual(timer.sessionLabel(for: .focus), "Design")
+  }
+
+  func testExtendAddsTimeToARunningSession() {
+    TimerIntentActions.start(timer)
+    currentTime += 20
+    timer.handleTick()
+
+    TimerIntentActions.extend(timer, minutes: 5)
+
+    // Debug builds read minutes as seconds.
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 110)
+  }
+
+  func testExtendAddsTimeToAPausedSession() {
+    TimerIntentActions.start(timer)
+    TimerIntentActions.pause(timer)
+
+    TimerIntentActions.extend(timer, minutes: 10)
+
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 135)
+  }
+
+  func testExtendDoesNothingWhenIdle() {
+    TimerIntentActions.extend(timer, minutes: 5)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.timeRemaining, 125)
+  }
+
+  func testExtendRestartsAFinishedBreak() {
+    timer.currentSessionType = .shortBreak
+    timer.isWaitingToContinue = true
+
+    TimerIntentActions.extend(timer, minutes: 3)
+
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
+  func testExtendKeepsMinutesWithinOneToSixty() {
+    TimerIntentActions.start(timer)
+    TimerIntentActions.pause(timer)
+
+    TimerIntentActions.extend(timer, minutes: 0)
+    XCTAssertEqual(timer.timeRemaining, 126)
+    TimerIntentActions.extend(timer, minutes: -5)
+    XCTAssertEqual(timer.timeRemaining, 127)
+    TimerIntentActions.extend(timer, minutes: 500)
+    XCTAssertEqual(timer.timeRemaining, 187)
+  }
+
   func testStartContinuesPastAFinishedBreak() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true

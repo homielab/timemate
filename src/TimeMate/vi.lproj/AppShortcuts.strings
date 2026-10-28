@@ -1,5 +1,7 @@
 "Start ${applicationName}" = "Bắt đầu ${applicationName}";
 "Start a focus session in ${applicationName}" = "Bắt đầu phiên tập trung trong ${applicationName}";
+"Start focus with a label in ${applicationName}" = "Bắt đầu tập trung có nhãn trong ${applicationName}";
+"Add time in ${applicationName}" = "Thêm thời gian trong ${applicationName}";
 "Pause ${applicationName}" = "Tạm dừng ${applicationName}";
 "Skip session in ${applicationName}" = "Bỏ qua phiên trong ${applicationName}";
 "How much time is left in ${applicationName}" = "${applicationName} còn bao nhiêu thời gian";

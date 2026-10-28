@@ -165,6 +165,14 @@
 "Pause Timer" = "Tạm dừng hẹn giờ";
 "Get Timer Status" = "Xem trạng thái hẹn giờ";
 "Get Today's Progress" = "Xem tiến độ hôm nay";
+"Start Focus with Label" = "Bắt đầu tập trung có nhãn";
+"Add Time" = "Thêm thời gian";
+"Sets what you are working on and starts or resumes the current TimeMate session. A running session keeps its label." = "Ghi việc bạn đang làm rồi bắt đầu hoặc tiếp tục phiên TimeMate hiện tại. Phiên đang chạy giữ nhãn cũ.";
+"Adds minutes (1 to 60) to the running or paused TimeMate session, or restarts a finished break for that long." = "Thêm số phút (1 đến 60) vào phiên TimeMate đang chạy hoặc tạm dừng, hoặc chạy lại giờ nghỉ đã hết với số phút đó.";
+"Label" = "Nhãn";
+"Minutes" = "Số phút";
+"Start focus on ${label}" = "Bắt đầu tập trung vào ${label}";
+"Add ${minutes} minutes" = "Thêm ${minutes} phút";
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
 "Ends the current TimeMate session and moves to the next one." = "Kết thúc phiên TimeMate hiện tại và chuyển sang phiên tiếp theo.";
