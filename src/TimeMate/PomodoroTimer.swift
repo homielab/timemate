@@ -47,9 +47,10 @@ class PomodoroTimer: ObservableObject {
   /// opening the app again) it ends silently and the next session waits.
   static let overdueGracePeriod: TimeInterval = 5 * 60
 
-  /// The session end the scheduled copy of the "session complete" notification
-  /// is for (`syncFallbackNotification`); `nil` when none was scheduled.
-  var scheduledFallbackEnd: Date?
+  /// The session end and the text of the scheduled copy of the "session
+  /// complete" notification (`syncFallbackNotification`); `nil` when none was
+  /// scheduled.
+  var scheduledFallback: ScheduledFallback?
   /// A scheduled copy may still be pending: one from the last run of the app,
   /// or one this run scheduled and has not cancelled or replaced.
   var fallbackMayBePending = true
@@ -137,12 +138,16 @@ class PomodoroTimer: ObservableObject {
       .sink { [weak self] _ in self?.handleScreenInactive() }
       .store(in: &cancellables)
     // Settings → Durations writes to these defaults; an idle timer shows the
-    // new length right away instead of on the next Start.
+    // new length right away instead of on the next Start. The others change
+    // what the scheduled "session complete" notification says.
     defaultsObserver = DefaultsObserver(
       defaults: defaults,
       keys: [
         SettingsKey.focusDuration, SettingsKey.shortBreakDuration, SettingsKey.longBreakDuration,
-        SettingsKey.notificationsEnabled,
+        SettingsKey.notificationsEnabled, SettingsKey.longBreakInterval,
+        SettingsKey.autoStartNextSession, SettingsKey.autoStartBreaks, SettingsKey.autoStartFocus,
+        SettingsKey.keepBreakScreenOpen, SettingsKey.overlayEnabled,
+        SettingsKey.overlaySkipFullscreen, SettingsKey.breakThroughFocus,
       ]
     ) { [weak self] in self?.handleDefaultsChange() }
     notificationCenter.publisher(for: .NSSystemClockDidChange)
@@ -158,7 +163,7 @@ class PomodoroTimer: ObservableObject {
   /// Takes the "session complete" notification away, shown or scheduled.
   private func clearSessionNotifications() {
     removeSessionNotifications()
-    scheduledFallbackEnd = nil
+    scheduledFallback = nil
     fallbackMayBePending = false
   }
 
@@ -281,7 +286,7 @@ class PomodoroTimer: ObservableObject {
       // The notification posted below replaces the scheduled copy; when that
       // copy has already shown (the app was late), it is not posted again.
       let fallbackShown = fallbackNotificationShown(forEnd: endDate, at: tickTime)
-      scheduledFallbackEnd = nil
+      scheduledFallback = nil
       fallbackMayBePending = false
       lastActivity = endDate
       // Only sessions that run to the end count; skipping never reaches here.
@@ -360,7 +365,9 @@ class PomodoroTimer: ObservableObject {
   /// The defaults changed: an idle timer that isn't waiting on the break
   /// screen picks up a new length for its session. Only the display changes;
   /// nothing is recorded and a running or paused session keeps its length.
-  /// Turning notifications on or off schedules or cancels the scheduled one.
+  /// Turning notifications on or off schedules or cancels the scheduled one;
+  /// a setting that changes what it says (auto-start, the next session's
+  /// length, the long break interval...) schedules it again with the new text.
   func handleDefaultsChange() {
     syncFallbackNotification()
     guard state == .idle, !isWaitingToContinue,

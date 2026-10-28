@@ -127,6 +127,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The scheduled "session complete" notification now follows settings changed during a session (auto-start, the next session's length, the long break interval), so it no longer says "Next: Short Break" when the break starts by itself or runs longer.
 - Break screen with several displays: VoiceOver reads the buttons and countdown only on the screen you work on instead of once per display, and announces "Break over. Continue Work to start focusing." when the break ends.
 - Break screen: the skip countdown now reads "Skip available in 5 s" ("Bỏ qua sau 5 giây"), so VoiceOver announces the unit.
 - Menu bar: the time text no longer turns white while a session runs, so it stays readable on a light menu bar.

@@ -13,8 +13,11 @@ final class SessionFallbackNotificationTests: TimerTestCase {
   final class FakeCenter {
     var pending: [String: UNNotificationRequest] = [:]
     var shown: [UNNotificationRequest] = []
+    /// Every request added, shown or scheduled.
+    var addCount = 0
 
     func add(_ request: UNNotificationRequest) {
+      addCount += 1
       if request.trigger == nil {
         pending[request.identifier] = nil
         shown.append(request)
@@ -187,6 +190,64 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     defaults.set(false, forKey: SettingsKey.notificationsEnabled)
     timer.startTimer()
     XCTAssertNil(center.sessionPending)
+  }
+
+  // MARK: - Settings changed mid-session
+
+  func testTurningAutoStartOnSchedulesTheCopyAgain() {
+    timer = makeNotifyingTimer(autoStart: false)
+    timer.startTimer()
+    XCTAssertEqual(
+      center.sessionPending?.content.categoryIdentifier, SessionNotification.categoryIdentifier)
+    let added = center.addCount
+    defaults.set(true, forKey: SettingsKey.autoStartNextSession)
+    timer.handleDefaultsChange()
+    XCTAssertEqual(center.addCount, added + 1)
+    let content = center.sessionPending?.content
+    XCTAssertEqual(content?.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
+    XCTAssertEqual(
+      content?.body, SessionNotification.body(next: .shortBreak, minutes: 2, autoStarted: true))
+    XCTAssertEqual(center.pendingInterval, 3 + delay, "still due at the session's end")
+  }
+
+  func testChangingTheNextSessionsLengthUpdatesTheCopy() {
+    timer.startTimer()
+    advanceClock(by: 1)
+    defaults.set(7, forKey: SettingsKey.shortBreakDuration)
+    timer.handleDefaultsChange()
+    XCTAssertEqual(
+      center.sessionPending?.content.body,
+      SessionNotification.body(next: .shortBreak, minutes: 7, autoStarted: true))
+    XCTAssertEqual(center.pendingInterval, 2 + delay)
+  }
+
+  func testChangingTheLongBreakIntervalUpdatesTheCopy() {
+    timer.startTimer()
+    defaults.set(1, forKey: SettingsKey.longBreakInterval)
+    timer.handleDefaultsChange()
+    XCTAssertEqual(
+      center.sessionPending?.content.body,
+      SessionNotification.body(next: .longBreak, minutes: 4, autoStarted: true))
+  }
+
+  func testUnchangedSettingsDoNotScheduleAgain() {
+    timer.startTimer()
+    let added = center.addCount
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    timer.handleDefaultsChange()
+    timer.handleDefaultsChange()
+    XCTAssertEqual(center.addCount, added)
+  }
+
+  func testTheSettingsObserverPicksUpAutoStart() {
+    timer = makeNotifyingTimer(autoStart: false)
+    timer.startTimer()
+    defaults.set(true, forKey: SettingsKey.autoStartBreaks)
+    XCTAssertTrue(
+      waitUntil {
+        self.center.sessionPending?.content.categoryIdentifier
+          == SessionNotification.autoStartedCategoryIdentifier
+      })
   }
 
   // MARK: - Relaunch

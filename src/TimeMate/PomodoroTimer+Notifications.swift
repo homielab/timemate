@@ -33,7 +33,8 @@ extension PomodoroTimer {
   /// quits, crashes or is late (the Mac slept, App Nap). While a session runs
   /// (not a postponed break) the copy is due `SessionNotification.fallbackDelay`
   /// after its end; otherwise none is pending. Called after every change of
-  /// the session (`saveSnapshot`) and of the settings.
+  /// the session (`saveSnapshot`) and of the settings: a new end or a new text
+  /// (auto-start switched, the next session's length changed...) schedules it again.
   func syncFallbackNotification() {
     let end = state == .active && !isBreakPostponed && notificationsEnabled ? endDate : nil
     guard let end else {
@@ -41,18 +42,23 @@ extension PomodoroTimer {
         removePendingSessionNotification()
       }
       fallbackMayBePending = false
-      scheduledFallbackEnd = nil
+      scheduledFallback = nil
       return
     }
-    guard end != scheduledFallbackEnd else { return }
     let fireDate = end.addingTimeInterval(SessionNotification.fallbackDelay)
     let trigger = UNTimeIntervalNotificationTrigger(
       timeInterval: max(1, fireDate.timeIntervalSince(now())), repeats: false)
-    // The same identifier: replaces any copy scheduled for an earlier end.
-    postNotification(sessionCompleteRequest(trigger: trigger))
-    scheduledFallbackEnd = end
+    let request = sessionCompleteRequest(trigger: trigger)
+    let fallback = ScheduledFallback(end: end, content: request.content)
+    guard fallback != scheduledFallback else { return }
+    // The same identifier: replaces any copy scheduled earlier.
+    postNotification(request)
+    scheduledFallback = fallback
     fallbackMayBePending = true
   }
+
+  /// The session end the scheduled copy is for; `nil` when none was scheduled.
+  var scheduledFallbackEnd: Date? { scheduledFallback?.end }
 
   /// Whether the scheduled copy for the session ending at `end` has already
   /// shown by `tickTime`, so posting the notification again would show it twice.
@@ -91,5 +97,26 @@ extension PomodoroTimer {
     case .skip:
       skipSession()
     }
+  }
+}
+
+/// What the scheduled copy of the "session complete" notification was made
+/// from: when it is due and what it says. A copy is scheduled again only when
+/// this changes.
+struct ScheduledFallback: Equatable {
+  let end: Date
+  let title: String
+  let subtitle: String
+  let body: String
+  let categoryIdentifier: String
+  let interruptionLevel: UNNotificationInterruptionLevel
+
+  init(end: Date, content: UNNotificationContent) {
+    self.end = end
+    title = content.title
+    subtitle = content.subtitle
+    body = content.body
+    categoryIdentifier = content.categoryIdentifier
+    interruptionLevel = content.interruptionLevel
   }
 }
