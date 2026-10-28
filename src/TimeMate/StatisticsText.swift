@@ -91,6 +91,17 @@ enum StatisticsText {
     return goalReached ? format("%@, goal reached", bundle, locale, text) : text
   }
 
+  /// VoiceOver for one label row: "Writing, 50 minutes"
+  static func spokenLabel(
+    _ name: String, minutes: Int, bundle: Bundle = .main, locale: Locale = .current
+  ) -> String {
+    format("%1$@, %2$lld minutes", bundle, locale, name, minutes)
+  }
+
+  static func localized(_ key: String, bundle: Bundle = .main) -> String {
+    bundle.localizedString(forKey: key, value: nil, table: nil)
+  }
+
   private static func format(
     _ key: String, _ bundle: Bundle, _ locale: Locale, _ arguments: CVarArg...
   ) -> String {

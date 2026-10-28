@@ -181,6 +181,9 @@
 "Last 30 days" = "Last 30 days";
 "7 days" = "7 days";
 "30 days" = "30 days";
+"By label" = "By label";
+"Other" = "Other";
+"No label" = "No label";
 "Statistics period" = "Statistics period";
 "%lld min" = "%lld min";
 "%lldm" = "%lldm";

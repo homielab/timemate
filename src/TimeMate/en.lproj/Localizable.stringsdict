@@ -56,6 +56,22 @@
 			<string>%lld pomodoros</string>
 		</dict>
 	</dict>
+	<key>%1$@, %2$lld minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$@, %2$#@minutes@</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld minute</string>
+			<key>other</key>
+			<string>%lld minutes</string>
+		</dict>
+	</dict>
 	<key>Daily goal reached: %lld pomodoros today</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

@@ -31,6 +31,8 @@ struct StatisticsSection: View {
       PeriodStatisticsView(
         history: model.timer.history, days: days, goal: DailyGoal.sanitized(dailyGoal))
 
+      LabelTotalsView(history: model.timer.history, days: days)
+
       MenuItemButton(title: "Export CSV…", systemImage: "square.and.arrow.up") {
         StatisticsExporter.export(
           model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)))
@@ -164,6 +166,76 @@ private struct PeriodStatisticsView: View {
         .monospacedDigit()
       }
     }
+  }
+}
+
+/// "By label": focus time per label over the chosen period, the five longest, then
+/// "Other" and "No label". Hidden when the period has no completed focus session.
+/// Each row is one VoiceOver element: "name, X minutes".
+private struct LabelTotalsView: View {
+  @ObservedObject var history: SessionHistory
+  let days: Int
+
+  var body: some View {
+    let totals = history.labelTotals(days: days)
+    if !totals.isEmpty {
+      let breakdown = SessionStatistics.labelBreakdown(totals)
+      let longest = max(1, totals.map(\.focusSeconds).max() ?? 0)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("By label")
+          .font(.caption)
+          .foregroundColor(.secondary)
+        ForEach(breakdown.top, id: \.label) { total in
+          LabelRow(
+            name: Text(verbatim: total.label ?? ""), spokenName: total.label ?? "",
+            minutes: total.focusMinutes, fraction: total.focusSeconds / longest)
+        }
+        if breakdown.otherSeconds > 0 {
+          LabelRow(
+            name: Text("Other"), spokenName: StatisticsText.localized("Other"),
+            minutes: breakdown.otherMinutes, fraction: breakdown.otherSeconds / longest)
+        }
+        if breakdown.unlabeledSeconds > 0 {
+          LabelRow(
+            name: Text("No label"), spokenName: StatisticsText.localized("No label"),
+            minutes: breakdown.unlabeledMinutes, fraction: breakdown.unlabeledSeconds / longest)
+        }
+      }
+    }
+  }
+}
+
+private struct LabelRow: View {
+  let name: Text
+  let spokenName: String
+  let minutes: Int
+  let fraction: Double
+
+  var body: some View {
+    HStack(spacing: 8) {
+      name
+        .frame(width: 90, alignment: .leading)
+        .lineLimit(1)
+        .truncationMode(.tail)
+
+      GeometryReader { proxy in
+        RoundedRectangle(cornerRadius: 2)
+          .fill(Color.accentColor.opacity(fraction <= 0 ? 0 : 0.8))
+          .frame(width: max(0, proxy.size.width * fraction))
+      }
+      .frame(height: 8)
+
+      Text(
+        String(
+          format: NSLocalizedString("%lld min", comment: "Focus minutes of one day"), minutes)
+      )
+      .foregroundColor(.secondary)
+      .frame(width: 60, alignment: .trailing)
+    }
+    .font(.caption)
+    .monospacedDigit()
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(Text(StatisticsText.spokenLabel(spokenName, minutes: minutes)))
   }
 }
 

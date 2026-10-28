@@ -449,4 +449,107 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(history.goalStreak(goal: 1), SessionHistory.retentionDays)
     XCTAssertEqual(history.goalStreak(goal: 2), 0)
   }
+
+  // MARK: - Label totals
+
+  private func labeled(_ label: String?, end: Date, minutes: Double = 25) -> Record {
+    Record(
+      start: end.addingTimeInterval(-minutes * 60), end: end, kind: .focus, completed: true,
+      label: label)
+  }
+
+  func testLabelTotalsGroupIgnoringCaseKeepNewestSpellingAndGatherNoLabel() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      labeled("writing", end: date(2026, 3, 8, 9, in: utc), minutes: 25),
+      labeled("Writing", end: date(2026, 3, 9, 9, in: utc), minutes: 50),
+      labeled(nil, end: date(2026, 3, 9, 12, in: utc), minutes: 10),
+      labeled("  ", end: date(2026, 3, 10, 9, in: utc), minutes: 5),
+    ]
+
+    let totals = SessionStatistics.labelTotals(
+      from: records, today: today, length: 7, calendar: utc)
+
+    XCTAssertEqual(totals.map(\.label), ["Writing", nil])
+    XCTAssertEqual(totals[0].pomodoros, 2)
+    XCTAssertEqual(totals[0].focusMinutes, 75)
+    XCTAssertEqual(totals[1].pomodoros, 2)
+    XCTAssertEqual(totals[1].focusMinutes, 15)
+  }
+
+  func testLabelTotalsWindowEdges() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      labeled("in", end: date(2026, 3, 4, 0, in: utc)),  // first moment of the 7 days
+      labeled("old", end: date(2026, 3, 3, 23, 59, in: utc)),
+      labeled("today", end: date(2026, 3, 10, 23, 59, in: utc)),
+      labeled("future", end: date(2026, 3, 11, 0, in: utc)),
+    ]
+
+    let week = SessionStatistics.labelTotals(
+      from: records, today: today, length: 7, calendar: utc)
+    XCTAssertEqual(Set(week.compactMap(\.label)), ["in", "today"])
+
+    let month = SessionStatistics.labelTotals(
+      from: records, today: today, length: 30, calendar: utc)
+    XCTAssertEqual(Set(month.compactMap(\.label)), ["in", "old", "today"])
+  }
+
+  func testLabelTotalsIgnoreBreaksAndUnfinishedSessions() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let end = date(2026, 3, 10, 9, in: utc)
+    let records = [
+      Record(
+        start: end.addingTimeInterval(-300), end: end, kind: .short, completed: true,
+        label: "break"),
+      Record(
+        start: end.addingTimeInterval(-900), end: end, kind: .focus, completed: false,
+        label: "stopped"),
+      labeled("done", end: end),
+    ]
+
+    let totals = SessionStatistics.labelTotals(
+      from: records, today: today, length: 7, calendar: utc)
+
+    XCTAssertEqual(totals.map(\.label), ["done"])
+    XCTAssertTrue(
+      SessionStatistics.labelTotals(from: [], today: today, length: 7, calendar: utc).isEmpty)
+  }
+
+  func testLabelTotalsLongestFirstTiesByNameAndNoLabelLast() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let end = date(2026, 3, 10, 9, in: utc)
+    let records = [
+      labeled(nil, end: end),
+      labeled("beta", end: end),
+      labeled("Alpha", end: end),
+      labeled("long", end: end, minutes: 60),
+    ]
+
+    let totals = SessionStatistics.labelTotals(
+      from: records, today: today, length: 7, calendar: utc)
+
+    XCTAssertEqual(totals.map(\.label), ["long", "Alpha", "beta", nil])
+  }
+
+  func testLabelBreakdownTopFiveOtherAndNoLabel() {
+    func total(_ label: String?, _ minutes: Double) -> SessionStatistics.LabelTotal {
+      SessionStatistics.LabelTotal(label: label, pomodoros: 1, focusSeconds: minutes * 60)
+    }
+    let totals = [
+      total("a", 70), total("b", 60), total(nil, 55), total("c", 50), total("d", 40),
+      total("e", 30), total("f", 20), total("g", 10),
+    ]
+
+    let breakdown = SessionStatistics.labelBreakdown(totals)
+
+    XCTAssertEqual(breakdown.top.map(\.label), ["a", "b", "c", "d", "e"])
+    XCTAssertEqual(breakdown.otherMinutes, 30)
+    XCTAssertEqual(breakdown.unlabeledMinutes, 55)
+    XCTAssertEqual(SessionStatistics.labelBreakdown([]).otherSeconds, 0)
+  }
 }

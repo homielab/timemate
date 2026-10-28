@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Statistics → **By label**: focus time per "What are you working on?" label over the chosen 7 or 30 days — your five longest labels (same label in other letter case counts once), then **Other** and **No label**. VoiceOver reads each row as "label, N minutes".
 - **Recent labels**: a small chevron next to "What are you working on?" opens a menu with the labels of your last focus sessions (up to 8, newest first, same label in other letter case listed once). Pick one to fill the field, or choose **Clear label**.
 - **Menu bar tooltip**: hovering the menu bar item shows the session and the time left (e.g. "Focus, 12 minutes, 34 seconds remaining"), also in the icon-only and minutes-only styles, without opening the popover.
 - **+5 min for focus**: a small button under the popover controls adds five minutes to a running or paused focus session when you are in the flow, instead of letting it ring and starting over. The longer length is what the history and statistics record. Breaks are still extended from the break screen.

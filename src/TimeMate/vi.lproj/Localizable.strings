@@ -181,6 +181,9 @@
 "Last 30 days" = "30 ngày qua";
 "7 days" = "7 ngày";
 "30 days" = "30 ngày";
+"By label" = "Theo nhãn";
+"Other" = "Khác";
+"No label" = "Không nhãn";
 "Statistics period" = "Khoảng thống kê";
 "%lld min" = "%lld phút";
 "%lldm" = "%lld ph";
