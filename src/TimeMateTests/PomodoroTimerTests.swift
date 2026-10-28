@@ -269,6 +269,36 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.timeRemaining, 2)
   }
 
+  // MARK: - Start or continue
+
+  func testStartOrContinueStartsAnIdleTimer() {
+    timer.startOrContinue()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
+  func testStartOrContinueMovesPastAWaitingBreak() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    timer.startOrContinue()
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
+  func testStartOrContinueNeverPausesARunningTimer() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.startOrContinue()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 2)
+  }
+
   // MARK: - Pause / resume
 
   func testPauseKeepsRemainingTime() {

@@ -325,4 +325,10 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertEqual(timer.focusSessionsCompleted, 1)
   }
+
+  func testLoggingAPostFailureDoesNotCrash() {
+    let error = NSError(
+      domain: "UNErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not allowed"])
+    SessionNotification.logPostFailure(error, identifier: SessionNotification.dailyGoalIdentifier)
+  }
 }

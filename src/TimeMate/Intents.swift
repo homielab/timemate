@@ -10,11 +10,7 @@ enum TimerIntentActions {
   /// on the break screen, continues with the next session. A running timer is
   /// left alone, so running the shortcut twice never pauses it.
   static func start(_ timer: PomodoroTimer) {
-    if timer.isWaitingToContinue {
-      timer.continueWork()
-    } else if timer.state != .active {
-      timer.startTimer()
-    }
+    timer.startOrContinue()
   }
 
   /// Sets what the next focus session is about, then starts like `start`. The

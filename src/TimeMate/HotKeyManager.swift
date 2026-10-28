@@ -83,12 +83,10 @@ extension PomodoroTimer {
   func perform(_ action: HotKeyAction) {
     switch action {
     case .startPause:
-      if isWaitingToContinue {
-        continueWork()
-      } else if state == .active {
+      if state == .active && !isWaitingToContinue {
         pauseTimer()
       } else {
-        startTimer()
+        startOrContinue()
       }
     case .skip:
       skipSession()

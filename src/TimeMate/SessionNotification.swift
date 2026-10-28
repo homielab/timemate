@@ -177,6 +177,23 @@ enum SessionNotification {
       withIdentifiers: [sessionCompleteIdentifier])
   }
 
+  /// Hands `request` to Notification Center; a failure (notifications denied,
+  /// a bad trigger) is logged so a missing banner can be traced in Console.app.
+  static func post(
+    _ request: UNNotificationRequest, center: UNUserNotificationCenter = .current()
+  ) {
+    center.add(request) { error in
+      if let error { logPostFailure(error, identifier: request.identifier) }
+    }
+  }
+
+  /// Logs a notification that could not be posted.
+  static func logPostFailure(_ error: Error, identifier: String) {
+    let reason = error.localizedDescription
+    os.Logger.app.error(
+      "Notification \(identifier, privacy: .public) not posted: \(reason, privacy: .public)")
+  }
+
   /// The request that shows the notification right away, or at `trigger`.
   static func request(
     forCompleted sessionType: SessionType, next: SessionType, minutes: Int,

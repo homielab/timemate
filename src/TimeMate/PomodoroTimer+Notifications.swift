@@ -89,11 +89,7 @@ extension PomodoroTimer {
   func handleNotificationAction(_ action: SessionNotificationAction) {
     switch action {
     case .startNext:
-      if isWaitingToContinue {
-        continueWork()
-      } else if state != .active {
-        startTimer()
-      }
+      startOrContinue()
     case .skip:
       skipSession()
     }

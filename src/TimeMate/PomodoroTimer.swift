@@ -99,9 +99,7 @@ class PomodoroTimer: ObservableObject {
     history: SessionHistory = SessionHistory(fileURL: nil),
     notificationCenter: NotificationCenter = .default,
     uptime: @escaping () -> TimeInterval = PomodoroTimer.continuousUptime,
-    postNotification: @escaping (UNNotificationRequest) -> Void = {
-      UNUserNotificationCenter.current().add($0)
-    },
+    postNotification: @escaping (UNNotificationRequest) -> Void = { SessionNotification.post($0) },
     removeSessionNotifications: @escaping () -> Void = SessionNotification.removeDelivered,
     removePendingSessionNotification: @escaping () -> Void = SessionNotification.removePending,
     playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) },
@@ -435,6 +433,17 @@ class PomodoroTimer: ObservableObject {
     endDate = nil
     timer?.cancel()
     resetForCurrentSession()
+  }
+
+  /// Starts or resumes the current session; past a finished break that waits
+  /// on the break screen, continues with the next session. A running timer is
+  /// left alone: this never pauses.
+  func startOrContinue() {
+    if isWaitingToContinue {
+      continueWork()
+    } else if state != .active {
+      startTimer()
+    }
   }
 
   func continueWork() {
