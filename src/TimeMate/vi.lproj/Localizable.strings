@@ -20,7 +20,6 @@
 "Not a whole number. Enter 1–180 minutes." = "Không phải số nguyên. Nhập từ 1 đến 180 phút.";
 "Too short. Enter at least 1 minute." = "Quá ngắn. Nhập ít nhất 1 phút.";
 "Too long. Enter at most 180 minutes." = "Quá dài. Nhập nhiều nhất 180 phút.";
-"Not saved. Leaving the field keeps %lld minutes." = "Chưa lưu. Rời ô sẽ giữ %lld phút.";
 "Cycles" = "Chu kỳ";
 
 // Settings - Automation & Sound
@@ -178,6 +177,7 @@
 "Label" = "Nhãn";
 "Minutes" = "Số phút";
 "Start focus on ${label}" = "Bắt đầu tập trung vào ${label}";
+"Add ${minutes} minute" = "Thêm ${minutes} phút";
 "Add ${minutes} minutes" = "Thêm ${minutes} phút";
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";

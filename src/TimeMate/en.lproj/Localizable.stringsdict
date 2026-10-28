@@ -104,6 +104,22 @@
 			<string>%lld days</string>
 		</dict>
 	</dict>
+	<key>Not saved. Leaving the field keeps %lld minutes.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Not saved. Leaving the field keeps %#@minutes@.</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld minute</string>
+			<key>other</key>
+			<string>%lld minutes</string>
+		</dict>
+	</dict>
 	<key>Streak: %lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

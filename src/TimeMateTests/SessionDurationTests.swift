@@ -43,6 +43,11 @@ final class SessionDurationTests: XCTestCase {
     XCTAssertEqual(SessionDuration.validationHint(for: "181"), .tooLong)
     XCTAssertEqual(SessionDuration.validationHint(for: "abc"), .notANumber)
     XCTAssertEqual(SessionDuration.validationHint(for: "12.5"), .notANumber)
+    XCTAssertEqual(SessionDuration.validationHint(for: "99999999999999999999"), .tooLong)
+    XCTAssertEqual(SessionDuration.validationHint(for: "+99999999999999999999"), .tooLong)
+    XCTAssertEqual(SessionDuration.validationHint(for: "-99999999999999999999"), .tooShort)
+    XCTAssertEqual(SessionDuration.validationHint(for: "-"), .notANumber)
+    XCTAssertEqual(SessionDuration.validationHint(for: "1e99"), .notANumber)
     XCTAssertNil(SessionDuration.validationHint(for: "45"))
     XCTAssertNil(SessionDuration.validationHint(for: " 180 "))
   }

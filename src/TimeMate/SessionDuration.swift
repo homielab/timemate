@@ -29,8 +29,18 @@ enum SessionDuration {
     if minutes(from: text) != nil { return nil }
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty { return .empty }
-    guard let value = Int(trimmed) else { return .notANumber }
+    guard let value = Int(trimmed) else {
+      // A whole number too big for `Int` is still a whole number, just out of range.
+      guard isWholeNumber(trimmed) else { return .notANumber }
+      return trimmed.hasPrefix("-") ? .tooShort : .tooLong
+    }
     return value < minuteRange.lowerBound ? .tooShort : .tooLong
+  }
+
+  /// Digits with an optional leading sign, the text `Int(_:)` accepts when it fits.
+  private static func isWholeNumber(_ text: String) -> Bool {
+    let digits = text.first == "-" || text.first == "+" ? text.dropFirst() : Substring(text)
+    return !digits.isEmpty && digits.allSatisfy { $0.isASCII && $0.isNumber }
   }
 
   /// A stored session length made safe to run: at least one minute, so a zero or

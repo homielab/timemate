@@ -154,8 +154,13 @@ struct ExtendSessionIntent: AppIntent {
   @Parameter(title: "Minutes", default: 5, inclusiveRange: (1, 60))
   var minutes: Int
 
+  /// Shortcuts reads the summary with the chosen value, so 1 gets the singular noun.
   static var parameterSummary: some ParameterSummary {
-    Summary("Add \(\.$minutes) minutes")
+    When(\.$minutes, .equalTo, 1) {
+      Summary("Add \(\.$minutes) minute")
+    } otherwise: {
+      Summary("Add \(\.$minutes) minutes")
+    }
   }
 
   @MainActor

@@ -90,6 +90,20 @@
 			<string>%lld ngày</string>
 		</dict>
 	</dict>
+	<key>Not saved. Leaving the field keeps %lld minutes.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Chưa lưu. Rời ô sẽ giữ %#@minutes@.</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld phút</string>
+		</dict>
+	</dict>
 	<key>Streak: %lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

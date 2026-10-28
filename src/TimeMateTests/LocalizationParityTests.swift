@@ -165,6 +165,31 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// Strings with a count read "1 minute", not "1 minutes".
+  func testCountedStringsUseTheSingularForOne() throws {
+    let bundle = Bundle(for: PomodoroTimer.self)
+    let key = "Not saved. Leaving the field keeps %lld minutes."
+    for (localization, one, five) in [
+      (
+        "en", "Not saved. Leaving the field keeps 1 minute.",
+        "Not saved. Leaving the field keeps 5 minutes."
+      ),
+      ("vi", "Chưa lưu. Rời ô sẽ giữ 1 phút.", "Chưa lưu. Rời ô sẽ giữ 5 phút."),
+    ] {
+      let path = try XCTUnwrap(bundle.path(forResource: localization, ofType: "lproj"))
+      let format = try XCTUnwrap(Bundle(path: path)).localizedString(
+        forKey: key, value: nil, table: nil)
+      let locale = Locale(identifier: localization)
+      XCTAssertEqual(String(format: format, locale: locale, 1), one)
+      XCTAssertEqual(String(format: format, locale: locale, 5), five)
+    }
+    // Add Time's summary picks the singular phrase for 1 (Intents.swift).
+    let english = try strings("Localizable", "en")
+    let vietnamese = try strings("Localizable", "vi")
+    XCTAssertEqual(english["Add ${minutes} minute"], "Add ${minutes} minute")
+    XCTAssertEqual(vietnamese["Add ${minutes} minute"], "Thêm ${minutes} phút")
+  }
+
   func testPluralKeysAreNotAlsoPlainStrings() throws {
     for localization in ["en", "vi"] {
       let plain = try strings("Localizable", localization)
