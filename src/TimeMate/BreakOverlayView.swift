@@ -22,7 +22,6 @@ struct BreakOverlayView: View {
   let isPrimary: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var isAnimating = false
-  @State private var currentTip = ""
 
   init(model: BreakOverlayModel, isPrimary: Bool) {
     self.model = model
@@ -76,7 +75,7 @@ struct BreakOverlayView: View {
           }
 
           VStack(spacing: 10) {
-            Text(LocalizedStringKey(currentTip))
+            Text(LocalizedStringKey(model.tip))
               .font(.system(size: 32, weight: .light))
               .multilineTextAlignment(.center)
               .foregroundColor(.white.opacity(0.9))
@@ -110,7 +109,6 @@ struct BreakOverlayView: View {
     }
     .onAppear {
       isAnimating = true
-      currentTip = RelaxationTips.random()
     }
     .onTapGesture {
       if model.isWaitingToContinue {

@@ -130,6 +130,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Break screen: with several displays every screen shows the same relaxation tip, and it stays the same when a display is connected or removed during the break. Each new break picks a new tip.
 - Settings → Durations: an entry that can't be saved (empty, not a whole number, under 1 or over 180 minutes) now shows a warning sign next to the red text and its tooltip says what is wrong. VoiceOver reads the problem and that leaving the field keeps the saved length.
 - **Reduce Motion in the popover**: with Reduce Motion on (System Settings → Accessibility → Display), the progress ring, the Settings chevron and the long-break cup now change without animating, like the break screen already did.
 - **Readable text on a custom background**: the popover now picks dark or light text and controls from the background color you chose, so a white background in Dark Mode (or a black one in Light Mode) no longer hides the text. Mostly transparent colors keep the system appearance.

@@ -14,17 +14,23 @@ final class BreakOverlayModel: ObservableObject {
   @Published private(set) var currentSessionType: SessionType
   @Published private(set) var isWaitingToContinue: Bool
   @Published private(set) var isBreakPostponed: Bool
+  /// The relaxation tip of the current break, shared by the windows on every screen.
+  @Published private(set) var tip: String
 
   let timer: PomodoroTimer
   let countdown: BreakOverlayCountdown
+  private let nextTip: () -> String
   private var cancellables = Set<AnyCancellable>()
 
   init(
     timer: PomodoroTimer,
     defaults: UserDefaults = .standard,
-    now: @escaping () -> Date = Date.init
+    now: @escaping () -> Date = Date.init,
+    tip: @escaping () -> String = RelaxationTips.random
   ) {
     self.timer = timer
+    self.nextTip = tip
+    self.tip = tip()
     self.state = timer.state
     self.currentSessionType = timer.currentSessionType
     self.isWaitingToContinue = timer.isWaitingToContinue
@@ -47,6 +53,12 @@ final class BreakOverlayModel: ObservableObject {
 
   func setLive(_ live: Bool) {
     countdown.setLive(live)
+  }
+
+  /// Picks the tip for a break screen that is about to appear. Rebuilding the windows
+  /// (a display change) must not call this, so the tip stays the same for the whole break.
+  func chooseTip() {
+    tip = nextTip()
   }
 
   /// Starts the countdown for a break screen that has just appeared: the skip delay

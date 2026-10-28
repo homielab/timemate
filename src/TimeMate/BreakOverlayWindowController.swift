@@ -93,6 +93,11 @@ class BreakOverlayWindowController: NSObject {
     !windows.isEmpty && !visibilityGeneration.isClosePending
   }
 
+  /// The tip each break window shows, one per screen.
+  var windowTips: [String] {
+    windows.compactMap { ($0.contentView as? NSHostingView<BreakOverlayView>)?.rootView.model.tip }
+  }
+
   init(
     timer: PomodoroTimer,
     defaults: UserDefaults = .standard,
@@ -101,7 +106,8 @@ class BreakOverlayWindowController: NSObject {
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
     fallbackPollInterval: TimeInterval? = OverlayPolicy.fallbackPollInterval,
     settleDelay: TimeInterval? = OverlayPolicy.settleRecheckDelay,
-    runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade
+    runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade,
+    tip: @escaping () -> String = RelaxationTips.random
   ) {
     self.isFullscreenProbe = isFullscreenProbe
     self.workspaceNotificationCenter = workspaceNotificationCenter
@@ -111,7 +117,7 @@ class BreakOverlayWindowController: NSObject {
     self.timer = timer
     self.defaults = defaults
     self.animated = animated
-    self.model = BreakOverlayModel(timer: timer, defaults: defaults)
+    self.model = BreakOverlayModel(timer: timer, defaults: defaults, tip: tip)
     super.init()
     setupSubscriptions()
   }
@@ -292,6 +298,7 @@ class BreakOverlayWindowController: NSObject {
       // Not when the overlay only comes back during its fade-out.
       let isNewlyShown = windows.isEmpty
       if windows.isEmpty {
+        model.chooseTip()
         createWindows()
         startBreakCountdown()
       }

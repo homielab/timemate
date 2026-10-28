@@ -43,7 +43,9 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     super.tearDown()
   }
 
-  private func makeController(animated: Bool) -> BreakOverlayWindowController {
+  private func makeController(
+    animated: Bool, tip: @escaping () -> String = RelaxationTips.random
+  ) -> BreakOverlayWindowController {
     BreakOverlayWindowController(
       timer: timer, defaults: defaults, animated: animated, isFullscreenProbe: { false },
       workspaceNotificationCenter: NotificationCenter(), fallbackPollInterval: nil,
@@ -51,7 +53,16 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
         // Window animations need an unlocked screen: set the end state, finish later.
         for window in windows { window.alphaValue = alpha }
         if alpha == 0 { self?.fadeOuts.append(done) } else { done() }
-      })
+      }, tip: tip)
+  }
+
+  /// Hands out "tip 1", "tip 2", … one per pick.
+  private func makeCountingTips() -> () -> String {
+    var count = 0
+    return {
+      count += 1
+      return "tip \(count)"
+    }
   }
 
   /// A break screen that waits because the app in front is full screen (`frontmostIsFullscreen`).
@@ -246,6 +257,40 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 5)
     runTicks(1)
     XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 4)
+  }
+
+  func testEveryScreenShowsTheSameTipForTheWholeBreak() {
+    let controller = makeController(animated: false, tip: makeCountingTips())
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay)
+    let tip = controller.model.tip
+    XCTAssertFalse(controller.windowTips.isEmpty)
+    XCTAssertEqual(Set(controller.windowTips), [tip])
+
+    postScreenChange()
+
+    XCTAssertEqual(controller.model.tip, tip, "rebuilding the windows keeps the tip")
+    XCTAssertEqual(Set(controller.windowTips), [tip])
+  }
+
+  func testNextBreakPicksANewTip() {
+    let controller = makeController(animated: false, tip: makeCountingTips())
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    let firstTip = controller.model.tip
+
+    timer.skipSession()
+    XCTAssertFalse(controller.isShowingOverlay)
+    XCTAssertEqual(controller.model.tip, firstTip)
+
+    timer.skipSession()
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertNotEqual(controller.model.tip, firstTip)
+    XCTAssertEqual(Set(controller.windowTips), [controller.model.tip])
   }
 
   func testScreenChangeDuringFadeOutDoesNotBringTheOverlayBack() throws {

@@ -182,4 +182,26 @@ final class BreakOverlayModelTests: XCTestCase {
     XCTAssertEqual(model.countdown.skipSecondsRemaining, 5)
     XCTAssertTrue(model.countdown.isLive)
   }
+
+  func testTipStaysUntilTheNextBreakScreen() {
+    var picks = 0
+    let model = BreakOverlayModel(
+      timer: timer, defaults: defaults,
+      tip: {
+        picks += 1
+        return "tip \(picks)"
+      })
+    let primary = BreakOverlayView(model: model, isPrimary: true)
+    let secondary = BreakOverlayView(model: model, isPrimary: false)
+    XCTAssertEqual(primary.model.tip, "tip 1")
+    XCTAssertEqual(secondary.model.tip, primary.model.tip)
+
+    model.setLive(true)
+    model.setLive(false)
+    XCTAssertEqual(model.tip, "tip 1", "going live again keeps the tip")
+
+    model.chooseTip()
+    XCTAssertEqual(model.tip, "tip 2")
+    XCTAssertEqual(secondary.model.tip, "tip 2")
+  }
 }
