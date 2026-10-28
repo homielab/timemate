@@ -37,11 +37,10 @@ enum MenuBarLayout {
     return activeColor
   }
 
+  /// The time text sits outside the accent pill (which only backs the icon), so it
+  /// follows the menu bar's own text colour in every state.
   static func foregroundColor(state: PomodoroState) -> Color {
-    if state == .active {
-      return .white
-    }
-    return Color(nsColor: .headerTextColor)
+    Color(nsColor: .headerTextColor)
   }
 }
 

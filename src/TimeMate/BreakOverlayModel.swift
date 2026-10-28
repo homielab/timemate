@@ -103,7 +103,7 @@ final class BreakOverlayCountdown: ObservableObject {
 
   var skipAvailableText: String {
     String(
-      format: NSLocalizedString("Skip available in %d", comment: ""),
+      format: NSLocalizedString("Skip available in %d s", comment: ""),
       skipCountdown.remainingSeconds)
   }
 

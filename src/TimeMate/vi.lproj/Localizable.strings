@@ -93,7 +93,7 @@
 "Relax your eyes..." = "Thư giãn đôi mắt...";
 "Skip Break" = "Bỏ qua nghỉ ngơi";
 "Press Esc twice to skip" = "Nhấn Esc 2 lần để bỏ qua";
-"Skip available in %d" = "Bỏ qua sau %d";
+"Skip available in %d s" = "Bỏ qua sau %d giây";
 "Break started, 1 minute" = "Bắt đầu nghỉ, 1 phút";
 "Break started, %d minutes" = "Bắt đầu nghỉ, %d phút";
 "Time remaining" = "Thời gian còn lại";

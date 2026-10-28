@@ -44,10 +44,10 @@ final class MenuBarLayoutTests: XCTestCase {
       MenuBarLayout.accentColor(state: .active, sessionType: .longBreak),
       SessionType.longBreak.style.color.opacity(0.8))
 
-    XCTAssertEqual(MenuBarLayout.foregroundColor(state: .active), .white)
-    XCTAssertEqual(
-      MenuBarLayout.foregroundColor(state: .idle), Color(nsColor: .headerTextColor))
-    XCTAssertEqual(
-      MenuBarLayout.foregroundColor(state: .paused), Color(nsColor: .headerTextColor))
+    for state in [PomodoroState.active, .idle, .paused] {
+      XCTAssertEqual(
+        MenuBarLayout.foregroundColor(state: state), Color(nsColor: .headerTextColor))
+      XCTAssertNotEqual(MenuBarLayout.foregroundColor(state: state), .white)
+    }
   }
 }

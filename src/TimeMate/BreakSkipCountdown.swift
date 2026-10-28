@@ -5,7 +5,7 @@ import Foundation
 /// Pure state machine for the skip/postpone countdown on the break overlay.
 ///
 /// While `canSkip` is false, Skip and Postpone buttons are hidden and the overlay
-/// shows "Skip available in %d". Once `remainingSeconds` hits 0, `canSkip` becomes true.
+/// shows "Skip available in %d s". Once `remainingSeconds` hits 0, `canSkip` becomes true.
 struct BreakSkipCountdown: Equatable {
   private(set) var remainingSeconds: Int
   private(set) var canSkip: Bool
