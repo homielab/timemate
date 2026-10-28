@@ -125,6 +125,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Reset All Settings** now also turns off Start at Login, so the Mac no longer opens TimeMate at login after a reset.
 - The menu bar tooltip showed the time from the last update, so in the icon-only and minutes-only styles it stayed at the full session length while you worked; it now shows the time left when you hover.
 - Settings → Statistics → 30 days: VoiceOver now reads the bar strip day by day ("Monday, October 20: 4 pomodoros, 100 minutes, goal reached") instead of skipping it.
 - **"Pause on sleep" is for focus sessions only**: when the Mac sleeps or the screen locks a running break no longer pauses — it keeps counting, still ends on time (silently if the wake comes more than 5 minutes late) and the break screen comes back when you unlock, so a lid-close during lunch no longer freezes the break until you press Resume. A running focus session still pauses, and with the setting off nothing changes.

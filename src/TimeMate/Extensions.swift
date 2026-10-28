@@ -91,6 +91,7 @@ enum SettingsReset {
 func resetAllSettings() {
   if let bundleID = Bundle.main.bundleIdentifier {
     SettingsReset.perform(on: .standard, domain: bundleID)
+    LoginItemReset.perform()
     Logger.app.notice("All settings have been reset, restarting")
     restartApp()
   } else {

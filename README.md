@@ -142,7 +142,7 @@ Sources are in `src/TimeMate/`:
   `ControlButtonsView`).
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
   building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`;
-  `Settings/LoginItemState.swift` decides what the Start at Login switch shows (pure, unit-tested).
+  `Settings/LoginItemState.swift` decides what the Start at Login switch shows (pure, unit-tested) and `LoginItemReset` turns it off on Reset All Settings.
 - `BreakOverlay*.swift` and `BreakSkipCountdown.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
   shows and what a double Esc does, `OverlayPolicy.swift` holds it back while a full-screen app is in front (unit-tested).
 - `Intents.swift` — Shortcuts actions (App Intents) and Siri phrases; they drive the shared

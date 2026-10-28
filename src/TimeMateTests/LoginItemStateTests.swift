@@ -26,3 +26,27 @@ final class LoginItemStateTests: XCTestCase {
     }
   }
 }
+
+final class LoginItemResetTests: XCTestCase {
+  private struct Failure: Error {}
+
+  func testUnregistersWhenEnabledOrAwaitingApproval() {
+    for status in [SMAppService.Status.enabled, .requiresApproval] {
+      var calls = 0
+      XCTAssertTrue(LoginItemReset.perform(status: status, unregister: { calls += 1 }))
+      XCTAssertEqual(calls, 1)
+    }
+  }
+
+  func testLeavesAnUnregisteredLoginItemAlone() {
+    for status in [SMAppService.Status.notRegistered, .notFound] {
+      var calls = 0
+      XCTAssertFalse(LoginItemReset.perform(status: status, unregister: { calls += 1 }))
+      XCTAssertEqual(calls, 0)
+    }
+  }
+
+  func testUnregisterFailureDoesNotThrow() {
+    XCTAssertFalse(LoginItemReset.perform(status: .enabled, unregister: { throw Failure() }))
+  }
+}
