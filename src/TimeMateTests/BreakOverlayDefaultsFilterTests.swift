@@ -26,7 +26,7 @@ final class BreakOverlayDefaultsFilterTests: XCTestCase {
     timer = PomodoroTimer(
       defaults: defaults,
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil))
+      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
     controller = BreakOverlayWindowController(
       timer: timer, defaults: defaults, animated: false,
       isFullscreenProbe: { [unowned self] in

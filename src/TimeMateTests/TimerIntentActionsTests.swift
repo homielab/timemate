@@ -23,7 +23,7 @@ final class TimerIntentActionsTests: XCTestCase {
     currentTime = Date(timeIntervalSince1970: 1_000_000)
     timer = PomodoroTimer(
       defaults: defaults, now: { [unowned self] in self.currentTime },
-      workspaceNotificationCenter: NotificationCenter())
+      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { false })
   }
 
   override func tearDown() {
@@ -91,7 +91,7 @@ final class TimerIntentActionsTests: XCTestCase {
     defaults.set(true, forKey: SettingsKey.keepBreakScreenOpen)
     timer = PomodoroTimer(
       defaults: defaults, now: { [unowned self] in self.currentTime },
-      workspaceNotificationCenter: NotificationCenter())
+      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { false })
     TimerIntentActions.start(timer)
     currentTime += 125
     timer.handleTick()  // focus ends, the break waits to be started
@@ -106,6 +106,24 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.state, .idle)
     XCTAssertFalse(timer.isWaitingToContinue)
     XCTAssertEqual(timer.timeRemaining, 125)
+  }
+
+  func testFinishedBreakDoesNotWaitWhileAFullScreenAppHidesTheBreakScreen() {
+    defaults.set(true, forKey: SettingsKey.keepBreakScreenOpen)
+    defaults.set(true, forKey: SettingsKey.overlaySkipFullscreen)
+    timer = PomodoroTimer(
+      defaults: defaults, now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { true })
+    XCTAssertFalse(timer.breakScreenCanShow)
+    TimerIntentActions.start(timer)
+    currentTime += 125
+    timer.handleTick()  // focus ends, the break waits to be started
+    TimerIntentActions.start(timer)
+    currentTime += 60
+    timer.handleTick()  // break ends: no break screen to wait on
+
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
   }
 
   func testStartFocusSavesTheLabelAndStarts() {

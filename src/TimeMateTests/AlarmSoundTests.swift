@@ -89,7 +89,8 @@ final class AlarmSoundTests: XCTestCase {
     PomodoroTimer(
       defaults: defaults, now: { [unowned self] in self.currentTime },
       workspaceNotificationCenter: NotificationCenter(), notificationCenter: NotificationCenter(),
-      postNotification: { _ in }, playSound: { [unowned self] name, _ in self.played.append(name) })
+      postNotification: { _ in }, playSound: { [unowned self] name, _ in self.played.append(name) },
+      isFullscreenProbe: { false })
   }
 
   func testFocusEndPlaysTheAlarmAndBreakEndPlaysTheBreakEndSound() {

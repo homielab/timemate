@@ -62,6 +62,15 @@ class BreakOverlayWindowController: NSObject {
   let isFullscreenProbe: () -> Bool
   /// How many times the break screen's visibility was evaluated (for tests).
   private(set) var evaluationCount = 0
+  /// Fades windows to an opacity over a duration, then calls back. Replaced in tests:
+  /// window animations only run while the screen is unlocked.
+  typealias FadeRunner =
+    (
+      _ windows: [NSWindow], _ alpha: CGFloat, _ duration: TimeInterval,
+      _ done: @escaping () -> Void
+    )
+    -> Void
+  private let runFade: FadeRunner
   private var escDetector = DoubleEscDetector()
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
@@ -73,15 +82,30 @@ class BreakOverlayWindowController: NSObject {
     timer: PomodoroTimer,
     defaults: UserDefaults = .standard,
     animated: Bool = true,
-    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen
+    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
+    runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade
   ) {
     self.isFullscreenProbe = isFullscreenProbe
+    self.runFade = runFade
     self.timer = timer
     self.defaults = defaults
     self.animated = animated
     self.model = BreakOverlayModel(timer: timer, defaults: defaults)
     super.init()
     setupSubscriptions()
+  }
+
+  /// Animates the windows' opacity with `NSAnimationContext`.
+  static func animateFade(
+    _ windows: [NSWindow], to alpha: CGFloat, duration: TimeInterval,
+    done: @escaping () -> Void
+  ) {
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = duration
+      for window in windows { window.animator().alphaValue = alpha }
+    } completionHandler: {
+      done()
+    }
   }
 
   /// Listens for screen changes and Esc only while the break screen exists.
@@ -312,12 +336,7 @@ class BreakOverlayWindowController: NSObject {
     }
 
     if let fadeDuration {
-      NSAnimationContext.runAnimationGroup { context in
-        context.duration = fadeDuration
-        for window in windows {
-          window.animator().alphaValue = 1
-        }
-      }
+      runFade(windows, 1, fadeDuration) {}
     }
   }
 
@@ -365,10 +384,7 @@ class BreakOverlayWindowController: NSObject {
         reduceMotion: BreakOverlayAccessibility.reduceMotion) : nil
 
     if let fadeDuration {
-      NSAnimationContext.runAnimationGroup { context in
-        context.duration = fadeDuration
-        for window in windowsToClose { window.animator().alphaValue = 0 }
-      } completionHandler: { [weak self] in
+      runFade(windowsToClose, 0, fadeDuration) { [weak self] in
         // Ensure we are on main thread and self exists
         DispatchQueue.main.async {
           // The overlay was shown again during the fade-out: keep it.

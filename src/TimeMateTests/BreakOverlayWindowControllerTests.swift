@@ -11,9 +11,12 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
   private var defaults: UserDefaults!
   private var currentTime = Date(timeIntervalSince1970: 1_000_000)
   private var timer: PomodoroTimer!
+  /// Fade-outs the controller started; the test ends them (`done`) when it wants.
+  private var fadeOuts: [() -> Void] = []
 
   override func setUp() {
     super.setUp()
+    fadeOuts = []
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     defaults = UserDefaults(suiteName: Self.suiteName)
     defaults.set(30, forKey: SettingsKey.focusDuration)
@@ -41,7 +44,12 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
 
   private func makeController(animated: Bool) -> BreakOverlayWindowController {
     BreakOverlayWindowController(
-      timer: timer, defaults: defaults, animated: animated, isFullscreenProbe: { false })
+      timer: timer, defaults: defaults, animated: animated, isFullscreenProbe: { false },
+      runFade: { [weak self] windows, alpha, _, done in
+        // Window animations need an unlocked screen: set the end state, finish later.
+        for window in windows { window.alphaValue = alpha }
+        if alpha == 0 { self?.fadeOuts.append(done) } else { done() }
+      })
   }
 
   private func runTicks(_ count: Int) {
@@ -111,7 +119,10 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     postScreenChange()
     XCTAssertFalse(controller.isShowingOverlay, "a fading break screen must not come back")
 
-    let closed = waitUntil(timeout: 4) { !controller.model.countdown.isLive }
+    XCTAssertTrue(controller.model.countdown.isLive, "the windows stay until the fade ends")
+    XCTAssertFalse(fadeOuts.isEmpty, "the overlay fades out")
+    for done in fadeOuts { done() }
+    let closed = waitUntil { !controller.model.countdown.isLive }
     XCTAssertTrue(closed, "the windows close when the fade ends")
     XCTAssertFalse(controller.isShowingOverlay)
   }

@@ -30,7 +30,7 @@ final class PopoverTimerModelTests: XCTestCase {
       defaults: defaults,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil))
+      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
     model = PopoverTimerModel(timer: timer)
     model.objectWillChange.sink { [weak self] _ in self?.modelChanges += 1 }
       .store(in: &cancellables)
