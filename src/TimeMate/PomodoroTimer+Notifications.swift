@@ -1,11 +1,17 @@
 //  Created by homielab.com
 
 import Foundation
+import UserNotifications
 
 extension PomodoroTimer {
   func sendNotification() {
     guard notificationsEnabled else { return }
+    postNotification(sessionCompleteRequest())
+  }
 
+  /// The "session complete" notification for the current session, shown right
+  /// away or, with a `trigger`, scheduled for later.
+  func sessionCompleteRequest(trigger: UNNotificationTrigger? = nil) -> UNNotificationRequest {
     // Called before the timer moves on, so work out the session that follows.
     let next = SessionSequence.next(
       after: .init(
@@ -15,12 +21,44 @@ extension PomodoroTimer {
       of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen,
       breakScreenShown: breakScreenCanShow)
     let autoStarted = autoStart.shouldStart(next: next.sessionType) && completion == .advance
-    postNotification(
-      SessionNotification.request(
-        forCompleted: currentSessionType, next: next.sessionType,
-        minutes: SessionDuration.sanitized(minutesFor(session: next.sessionType)),
-        autoStarted: autoStarted, breakThroughFocus: breakThroughFocus,
-        label: sessionLabel(for: currentSessionType)))
+    return SessionNotification.request(
+      forCompleted: currentSessionType, next: next.sessionType,
+      minutes: SessionDuration.sanitized(minutesFor(session: next.sessionType)),
+      autoStarted: autoStarted, breakThroughFocus: breakThroughFocus,
+      label: sessionLabel(for: currentSessionType), trigger: trigger)
+  }
+
+  /// Keeps the scheduled copy of the "session complete" notification in step
+  /// with the timer, so a session still ends with a notification when the app
+  /// quits, crashes or is late (the Mac slept, App Nap). While a session runs
+  /// (not a postponed break) the copy is due `SessionNotification.fallbackDelay`
+  /// after its end; otherwise none is pending. Called after every change of
+  /// the session (`saveSnapshot`) and of the settings.
+  func syncFallbackNotification() {
+    let end = state == .active && !isBreakPostponed && notificationsEnabled ? endDate : nil
+    guard let end else {
+      if fallbackMayBePending {
+        removePendingSessionNotification()
+      }
+      fallbackMayBePending = false
+      scheduledFallbackEnd = nil
+      return
+    }
+    guard end != scheduledFallbackEnd else { return }
+    let fireDate = end.addingTimeInterval(SessionNotification.fallbackDelay)
+    let trigger = UNTimeIntervalNotificationTrigger(
+      timeInterval: max(1, fireDate.timeIntervalSince(now())), repeats: false)
+    // The same identifier: replaces any copy scheduled for an earlier end.
+    postNotification(sessionCompleteRequest(trigger: trigger))
+    scheduledFallbackEnd = end
+    fallbackMayBePending = true
+  }
+
+  /// Whether the scheduled copy for the session ending at `end` has already
+  /// shown by `tickTime`, so posting the notification again would show it twice.
+  func fallbackNotificationShown(forEnd end: Date, at tickTime: Date) -> Bool {
+    scheduledFallbackEnd == end
+      && tickTime >= end.addingTimeInterval(SessionNotification.fallbackDelay)
   }
 
   /// Tells the user once a day when the session that just ended took today's

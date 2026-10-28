@@ -24,7 +24,7 @@ class PomodoroTimer: ObservableObject {
   // made in the settings UI apply to the running timer just like @AppStorage did.
   let defaults: UserDefaults
   /// Source of wall-clock time; tests inject a fixed clock.
-  private let now: () -> Date
+  let now: () -> Date
   /// Seconds on a clock that keeps running during sleep and ignores changes to
   /// the system time; used to keep a session's length when the clock is set.
   private let uptime: () -> TimeInterval
@@ -35,6 +35,8 @@ class PomodoroTimer: ObservableObject {
   /// Takes the "session complete" notification out of Notification Center once
   /// the user moves on, so its buttons can't act on a later session; tests count calls.
   let removeSessionNotifications: () -> Void
+  /// Cancels the scheduled copy of the "session complete" notification; tests track it.
+  let removePendingSessionNotification: () -> Void
   /// Plays a sound by name at a volume (`AlarmSound.play`); tests capture it.
   private let playSound: (String, Float) -> Void
   /// Whether the app in front covers a screen (`OverlayPolicy.isFrontmostAppFullscreen`).
@@ -44,6 +46,13 @@ class PomodoroTimer: ObservableObject {
   /// start the next session. Later than this (waking from a long sleep or
   /// opening the app again) it ends silently and the next session waits.
   static let overdueGracePeriod: TimeInterval = 5 * 60
+
+  /// The session end the scheduled copy of the "session complete" notification
+  /// is for (`syncFallbackNotification`); `nil` when none was scheduled.
+  var scheduledFallbackEnd: Date?
+  /// A scheduled copy may still be pending: one from the last run of the app,
+  /// or one this run scheduled and has not cancelled or replaced.
+  var fallbackMayBePending = true
 
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
@@ -89,6 +98,7 @@ class PomodoroTimer: ObservableObject {
       UNUserNotificationCenter.current().add($0)
     },
     removeSessionNotifications: @escaping () -> Void = SessionNotification.removeDelivered,
+    removePendingSessionNotification: @escaping () -> Void = SessionNotification.removePending,
     playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) },
     isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen
   ) {
@@ -96,6 +106,7 @@ class PomodoroTimer: ObservableObject {
     self.defaults = defaults
     self.postNotification = postNotification
     self.removeSessionNotifications = removeSessionNotifications
+    self.removePendingSessionNotification = removePendingSessionNotification
     self.playSound = playSound
     self.now = now
     self.uptime = uptime
@@ -142,9 +153,16 @@ class PomodoroTimer: ObservableObject {
     #endif
   }
 
+  /// Takes the "session complete" notification away, shown or scheduled.
+  private func clearSessionNotifications() {
+    removeSessionNotifications()
+    scheduledFallbackEnd = nil
+    fallbackMayBePending = false
+  }
+
   /// Starts or resumes the current session for the user.
   func startTimer() {
-    removeSessionNotifications()
+    clearSessionNotifications()
     beginSession()
   }
 
@@ -238,6 +256,11 @@ class PomodoroTimer: ObservableObject {
       progress = 0
       self.endDate = nil
       timer?.cancel()
+      // The notification posted below replaces the scheduled copy; when that
+      // copy has already shown (the app was late), it is not posted again.
+      let fallbackShown = fallbackNotificationShown(forEnd: endDate, at: tickTime)
+      scheduledFallbackEnd = nil
+      fallbackMayBePending = false
       // Only sessions that run to the end count; skipping never reaches here.
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
@@ -253,7 +276,9 @@ class PomodoroTimer: ObservableObject {
       }
       playSound(
         AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
-      sendNotification()
+      if !fallbackShown {
+        sendNotification()
+      }
       sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
 
       switch SessionSequence.completion(
@@ -312,7 +337,9 @@ class PomodoroTimer: ObservableObject {
   /// The defaults changed: an idle timer that isn't waiting on the break
   /// screen picks up a new length for its session. Only the display changes;
   /// nothing is recorded and a running or paused session keeps its length.
+  /// Turning notifications on or off schedules or cancels the scheduled one.
   func handleDefaultsChange() {
+    syncFallbackNotification()
     guard state == .idle, !isWaitingToContinue,
       durationFor(session: currentSessionType) != totalDuration
     else { return }
@@ -334,7 +361,7 @@ class PomodoroTimer: ObservableObject {
 
   func stopTimer() {
     defer { saveSnapshot() }
-    removeSessionNotifications()
+    clearSessionNotifications()
     isWaitingToContinue = false
     state = .idle
     endDate = nil
@@ -345,7 +372,7 @@ class PomodoroTimer: ObservableObject {
   func skipSession() {
     defer { saveSnapshot() }
     let wasRunning = state != .idle
-    removeSessionNotifications()
+    clearSessionNotifications()
     isWaitingToContinue = false
     endDate = nil
     timer?.cancel()
@@ -355,7 +382,7 @@ class PomodoroTimer: ObservableObject {
 
   func restartCycle() {
     defer { saveSnapshot() }
-    removeSessionNotifications()
+    clearSessionNotifications()
     isWaitingToContinue = false
     state = .idle
     focusSessionsCompleted = 0
@@ -367,7 +394,7 @@ class PomodoroTimer: ObservableObject {
 
   func continueWork() {
     defer { saveSnapshot() }
-    removeSessionNotifications()
+    clearSessionNotifications()
     isWaitingToContinue = false
     advanceToNextSession()
     if state != .active {
@@ -446,6 +473,7 @@ class PomodoroTimer: ObservableObject {
 
   /// Saves what is needed to pick the session up again after a relaunch.
   private func saveSnapshot() {
+    syncFallbackNotification()
     TimerSnapshot(
       state: state, sessionType: currentSessionType, endDate: endDate,
       remaining: timeRemaining, totalDuration: totalDuration,
@@ -458,7 +486,7 @@ class PomodoroTimer: ObservableObject {
   /// counting from its end date and a paused one stays paused. A session that
   /// ended while the app was closed is recorded in the history on the day it
   /// ended and the next session follows, without the alarm or a late
-  /// notification; it only starts when the session ended within
+  /// notification (the one scheduled for its end showed on time); it only starts when the session ended within
   /// `overdueGracePeriod`. A waiting break screen or a postponed break that is due
   /// is not shown at launch: the timer waits on the next session instead.
   private func restore(_ snapshot: TimerSnapshot) {

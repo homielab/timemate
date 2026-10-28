@@ -132,7 +132,9 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(alertTimer.focusSessionsCompleted, 1)
     XCTAssertEqual(alertTimer.currentSessionType, .shortBreak)
     XCTAssertEqual(sounds(), 1)
-    XCTAssertEqual(posts(), 1)
+    // The notification scheduled for the session's end has shown by now:
+    // posting it again on wake would show it twice.
+    XCTAssertEqual(posts(), 0)
   }
 
   func testWakeBeforeEndDateShowsRealRemainingTime() {

@@ -136,7 +136,7 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { posted.append($0) })
+      postNotification: { if $0.trigger == nil { posted.append($0) } })
     timer.startTimer()
     finishSession(timer)
     XCTAssertEqual(posted.first?.content.body, "Short Break started · 7 min")
@@ -158,7 +158,7 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { posted.append($0) })
+      postNotification: { if $0.trigger == nil { posted.append($0) } })
     timer.startTimer()
     finishSession(timer)
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
@@ -251,7 +251,7 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { posted.append($0) })
+      postNotification: { if $0.trigger == nil { posted.append($0) } })
     timer.startTimer()
     finishSession(timer)
     return posted

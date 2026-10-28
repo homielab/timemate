@@ -72,6 +72,7 @@ class TimerTestCase: XCTestCase {
       notificationCenter: clockCenter,
       uptime: { [weak self] in self?.currentUptime ?? 0 },
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
+      removePendingSessionNotification: {},
       isFullscreenProbe: { false })
   }
 
@@ -114,8 +115,10 @@ class TimerTestCase: XCTestCase {
       history: history,
       notificationCenter: clockCenter,
       uptime: { [weak self] in self?.currentUptime ?? 0 },
-      postNotification: { _ in posts += 1 },
+      // Counts only notifications shown now, not the copy scheduled for a session's end.
+      postNotification: { if $0.trigger == nil { posts += 1 } },
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
+      removePendingSessionNotification: {},
       playSound: { _, _ in sounds += 1 },
       isFullscreenProbe: { false })
     return (alertTimer, { sounds }, { posts })

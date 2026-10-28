@@ -164,17 +164,30 @@ enum SessionNotification {
     center.removePendingNotificationRequests(withIdentifiers: [sessionCompleteIdentifier])
   }
 
-  /// The request that shows the notification right away.
+  /// How long after a session's end its scheduled copy of the notification
+  /// fires. The app posts the notification itself as the session ends, under
+  /// the same identifier, which replaces the scheduled copy; so the copy only
+  /// shows when the app is not running or is late (the Mac slept, App Nap).
+  static let fallbackDelay: TimeInterval = 3
+
+  /// Cancels the scheduled copy of the "session complete" notification; one
+  /// already shown stays in Notification Center.
+  static func removePending() {
+    UNUserNotificationCenter.current().removePendingNotificationRequests(
+      withIdentifiers: [sessionCompleteIdentifier])
+  }
+
+  /// The request that shows the notification right away, or at `trigger`.
   static func request(
     forCompleted sessionType: SessionType, next: SessionType, minutes: Int,
     autoStarted: Bool, breakThroughFocus: Bool, label: String? = nil,
-    identifier: String = sessionCompleteIdentifier
+    identifier: String = sessionCompleteIdentifier, trigger: UNNotificationTrigger? = nil
   ) -> UNNotificationRequest {
     UNNotificationRequest(
       identifier: identifier,
       content: content(
         forCompleted: sessionType, next: next, minutes: minutes, autoStarted: autoStarted,
         breakThroughFocus: breakThroughFocus, label: label),
-      trigger: nil)
+      trigger: trigger)
   }
 }
