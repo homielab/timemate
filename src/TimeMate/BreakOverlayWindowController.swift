@@ -66,6 +66,8 @@ class BreakOverlayWindowController: NSObject {
   private var lastClickRecheck: Date?
   /// Whether a re-check is scheduled for when a full-screen animation has settled.
   var hasPendingSettleRecheck: Bool { settleRecheck != nil }
+  /// Whether the slow fallback poll is running (only while waiting, if an interval is set).
+  var hasFallbackPoll: Bool { fullscreenPoll != nil }
   /// Whether clicks in other apps are watched (only while waiting).
   var isMonitoringClicks: Bool { clickMonitor != nil }
   /// Whether the break screen is waiting for the frontmost app to leave full screen.

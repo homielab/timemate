@@ -98,6 +98,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- The break screen tests check the full-screen fallback poll directly (it runs, and stops when the break ends) instead of waiting on fixed delays, so the test suite runs about 7 seconds faster; behaviour is unchanged.
 - The menu bar item's VoiceOver label rules (follow the timer only while VoiceOver is on, post the label only when it changes) are now covered by unit tests; behaviour is unchanged.
 - While the break screen waits for a full-screen app, it now looks again when you switch Spaces or apps (and every 30 s as a fallback) instead of checking the windows every 5 s, saving battery during long full-screen breaks.
 - Leaving a video's full screen inside the same app (YouTube in Safari, QuickTime) now brings the waiting break screen within about 2 seconds instead of up to 30 s: it looks again once the full-screen animation has ended and shortly after a click.

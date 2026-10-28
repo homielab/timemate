@@ -146,8 +146,10 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     controller.handleClickWhileWaiting()
     drainMainQueue()
     let evaluations = controller.evaluationCount
+    XCTAssertTrue(controller.hasPendingSettleRecheck)
 
-    RunLoop.main.run(until: Date().addingTimeInterval(0.6))
+    XCTAssertTrue(waitUntil { !controller.hasPendingSettleRecheck })
+    drainMainQueue()
 
     XCTAssertEqual(controller.evaluationCount, evaluations + 1)
     XCTAssertFalse(controller.hasPendingSettleRecheck)
@@ -182,18 +184,33 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertFalse(controller.hasPendingSettleRecheck)
     XCTAssertFalse(controller.isMonitoringClicks)
     let evaluations = controller.evaluationCount
-    RunLoop.main.run(until: Date().addingTimeInterval(0.3))
-    XCTAssertEqual(controller.evaluationCount, evaluations)
+    XCTAssertFalse(
+      waitUntil(timeout: 0.2) { controller.evaluationCount > evaluations },
+      "the cancelled re-check never runs")
   }
 
   func testNoBackgroundChecksWhileWaitingWithoutFallbackPoll() {
     let controller = makeWaitingController(workspace: NotificationCenter())
-    let evaluations = controller.evaluationCount
 
-    RunLoop.main.run(until: Date().addingTimeInterval(6))
-
-    XCTAssertEqual(controller.evaluationCount, evaluations)
     XCTAssertTrue(controller.isWaitingForWindowedApp)
+    XCTAssertFalse(controller.hasFallbackPoll, "no interval, no poll")
+  }
+
+  func testBreakEndingWhileWaitingStopsTheFallbackPoll() {
+    let controller = makeWaitingController(
+      workspace: NotificationCenter(), fallbackPollInterval: 0.05)
+    XCTAssertTrue(controller.hasFallbackPoll)
+    var evaluations = controller.evaluationCount
+    XCTAssertTrue(waitUntil { controller.evaluationCount > evaluations }, "the poll runs")
+
+    timer.skipSession()
+
+    XCTAssertFalse(controller.hasFallbackPoll)
+    XCTAssertFalse(controller.isWaitingForWindowedApp)
+    evaluations = controller.evaluationCount
+    XCTAssertFalse(
+      waitUntil(timeout: 0.2) { controller.evaluationCount > evaluations },
+      "the poll no longer runs")
   }
 
   func testFallbackPollReevaluatesWhileWaiting() {
@@ -205,6 +222,7 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     frontmostIsFullscreen = false
     XCTAssertTrue(waitUntil { controller.isShowingOverlay })
     XCTAssertFalse(controller.isWaitingForWindowedApp)
+    XCTAssertFalse(controller.hasFallbackPoll, "the poll stops once shown")
   }
 
   func testBreakEndingWhileWaitingRemovesTheObservers() {
