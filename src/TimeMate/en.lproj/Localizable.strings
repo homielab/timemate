@@ -16,6 +16,11 @@
 // Settings - Durations
 "min" = "min";
 "Enter 1–180 minutes" = "Enter 1–180 minutes";
+"Empty. Enter 1–180 minutes." = "Empty. Enter 1–180 minutes.";
+"Not a whole number. Enter 1–180 minutes." = "Not a whole number. Enter 1–180 minutes.";
+"Too short. Enter at least 1 minute." = "Too short. Enter at least 1 minute.";
+"Too long. Enter at most 180 minutes." = "Too long. Enter at most 180 minutes.";
+"Not saved. Leaving the field keeps %lld minutes." = "Not saved. Leaving the field keeps %lld minutes.";
 "Cycles" = "Cycles";
 
 // Settings - Automation & Sound

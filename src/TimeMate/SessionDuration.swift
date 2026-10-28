@@ -15,6 +15,24 @@ enum SessionDuration {
     return value
   }
 
+  /// Why a typed entry can't be saved. The raw value is the localization key of
+  /// the message shown and read by VoiceOver.
+  enum Problem: String, Equatable {
+    case empty = "Empty. Enter 1–180 minutes."
+    case notANumber = "Not a whole number. Enter 1–180 minutes."
+    case tooShort = "Too short. Enter at least 1 minute."
+    case tooLong = "Too long. Enter at most 180 minutes."
+  }
+
+  /// What is wrong with the typed text, or `nil` when `minutes(from:)` accepts it.
+  static func validationHint(for text: String) -> Problem? {
+    if minutes(from: text) != nil { return nil }
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty { return .empty }
+    guard let value = Int(trimmed) else { return .notANumber }
+    return value < minuteRange.lowerBound ? .tooShort : .tooLong
+  }
+
   /// A stored session length made safe to run: at least one minute, so a zero or
   /// negative value in the defaults (edited by hand or left by an old version)
   /// can't end every session the moment it starts. Longer values are kept, the

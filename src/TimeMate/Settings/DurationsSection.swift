@@ -46,7 +46,8 @@ private struct DurationRow: View {
   @State private var text = ""
   @FocusState private var isEditing: Bool
 
-  private var isValid: Bool { SessionDuration.minutes(from: text) != nil }
+  /// Why the typed text can't be saved, `nil` when it is valid.
+  private var problem: SessionDuration.Problem? { SessionDuration.validationHint(for: text) }
 
   var body: some View {
     HStack {
@@ -57,11 +58,19 @@ private struct DurationRow: View {
         .multilineTextAlignment(.trailing)
         .monospacedDigit()
         .frame(width: 44)
-        .foregroundColor(isValid ? .primary : .red)
+        .foregroundColor(problem == nil ? .primary : .red)
         .focused($isEditing)
         .onSubmit(commit)
-        .help("Enter 1–180 minutes")
+        .help(problem.map { LocalizedStringKey($0.rawValue) } ?? "Enter 1–180 minutes")
         .accessibilityLabel(Text(titleKey))
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(accessibilityHint)
+      // Not only colour: a warning sign marks an entry that won't be saved.
+      Image(systemName: "exclamationmark.triangle.fill")
+        .foregroundColor(.orange)
+        .opacity(problem == nil ? 0 : 1)
+        .help(problem.map { LocalizedStringKey($0.rawValue) } ?? "")
+        .accessibilityHidden(true)
       Text("min")
         .foregroundColor(.secondary)
       Stepper("", value: $minutes, in: SessionDuration.minuteRange, step: step)
@@ -74,6 +83,18 @@ private struct DurationRow: View {
     .onChange(of: isEditing) { editing in
       if !editing { commit() }
     }
+  }
+
+  /// The typed text, plus why it is invalid, so VoiceOver reads what is wrong.
+  private var accessibilityValue: Text {
+    guard let problem else { return Text(verbatim: text) }
+    return Text(verbatim: "\(text), ") + Text(LocalizedStringKey(problem.rawValue))
+  }
+
+  /// Valid: the allowed range. Invalid: leaving the field keeps the saved value.
+  private var accessibilityHint: Text {
+    guard problem != nil else { return Text("Enter 1–180 minutes") }
+    return Text("Not saved. Leaving the field keeps \(minutes) minutes.")
   }
 
   /// Saves a valid entry; anything else goes back to the current value.

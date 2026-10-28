@@ -34,4 +34,30 @@ final class SessionDurationTests: XCTestCase {
     XCTAssertEqual(SessionDuration.sanitized(-3), 1)
     XCTAssertEqual(SessionDuration.sanitized(90), 90)
   }
+
+  func testValidationHint() {
+    XCTAssertEqual(SessionDuration.validationHint(for: ""), .empty)
+    XCTAssertEqual(SessionDuration.validationHint(for: "  "), .empty)
+    XCTAssertEqual(SessionDuration.validationHint(for: "0"), .tooShort)
+    XCTAssertEqual(SessionDuration.validationHint(for: "-5"), .tooShort)
+    XCTAssertEqual(SessionDuration.validationHint(for: "181"), .tooLong)
+    XCTAssertEqual(SessionDuration.validationHint(for: "abc"), .notANumber)
+    XCTAssertEqual(SessionDuration.validationHint(for: "12.5"), .notANumber)
+    XCTAssertNil(SessionDuration.validationHint(for: "45"))
+    XCTAssertNil(SessionDuration.validationHint(for: " 180 "))
+  }
+
+  func testValidationHintsAreLocalized() throws {
+    let bundle = Bundle(for: PomodoroTimer.self)
+    for lang in ["en", "vi"] {
+      let path = try XCTUnwrap(bundle.path(forResource: lang, ofType: "lproj"))
+      let langBundle = try XCTUnwrap(Bundle(path: path))
+      for problem in [
+        SessionDuration.Problem.empty, .notANumber, .tooShort, .tooLong,
+      ] {
+        let text = langBundle.localizedString(forKey: problem.rawValue, value: "\u{0}", table: nil)
+        XCTAssertNotEqual(text, "\u{0}", "\(lang) misses \(problem.rawValue)")
+      }
+    }
+  }
 }
