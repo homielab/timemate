@@ -96,6 +96,7 @@
 "Skip available in %d s" = "Bỏ qua sau %d giây";
 "Break started, 1 minute" = "Bắt đầu nghỉ, 1 phút";
 "Break started, %d minutes" = "Bắt đầu nghỉ, %d phút";
+"Break over. Continue Work to start focusing." = "Hết giờ nghỉ. Chọn Tiếp tục làm việc để bắt đầu tập trung.";
 "Time remaining" = "Thời gian còn lại";
 "Break time remaining" = "Thời gian nghỉ còn lại";
 

@@ -127,6 +127,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Break screen with several displays: VoiceOver reads the buttons and countdown only on the screen you work on instead of once per display, and announces "Break over. Continue Work to start focusing." when the break ends.
 - Break screen: the skip countdown now reads "Skip available in 5 s" ("Bỏ qua sau 5 giây"), so VoiceOver announces the unit.
 - Menu bar: the time text no longer turns white while a session runs, so it stays readable on a light menu bar.
 - Skipping a Focus session before half of it has passed (for example a mis-clicked Start) no longer counts it towards the long break, so the cycle dots match Today and the history. Skipping later still counts it, as before; this also applies to the Skip shortcut and the Skip action in Shortcuts.

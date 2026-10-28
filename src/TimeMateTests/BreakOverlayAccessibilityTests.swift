@@ -19,6 +19,34 @@ final class BreakOverlayAccessibilityTests: XCTestCase {
       BreakOverlayAccessibility.announcement(secondsRemaining: 5), "Break started, 1 minute")
   }
 
+  func testEndAnnouncementTellsHowToGoOn() {
+    let text = BreakOverlayAccessibility.endAnnouncement()
+    XCTAssertFalse(text.isEmpty)
+    XCTAssertEqual(text, "Break over. Continue Work to start focusing.")
+  }
+
+  func testBreakEndIsAnnouncedOnlyWhenTheShowingBreakStartsWaiting() {
+    XCTAssertTrue(
+      BreakOverlayAccessibility.announcesBreakEnd(
+        wasWaiting: false, isWaiting: true, isNewlyShown: false))
+    // Already waiting: the state change after it (e.g. to idle) does not repeat it.
+    XCTAssertFalse(
+      BreakOverlayAccessibility.announcesBreakEnd(
+        wasWaiting: true, isWaiting: true, isNewlyShown: false))
+    // A screen that opens already waiting, or a running break.
+    XCTAssertFalse(
+      BreakOverlayAccessibility.announcesBreakEnd(
+        wasWaiting: false, isWaiting: true, isNewlyShown: true))
+    XCTAssertFalse(
+      BreakOverlayAccessibility.announcesBreakEnd(
+        wasWaiting: false, isWaiting: false, isNewlyShown: false))
+  }
+
+  func testOnlyThePrimaryScreenIsReadByVoiceOver() {
+    XCTAssertTrue(BreakOverlayAccessibility.contentIsAccessible(isPrimary: true))
+    XCTAssertFalse(BreakOverlayAccessibility.contentIsAccessible(isPrimary: false))
+  }
+
   func testCountdownValueIsSpelledOut() {
     let value = BreakOverlayAccessibility.countdownValue(secondsRemaining: 270)
     XCTAssertFalse(value.contains(":"), value)

@@ -18,6 +18,26 @@ enum BreakOverlayAccessibility {
       minutes)
   }
 
+  /// What VoiceOver announces when the break ends and the break screen waits for the user.
+  static func endAnnouncement() -> String {
+    NSLocalizedString(
+      "Break over. Continue Work to start focusing.", comment: "VoiceOver announcement")
+  }
+
+  /// Whether the break ended while its screen was already showing: the timer went from
+  /// counting down to waiting for "Continue Work". A screen that opens already waiting
+  /// is not announced as an end.
+  static func announcesBreakEnd(wasWaiting: Bool, isWaiting: Bool, isNewlyShown: Bool) -> Bool {
+    !wasWaiting && isWaiting && !isNewlyShown
+  }
+
+  /// Whether VoiceOver reads the content of a break screen window. With several screens
+  /// only the one on the screen the user works on is read, so each button and the
+  /// countdown are heard once.
+  static func contentIsAccessible(isPrimary: Bool) -> Bool {
+    isPrimary
+  }
+
   /// Spoken value of the break countdown, e.g. "4 minutes, 30 seconds".
   static func countdownValue(secondsRemaining: Int) -> String {
     let formatter = DateComponentsFormatter()

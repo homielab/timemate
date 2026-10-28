@@ -96,6 +96,7 @@
 "Skip available in %d s" = "Skip available in %d s";
 "Break started, 1 minute" = "Break started, 1 minute";
 "Break started, %d minutes" = "Break started, %d minutes";
+"Break over. Continue Work to start focusing." = "Break over. Continue Work to start focusing.";
 "Time remaining" = "Time remaining";
 "Break time remaining" = "Break time remaining";
 

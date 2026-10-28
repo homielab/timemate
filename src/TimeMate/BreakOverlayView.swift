@@ -105,6 +105,8 @@ struct BreakOverlayView: View {
           entrance: entrance(1.0, delay: 1.2)
         )
       }
+      // The other screens show the same break; VoiceOver reads only this one's.
+      .accessibilityHidden(!BreakOverlayAccessibility.contentIsAccessible(isPrimary: isPrimary))
     }
     .onAppear {
       isAnimating = true

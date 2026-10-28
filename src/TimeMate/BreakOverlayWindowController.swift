@@ -220,6 +220,7 @@ class BreakOverlayWindowController: NSObject {
     isBreakPostponed: Bool
   ) {
     evaluationCount += 1
+    let wasWaiting = lastState?.2 ?? isWaitingToContinue
     lastState = (state, sessionType, isWaitingToContinue, isBreakPostponed)
     let settings = OverlaySettings(defaults: defaults)
     lastSettings = settings
@@ -252,6 +253,10 @@ class BreakOverlayWindowController: NSObject {
       showWindows(animated: animated)
       if isNewlyShown && !isWaitingToContinue {
         announceBreakStart()
+      } else if BreakOverlayAccessibility.announcesBreakEnd(
+        wasWaiting: wasWaiting, isWaiting: isWaitingToContinue, isNewlyShown: isNewlyShown)
+      {
+        postAnnouncement(BreakOverlayAccessibility.endAnnouncement())
       }
     } else {
       hideWindows(animated: animated)
@@ -333,12 +338,12 @@ class BreakOverlayWindowController: NSObject {
       guard let self, !self.windows.isEmpty, !self.visibilityGeneration.isClosePending else {
         return
       }
-      self.postAnnouncement()
+      self.postAnnouncement(
+        BreakOverlayAccessibility.announcement(secondsRemaining: self.timer.timeRemaining))
     }
   }
 
-  private func postAnnouncement() {
-    let text = BreakOverlayAccessibility.announcement(secondsRemaining: timer.timeRemaining)
+  private func postAnnouncement(_ text: String) {
     NSAccessibility.post(
       element: primaryWindow ?? NSApp as Any,
       notification: .announcementRequested,
