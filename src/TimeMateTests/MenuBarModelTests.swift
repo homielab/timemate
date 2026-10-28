@@ -178,6 +178,34 @@ final class MenuBarModelTests: XCTestCase {
       (statusItem.button?.accessibilityLabel() ?? "").contains(String(29)))
   }
 
+  func testVoiceOverSwitchUpdatesTheTickModeAndTheLabel() {
+    let statusItem = NSStatusBar.system.statusItem(withLength: 90)
+    defer { NSStatusBar.system.removeStatusItem(statusItem) }
+    var tickModeUpdates = 0
+    let controller = StatusItemController(
+      timer: timer, menuBarStyle: .iconOnly, statusItem: statusItem,
+      onTickModeNeedsUpdate: { tickModeUpdates += 1 })
+    // Let the controller read the real VoiceOver state first.
+    drainMainQueue()
+    tickModeUpdates = 0
+
+    controller.setAccessibilityLabelUpdates(enabled: true)
+    XCTAssertTrue(controller.isVoiceOverRunning)
+    XCTAssertEqual(tickModeUpdates, 1)
+    XCTAssertEqual(
+      statusItem.button?.accessibilityLabel(), controller.menuBarModel.accessibilityLabel)
+
+    controller.setAccessibilityLabelUpdates(enabled: false)
+    XCTAssertFalse(controller.isVoiceOverRunning)
+    XCTAssertEqual(tickModeUpdates, 2)
+    XCTAssertEqual(statusItem.button?.accessibilityLabel(), Bundle.main.appName)
+    // With VoiceOver off the label no longer follows the timer.
+    timer.startTimer()
+    tick()
+    drainMainQueue()
+    XCTAssertEqual(statusItem.button?.accessibilityLabel(), Bundle.main.appName)
+  }
+
   func testToolTipIsTheVoiceOverSentenceAndFollowsTheTimer() throws {
     let statusItem = NSStatusBar.system.statusItem(withLength: 24)
     defer { NSStatusBar.system.removeStatusItem(statusItem) }

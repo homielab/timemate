@@ -133,8 +133,8 @@ Sources are in `src/TimeMate/`:
   `TimerRestorePlan.swift` (what to do with the saved session at launch).
 - `AppDelegate.swift` — app start-up and the popover; it wires the status item, the global
   shortcuts (`HotKeyManager.swift`), the break screen, keep-awake and notification responses.
-  `StatusItemController.swift` owns the status item and its right-click menu
-  (`StatusItemMenu.swift`); `MenuBarView.swift` draws it from `MenuBarModel.swift`, which
+  `StatusItemController.swift` owns the status item, its right-click menu
+  (`StatusItemMenu.swift`) and its VoiceOver label (`StatusItemPolicy.swift`); `MenuBarView.swift` draws it from `MenuBarModel.swift`, which
   publishes only what the menu bar shows (one update per tick), in the style chosen in
   `MenuBarTimeStyle.swift`.
   `LaunchBehavior.swift` decides whether the popover opens at launch (not at login);

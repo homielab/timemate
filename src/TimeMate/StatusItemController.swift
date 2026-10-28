@@ -174,23 +174,26 @@ final class StatusItemController: NSObject {
   }
 
   func setAccessibilityLabelUpdates(enabled: Bool) {
+    // `TickMode.mode(...)` reads `isVoiceOverRunning` when the tick mode is updated.
     isVoiceOverRunning = enabled
     onTickModeNeedsUpdate?()
-    guard enabled else {
+    switch StatusItemPolicy.label(voiceOverEnabled: enabled, appName: Bundle.main.appName) {
+    case .fixed(let label):
       accessibilityLabelUpdates = nil
-      statusItem.button?.setAccessibilityLabel(Bundle.main.appName)
-      return
+      statusItem.button?.setAccessibilityLabel(label)
+    case .followsTimer:
+      updateStatusItemAccessibilityLabel()
+      // objectWillChange fires before the new values land; read them on the next pass.
+      accessibilityLabelUpdates = menuBarModel.objectWillChange
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _ in self?.updateStatusItemAccessibilityLabel() }
     }
-    updateStatusItemAccessibilityLabel()
-    // objectWillChange fires before the new values land; read them on the next pass.
-    accessibilityLabelUpdates = menuBarModel.objectWillChange
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in self?.updateStatusItemAccessibilityLabel() }
   }
 
   func updateStatusItemAccessibilityLabel() {
-    let label = menuBarModel.accessibilityLabel
-    if statusItem.button?.accessibilityLabel() != label {
+    if let label = StatusItemPolicy.labelUpdate(
+      current: statusItem.button?.accessibilityLabel(), new: menuBarModel.accessibilityLabel)
+    {
       statusItem.button?.setAccessibilityLabel(label)
     }
   }
