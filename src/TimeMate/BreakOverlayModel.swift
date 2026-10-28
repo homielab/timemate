@@ -101,6 +101,8 @@ final class BreakOverlayCountdown: ObservableObject {
 
   var isLive: Bool { timerSubscription != nil }
   var isClockRunning: Bool { clock?.isRunning ?? false }
+  /// Seconds between wall-clock ticks, or nil while the clock is stopped.
+  var clockInterval: TimeInterval? { clock?.interval }
 
   var canSkip: Bool { skipCountdown.canSkip }
   var skipSecondsRemaining: Int { skipCountdown.remainingSeconds }
@@ -174,21 +176,25 @@ final class BreakOverlayCountdown: ObservableObject {
         }
       }
 
-    stateSubscription = timer.$state.removeDuplicates()
-      .sink { [weak self] state in self?.updateClock(for: state) }
-    updateClock(for: timer.state)
+    stateSubscription = timer.$state.combineLatest(timer.$isWaitingToContinue)
+      .removeDuplicates(by: ==)
+      .sink { [weak self] state, waiting in
+        self?.updateClock(for: state, isWaitingToContinue: waiting)
+      }
   }
 
   /// The wall clock drives the countdown only when the timer is not active (waiting to
   /// continue, paused). An active timer already publishes every second, so a second clock
-  /// would wake the Mac twice a second. `state` is passed in because `$state` fires before
-  /// the new value is stored.
-  private func updateClock(for state: PomodoroState) {
+  /// would wake the Mac twice a second. Waiting to continue ticks once a minute. The values
+  /// are passed in because `@Published` fires before the new value is stored.
+  private func updateClock(for state: PomodoroState, isWaitingToContinue: Bool) {
     guard isLive, state != .active else {
       stopClock()
       return
     }
-    guard clock == nil else { return }
+    let interval = BreakOverlayMotion.clockInterval(isWaitingToContinue: isWaitingToContinue)
+    if let clock, clock.interval == interval { return }
+    stopClock()
     let overlayClock = OverlayClock()
     clockCancellable = overlayClock.$now.dropFirst().sink { [weak self] date in
       guard let self else { return }
@@ -196,8 +202,9 @@ final class BreakOverlayCountdown: ObservableObject {
         self.currentTime = date
       }
     }
-    overlayClock.start()
+    overlayClock.start(interval: interval)
     clock = overlayClock
+    currentTime = now()
   }
 
   private func stopClock() {

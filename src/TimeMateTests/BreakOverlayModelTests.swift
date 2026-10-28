@@ -113,6 +113,7 @@ final class BreakOverlayModelTests: XCTestCase {
     timer.pauseTimer()
     XCTAssertEqual(timer.state, .paused)
     XCTAssertTrue(model.countdown.isClockRunning)
+    XCTAssertEqual(model.countdown.clockInterval, 1)
 
     timer.startTimer()
     XCTAssertEqual(timer.state, .active)
@@ -131,8 +132,10 @@ final class BreakOverlayModelTests: XCTestCase {
     XCTAssertTrue(timer.isWaitingToContinue)
     XCTAssertEqual(timer.state, .idle)
     XCTAssertTrue(model.countdown.isClockRunning)
+    XCTAssertEqual(model.countdown.clockInterval, 60, "nobody needs seconds while waiting")
 
     model.setLive(false)
+    XCTAssertNil(model.countdown.clockInterval)
     XCTAssertFalse(model.countdown.isClockRunning)
   }
 

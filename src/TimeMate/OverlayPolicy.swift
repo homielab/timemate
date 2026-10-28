@@ -105,18 +105,23 @@ enum OverlayPolicy {
   }
 }
 
-/// A once-a-second clock that runs only between `start()` and `stop()`, so a hidden
-/// break screen costs nothing.
+/// A wall clock that runs only between `start(interval:)` and `stop()`, so a hidden
+/// break screen costs nothing. Ticks land on whole multiples of `interval`.
 final class OverlayClock: ObservableObject {
   @Published private(set) var now = Date()
   private var timer: Timer?
+  private(set) var interval: TimeInterval = 1
   var isRunning: Bool { timer != nil }
 
-  func start() {
+  func start(interval: TimeInterval = 1) {
     guard timer == nil else { return }
+    self.interval = interval
     now = Date()
-    let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.now = Date() }
-    timer.tolerance = TickMode.tolerance
+    let timer = Timer(
+      fire: BreakOverlayMotion.nextTick(after: now, interval: interval), interval: interval,
+      repeats: true
+    ) { [weak self] _ in self?.now = Date() }
+    timer.tolerance = interval > 1 ? 1 : TickMode.tolerance
     RunLoop.main.add(timer, forMode: .common)
     self.timer = timer
   }

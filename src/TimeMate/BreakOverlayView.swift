@@ -59,12 +59,15 @@ struct BreakOverlayView: View {
         VStack(spacing: 30) {
           if isPrimary {
             Group {
-              if reduceMotion {
-                LottieView(animation: .named("cat-playing"))
-                  .paused(at: .progress(0.5))
-              } else {
+              if BreakOverlayMotion.animatesCat(
+                reduceMotion: reduceMotion, isWaitingToContinue: model.isWaitingToContinue)
+              {
                 LottieView(animation: .named("cat-playing"))
                   .playing(loopMode: .loop)
+              } else {
+                // Reduce Motion, or a finished break waiting for Continue Work.
+                LottieView(animation: .named("cat-playing"))
+                  .paused(at: .progress(0.5))
               }
             }
             .frame(width: 535, height: 228)

@@ -56,6 +56,9 @@ final class OverlayPolicyTests: XCTestCase {
     XCTAssertTrue(clock.isRunning)
     clock.stop()
     XCTAssertFalse(clock.isRunning)
+    clock.start(interval: 60)
+    XCTAssertEqual(clock.interval, 60)
+    clock.stop()
   }
 
   func testBreakScreenCanShowNeedsTheOverlayAndNoHoldingFullScreenApp() {

@@ -98,6 +98,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Changed
 
+- **Break screen at rest while waiting**: once a break is over and the screen waits for **Continue Work**, the cat stands still and the clock updates once a minute, so a break screen left up during lunch or a meeting no longer keeps the Mac busy. The cat still plays during the break.
 - The break screen tests check the full-screen fallback poll directly (it runs, and stops when the break ends) instead of waiting on fixed delays, so the test suite runs about 7 seconds faster; behaviour is unchanged.
 - The menu bar item's VoiceOver label rules (follow the timer only while VoiceOver is on, post the label only when it changes) are now covered by unit tests; behaviour is unchanged.
 - While the break screen waits for a full-screen app, it now looks again when you switch Spaces or apps (and every 30 s as a fallback) instead of checking the windows every 5 s, saving battery during long full-screen breaks.
