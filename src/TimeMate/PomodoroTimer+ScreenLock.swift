@@ -3,10 +3,16 @@
 import Foundation
 
 extension PomodoroTimer {
-  /// The display went to sleep or the screen was locked. Only acts when
-  /// `pauseOnSleep` is on; the session stays paused until the user resumes it.
+  /// The display went to sleep or the screen was locked. Pauses only a running
+  /// focus session, and only when `pauseOnSleep` is on; it stays paused until
+  /// the user resumes it. A break keeps running (see `SleepPausePolicy`).
   func handleScreenInactive() {
-    guard defaults.bool(forKey: SettingsKey.pauseOnSleep) else { return }
+    guard
+      SleepPausePolicy.shouldPause(
+        state: state, isBreak: isBreak,
+        pauseOnSleep: defaults.bool(forKey: SettingsKey.pauseOnSleep)
+      )
+    else { return }
     pauseTimer()
   }
 

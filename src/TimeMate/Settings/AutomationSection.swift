@@ -37,7 +37,9 @@ struct AutomationSection: View {
       SettingsToggleRow(
         titleKey: "Pause when the Mac sleeps or the screen locks", isOn: $pauseOnSleep
       )
-      .help("Pause a running session when the Mac sleeps or the screen locks. Resume it yourself.")
+      .help(
+        "Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself."
+      )
     }
   }
 }

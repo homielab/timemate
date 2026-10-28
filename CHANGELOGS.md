@@ -125,6 +125,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **"Pause on sleep" is for focus sessions only**: when the Mac sleeps or the screen locks a running break no longer pauses — it keeps counting, still ends on time (silently if the wake comes more than 5 minutes late) and the break screen comes back when you unlock, so a lid-close during lunch no longer freezes the break until you press Resume. A running focus session still pauses, and with the setting off nothing changes.
 - Vietnamese Settings labels: "Hiển thị vòng tiến trình" (was misspelled), "Giữ Mac không ngủ" and "Giữ cửa sổ luôn ở trên" now say what they do, and "Start at Login" has one translation ("Khởi động cùng máy") instead of two conflicting ones.
 - A focus session keeps the "What are you working on?" label it started with: typing the next task before the bell (or while paused, or across a relaunch) no longer relabels the session that just ended in the history, the sessions CSV and the "session complete" notification. The field stays editable; the new text applies to the next session.
 - The daily goal notification still comes the same day if notifications were off when the goal was reached and you turn them on before the next session ends.

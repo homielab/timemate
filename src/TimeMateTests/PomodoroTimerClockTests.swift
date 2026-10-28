@@ -205,6 +205,54 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(timer.state, .paused)
   }
 
+  func testPauseOnSleepLeavesABreakAloneWhenScreenLocksOrSleeps() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    let endDate = timer.endDate
+    lockScreen()
+    workspaceCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.endDate, endDate)
+    XCTAssertTrue(showsOverlay(timer))
+  }
+
+  func testPauseOnSleepBreakKeepsCountingThroughSleepAndShowsOverlayOnUnlock() {
+    // The hand check: in Debug minutes are seconds — a 1-minute break locked for
+    // 20 seconds wakes with 40 s left and the break screen back.
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.timeRemaining, 60)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 20)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.timeRemaining, 40)
+    XCTAssertTrue(showsOverlay(timer))
+  }
+
+  func testPauseOnSleepBreakEndedDuringLongSleepMovesOnAsUsual() {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    timer = makeTimer(focus: 3, short: 60, keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(history.records.count, 2)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertFalse(showsOverlay(timer))
+  }
+
   func testPauseOnSleepLeavesIdleTimerAlone() {
     defaults.set(true, forKey: SettingsKey.pauseOnSleep)
     lockScreen()

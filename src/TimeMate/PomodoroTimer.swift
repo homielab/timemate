@@ -270,11 +270,15 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
-  /// The Mac is about to sleep: stop the ticking loop. `endDate` keeps counting
-  /// in wall-clock time while the Mac sleeps.
+  /// The Mac is about to sleep: stop the ticking loop. A focus session pauses
+  /// when `pauseOnSleep` is on; anything else keeps `endDate` counting in
+  /// wall-clock time while the Mac sleeps.
   func handleWillSleep() {
     guard state == .active else { return }
-    if defaults.bool(forKey: SettingsKey.pauseOnSleep) {
+    if SleepPausePolicy.shouldPause(
+      state: state, isBreak: isBreak,
+      pauseOnSleep: defaults.bool(forKey: SettingsKey.pauseOnSleep))
+    {
       pauseTimer()
       return
     }

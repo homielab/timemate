@@ -78,7 +78,7 @@
 // Reset All Settings feature
 "Reset All Settings" = "Reset All Settings";
 "Pause when the Mac sleeps or the screen locks" = "Pause when the Mac sleeps or the screen locks";
-"Pause a running session when the Mac sleeps or the screen locks. Resume it yourself." = "Pause a running session when the Mac sleeps or the screen locks. Resume it yourself.";
+"Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself." = "Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself.";
 "Reset Settings?" = "Reset Settings?";
 "This will restore all settings to their default values and restart the app. A running session and today's goal notification are kept. Are you sure?" = "This will restore all settings to their default values and restart the app. A running session and today's goal notification are kept. Are you sure?";
 "Cancel" = "Cancel";
