@@ -56,14 +56,16 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
 
   /// A break screen that waits because the app in front is full screen (`frontmostIsFullscreen`).
   private func makeWaitingController(
-    workspace: NotificationCenter, fallbackPollInterval: TimeInterval? = nil
+    workspace: NotificationCenter, fallbackPollInterval: TimeInterval? = nil,
+    settleDelay: TimeInterval? = nil
   ) -> BreakOverlayWindowController {
     defaults.set(true, forKey: SettingsKey.overlaySkipFullscreen)
     frontmostIsFullscreen = true
     let controller = BreakOverlayWindowController(
       timer: timer, defaults: defaults, animated: false,
       isFullscreenProbe: { [weak self] in self?.frontmostIsFullscreen ?? false },
-      workspaceNotificationCenter: workspace, fallbackPollInterval: fallbackPollInterval)
+      workspaceNotificationCenter: workspace, fallbackPollInterval: fallbackPollInterval,
+      settleDelay: settleDelay)
     timer.startTimer()
     timer.skipSession()
     XCTAssertFalse(controller.isShowingOverlay)
@@ -106,6 +108,71 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
     drainMainQueue()
     XCTAssertEqual(controller.evaluationCount, evaluations, "Observers removed once shown")
+  }
+
+  func testSpaceChangeDuringFullscreenAnimationIsCheckedAgainOnceSettled() {
+    let workspace = NotificationCenter()
+    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.05)
+
+    // The Space changes when leaving full screen starts: the window is still listed.
+    workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
+    drainMainQueue()
+    XCTAssertFalse(controller.isShowingOverlay)
+    XCTAssertTrue(controller.hasPendingSettleRecheck)
+
+    frontmostIsFullscreen = false
+    XCTAssertTrue(waitUntil { controller.isShowingOverlay }, "shown without the fallback poll")
+    XCTAssertFalse(controller.isWaitingForWindowedApp)
+    XCTAssertFalse(controller.hasPendingSettleRecheck)
+  }
+
+  func testSettleRechecksInABurstRunOnce() {
+    let workspace = NotificationCenter()
+    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.2)
+
+    workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
+    workspace.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
+    controller.handleClickWhileWaiting()
+    drainMainQueue()
+    let evaluations = controller.evaluationCount
+
+    RunLoop.main.run(until: Date().addingTimeInterval(0.6))
+
+    XCTAssertEqual(controller.evaluationCount, evaluations + 1)
+    XCTAssertFalse(controller.hasPendingSettleRecheck)
+    XCTAssertTrue(controller.isWaitingForWindowedApp, "still full screen")
+  }
+
+  func testClicksWhileWaitingScheduleAThrottledRecheck() {
+    let controller = makeWaitingController(workspace: NotificationCenter(), settleDelay: 0.05)
+    XCTAssertTrue(controller.isMonitoringClicks)
+    let start = Date()
+
+    controller.handleClickWhileWaiting(now: start)
+    XCTAssertTrue(waitUntil { !controller.hasPendingSettleRecheck })
+    controller.handleClickWhileWaiting(now: start.addingTimeInterval(0.5))
+    XCTAssertFalse(controller.hasPendingSettleRecheck, "at most one per second")
+
+    frontmostIsFullscreen = false
+    controller.handleClickWhileWaiting(now: start.addingTimeInterval(1.1))
+    XCTAssertTrue(waitUntil { controller.isShowingOverlay })
+    XCTAssertFalse(controller.isMonitoringClicks, "the click monitor is removed once shown")
+  }
+
+  func testBreakEndingWhileWaitingCancelsTheSettleRecheck() {
+    let workspace = NotificationCenter()
+    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.1)
+    workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
+    drainMainQueue()
+    XCTAssertTrue(controller.hasPendingSettleRecheck)
+
+    timer.skipSession()
+
+    XCTAssertFalse(controller.hasPendingSettleRecheck)
+    XCTAssertFalse(controller.isMonitoringClicks)
+    let evaluations = controller.evaluationCount
+    RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+    XCTAssertEqual(controller.evaluationCount, evaluations)
   }
 
   func testNoBackgroundChecksWhileWaitingWithoutFallbackPoll() {

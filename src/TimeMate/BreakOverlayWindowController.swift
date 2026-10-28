@@ -54,11 +54,20 @@ class BreakOverlayWindowController: NSObject {
   private var eventMonitor: Any?
   private var screenObserver: NSObjectProtocol?
   /// While the break screen waits for the frontmost app to leave full screen: the
-  /// Space and app-switch observers, plus a slow fallback poll.
+  /// Space and app-switch observers, a click monitor, a settle re-check and a slow
+  /// fallback poll.
   private let workspaceNotificationCenter: NotificationCenter
   private let fallbackPollInterval: TimeInterval?
+  private let settleDelay: TimeInterval?
   private var frontmostAppObservers: [NSObjectProtocol] = []
   private var fullscreenPoll: Timer?
+  private var settleRecheck: DispatchWorkItem?
+  private var clickMonitor: Any?
+  private var lastClickRecheck: Date?
+  /// Whether a re-check is scheduled for when a full-screen animation has settled.
+  var hasPendingSettleRecheck: Bool { settleRecheck != nil }
+  /// Whether clicks in other apps are watched (only while waiting).
+  var isMonitoringClicks: Bool { clickMonitor != nil }
   /// Whether the break screen is waiting for the frontmost app to leave full screen.
   var isWaitingForWindowedApp: Bool { !frontmostAppObservers.isEmpty }
   private var lastState: (PomodoroState, SessionType, Bool, Bool)?
@@ -91,11 +100,13 @@ class BreakOverlayWindowController: NSObject {
     isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
     fallbackPollInterval: TimeInterval? = OverlayPolicy.fallbackPollInterval,
+    settleDelay: TimeInterval? = OverlayPolicy.settleRecheckDelay,
     runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade
   ) {
     self.isFullscreenProbe = isFullscreenProbe
     self.workspaceNotificationCenter = workspaceNotificationCenter
     self.fallbackPollInterval = fallbackPollInterval
+    self.settleDelay = settleDelay
     self.runFade = runFade
     self.timer = timer
     self.defaults = defaults
@@ -299,8 +310,10 @@ class BreakOverlayWindowController: NSObject {
 
   /// The notification already told the user the session ended; the break screen comes
   /// once the app in front leaves full screen, until the break is over. Looks again when
-  /// the active Space or the app in front changes, and every `fallbackPollInterval`
-  /// for what those miss, instead of reading the window list every few seconds.
+  /// the active Space or the app in front changes, again `settleDelay` later (the
+  /// Space change comes before the full-screen animation ends) and after a click, and
+  /// every `fallbackPollInterval` for what those miss, instead of reading the window
+  /// list every few seconds.
   private func startWaitingForWindowedApp() {
     if frontmostAppObservers.isEmpty {
       frontmostAppObservers = [
@@ -308,8 +321,14 @@ class BreakOverlayWindowController: NSObject {
         NSWorkspace.didActivateApplicationNotification,
       ].map { name in
         workspaceNotificationCenter.addObserver(forName: name, object: nil, queue: .main) {
-          [weak self] _ in self?.reevaluate()
+          [weak self] _ in self?.handleWorkspaceChangeWhileWaiting()
         }
+      }
+    }
+    if clickMonitor == nil, settleDelay != nil {
+      // Clicks in other apps need no permission; key presses would.
+      clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) {
+        [weak self] _ in self?.handleClickWhileWaiting()
       }
     }
     guard fullscreenPoll == nil, let fallbackPollInterval else { return }
@@ -328,6 +347,47 @@ class BreakOverlayWindowController: NSObject {
     frontmostAppObservers = []
     fullscreenPoll?.invalidate()
     fullscreenPoll = nil
+    settleRecheck?.cancel()
+    settleRecheck = nil
+    if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
+    clickMonitor = nil
+    lastClickRecheck = nil
+  }
+
+  /// The Space or the app in front changed: look now, and again once the animation settled.
+  private func handleWorkspaceChangeWhileWaiting() {
+    reevaluate()
+    guard isWaitingForWindowedApp else { return }
+    scheduleSettleRecheck(replacingPending: true)
+  }
+
+  /// A click while waiting (leaving a video's full screen): look again shortly, at most
+  /// once per `OverlayPolicy.clickRecheckMinInterval`.
+  func handleClickWhileWaiting(now: Date = Date()) {
+    guard isWaitingForWindowedApp else { return }
+    if let lastClickRecheck,
+      now.timeIntervalSince(lastClickRecheck) < OverlayPolicy.clickRecheckMinInterval
+    {
+      return
+    }
+    lastClickRecheck = now
+    scheduleSettleRecheck(replacingPending: false)
+  }
+
+  /// One pending re-check at a time: events in a burst push it back (a workspace change)
+  /// or join it (a click).
+  private func scheduleSettleRecheck(replacingPending: Bool) {
+    guard let settleDelay else { return }
+    if settleRecheck != nil {
+      guard replacingPending else { return }
+      settleRecheck?.cancel()
+    }
+    let work = DispatchWorkItem { [weak self] in
+      self?.settleRecheck = nil
+      self?.reevaluate()
+    }
+    settleRecheck = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + settleDelay, execute: work)
   }
 
   /// Evaluates the break screen again with the last known timer state.

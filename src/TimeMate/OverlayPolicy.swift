@@ -46,9 +46,19 @@ enum OverlayPolicy {
   }
 
   /// While the break screen waits for the frontmost app to leave full screen, it looks
-  /// again when the active Space or the app in front changes. This slow poll only catches
-  /// what those notifications miss (a video leaving full screen inside the same app).
+  /// again when the active Space or the app in front changes, and shortly after a click.
+  /// This slow poll only catches what those miss (full screen left by
+  /// keyboard without a Space change).
   static let fallbackPollInterval: TimeInterval = 30
+
+  /// A Space change is posted when the full-screen animation starts, while the app's
+  /// full-screen window may still be listed. Each change (and each click while waiting:
+  /// leaving full screen inside the same app, e.g. a video, comes with a click) is
+  /// checked again this long after, once the animation has settled.
+  static let settleRecheckDelay: TimeInterval = 1.5
+
+  /// Clicks while waiting schedule at most one settle re-check per this interval.
+  static let clickRecheckMinInterval: TimeInterval = 1
 
   /// - Parameters:
   ///   - shouldShow: the break screen is due (`BreakOverlayRules.shouldShowOverlay`);
