@@ -48,6 +48,9 @@ final class SessionHistory: ObservableObject {
   private let now: () -> Date
   let calendar: Calendar
   private var cancellables = Set<AnyCancellable>()
+  /// Set when loading skipped unreadable records: the file still holds them,
+  /// so it is copied aside before the first save writes it without them.
+  private var needsBackupBeforeSave = false
 
   /// Posted when "today" may have become another day: midnight passed, or the
   /// system time or time zone was changed.
@@ -67,7 +70,9 @@ final class SessionHistory: ObservableObject {
     self.fileURL = fileURL
     self.now = now
     self.calendar = calendar
-    records = trimmed(Self.load(from: fileURL, now: now()))
+    let loaded = Self.load(from: fileURL, now: now())
+    records = trimmed(loaded.records)
+    needsBackupBeforeSave = loaded.skippedRecords > 0
 
     // Views of today's or this week's totals redraw for the new day.
     for name in Self.dayChangeNotifications {
@@ -175,27 +180,29 @@ final class SessionHistory: ObservableObject {
 
   /// A missing or empty file starts an empty history. Records that can't be
   /// decoded (an unknown kind, a malformed date) are skipped and the rest are
-  /// kept; the next save writes the file without them. A file that isn't a
-  /// JSON array at all can't be read and is first moved aside (see `backUpUnreadableFile`), so the next save
-  /// doesn't overwrite the sessions it may still hold.
-  private static func load(from url: URL?, now: Date) -> [Record] {
-    guard let url, FileManager.default.fileExists(atPath: url.path) else { return [] }
+  /// kept; `skippedRecords` counts them, and the file is copied aside before
+  /// the next save writes it without them (see `backUpFile`). A file that isn't
+  /// a JSON array at all can't be read and is first moved aside, so the next
+  /// save doesn't overwrite the sessions it may still hold.
+  private static func load(from url: URL?, now: Date) -> (records: [Record], skippedRecords: Int) {
+    guard let url, FileManager.default.fileExists(atPath: url.path) else { return ([], 0) }
     do {
       let data = try Data(contentsOf: url)
-      if data.isEmpty { return [] }
+      if data.isEmpty { return ([], 0) }
       let decoded = try makeDecoder().decode([Lossy<Record>].self, from: data)
       let records = decoded.compactMap(\.value)
-      if records.count < decoded.count {
+      let skipped = decoded.count - records.count
+      if skipped > 0 {
         Logger.history.error(
-          "Skipped \(decoded.count - records.count, privacy: .public) unreadable history record(s)"
+          "Skipped \(skipped, privacy: .public) unreadable history record(s); the file is backed up before the next save"
         )
       }
-      return records
+      return (records, skipped)
     } catch {
       Logger.history.error(
         "Could not read the session history: \(error.localizedDescription, privacy: .public)")
-      backUpUnreadableFile(at: url, now: now)
-      return []
+      backUpFile(at: url, now: now, keepingOriginal: false)
+      return ([], 0)
     }
   }
 
@@ -208,7 +215,8 @@ final class SessionHistory: ObservableObject {
     return "session-history.corrupt-\(formatter.string(from: date)).json"
   }
 
-  /// The backups of unreadable history files in `folder` (at most one is kept).
+  /// The backups of history files in `folder` that were unreadable or held
+  /// unreadable records (at most one is kept).
   static func corruptBackups(in folder: URL, fileManager: FileManager = .default) -> [URL] {
     let names = (try? fileManager.contentsOfDirectory(atPath: folder.path)) ?? []
     return names.filter { $0.hasPrefix("session-history.corrupt-") && $0.hasSuffix(".json") }
@@ -216,9 +224,10 @@ final class SessionHistory: ObservableObject {
       .map { folder.appendingPathComponent($0) }
   }
 
-  /// Renames the unreadable file to `corruptBackupName(for: now)`, replacing an
-  /// older backup so only the latest one is kept.
-  private static func backUpUnreadableFile(at url: URL, now: Date) {
+  /// Moves (or, `keepingOriginal`, copies) the history file to
+  /// `corruptBackupName(for: now)`, replacing an older backup so only the
+  /// latest one is kept.
+  private static func backUpFile(at url: URL, now: Date, keepingOriginal: Bool) {
     let fileManager = FileManager.default
     let folder = url.deletingLastPathComponent()
     for old in corruptBackups(in: folder, fileManager: fileManager) {
@@ -226,9 +235,13 @@ final class SessionHistory: ObservableObject {
     }
     let backup = folder.appendingPathComponent(corruptBackupName(for: now))
     do {
-      try fileManager.moveItem(at: url, to: backup)
+      if keepingOriginal {
+        try fileManager.copyItem(at: url, to: backup)
+      } else {
+        try fileManager.moveItem(at: url, to: backup)
+      }
       Logger.history.notice(
-        "Moved the unreadable session history to \(backup.lastPathComponent, privacy: .public)")
+        "Backed up the session history to \(backup.lastPathComponent, privacy: .public)")
     } catch {
       Logger.history.error(
         "Could not back up the session history: \(error.localizedDescription, privacy: .public)")
@@ -237,6 +250,12 @@ final class SessionHistory: ObservableObject {
 
   private func save() {
     guard let fileURL else { return }
+    if needsBackupBeforeSave {
+      needsBackupBeforeSave = false
+      if FileManager.default.fileExists(atPath: fileURL.path) {
+        Self.backUpFile(at: fileURL, now: now(), keepingOriginal: true)
+      }
+    }
     do {
       try FileManager.default.createDirectory(
         at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)

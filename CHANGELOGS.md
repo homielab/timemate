@@ -149,6 +149,8 @@ All notable changes to TimeMate will be documented in this file.
 - The break screen's hints ("Press Esc twice to skip", "Skip available in…", Postpone) are no longer dimmed to 40–50%, and turn fully opaque with Increase Contrast. VoiceOver now reads the seconds of the "Skip button delay" stepper.
 - One unreadable record in the session history (for example from a newer or older version)
   no longer wipes all your history and goal streak: that record is skipped and the rest is kept.
+  Before the next session is saved without it, the original file is kept as
+  `session-history.corrupt-<date>.json` (the latest one only), so the skipped record isn't lost.
 - **Auto-start on launch** only starts a focus session. If the session restored from last time
   is a break, TimeMate waits for you instead of opening the break screen when the app starts.
 - VoiceOver reads the popover clock as "Time remaining" with a spelled-out value such as "24

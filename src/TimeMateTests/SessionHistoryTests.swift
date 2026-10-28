@@ -166,9 +166,80 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(SessionHistory.corruptBackups(in: folder), [])
     XCTAssertTrue(FileManager.default.fileExists(atPath: fileURL.path))
 
-    // The next save writes the file without the skipped records.
+    // The next save writes the file without the skipped records, after
+    // copying the original aside.
     history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
     XCTAssertEqual(makeHistory().records.map(\.kind), [.focus, .long, .focus])
+    let backups = SessionHistory.corruptBackups(in: folder)
+    XCTAssertEqual(backups.count, 1)
+    XCTAssertEqual(try Data(contentsOf: backups[0]), Data(mixed.utf8))
+  }
+
+  func testUnknownKindIsBackedUpBeforeTheFirstSave() throws {
+    let mixed = """
+      [
+        {"completed": true, "end": "2026-03-10T14:00:00Z", "kind": "focus",
+         "start": "2026-03-10T13:35:00Z"},
+        {"completed": true, "end": "2026-03-10T14:30:00Z", "kind": "x",
+         "start": "2026-03-10T14:05:00Z"},
+        {"completed": true, "end": "2026-03-10T14:40:00Z", "kind": "short",
+         "start": "2026-03-10T14:35:00Z"}
+      ]
+      """
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data(mixed.utf8).write(to: fileURL)
+
+    let history = makeHistory()
+    XCTAssertEqual(history.records.count, 2)
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder), [], "loading alone backs up nothing")
+
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
+
+    let backups = SessionHistory.corruptBackups(in: folder)
+    XCTAssertEqual(
+      backups.map(\.lastPathComponent), [SessionHistory.corruptBackupName(for: currentTime)])
+    let backup = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(contentsOf: backups[0])) as? [[String: Any]])
+    XCTAssertEqual(backup.map { $0["kind"] as? String }, ["focus", "x", "short"])
+    let main = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(contentsOf: fileURL)) as? [[String: Any]])
+    XCTAssertEqual(main.count, 3)
+
+    // Only the first save backs up; the next one leaves the backup alone.
+    currentTime = currentTime.addingTimeInterval(60)
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder), backups)
+    XCTAssertEqual(try Data(contentsOf: backups[0]), Data(mixed.utf8))
+  }
+
+  func testUnreadableRecordsAreBackedUpBeforeReset() throws {
+    let mixed = """
+      [
+        {"completed": true, "end": "2026-03-10T14:30:00Z", "kind": "x",
+         "start": "2026-03-10T14:05:00Z"}
+      ]
+      """
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data(mixed.utf8).write(to: fileURL)
+
+    makeHistory().reset()
+
+    let backups = SessionHistory.corruptBackups(in: folder)
+    XCTAssertEqual(backups.count, 1)
+    XCTAssertEqual(try Data(contentsOf: backups[0]), Data(mixed.utf8))
+    XCTAssertEqual(makeHistory().records, [])
+  }
+
+  func testReadableFileIsNotBackedUpOnSave() throws {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(2))
+    let reloaded = makeHistory()
+    reloaded.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
+
+    XCTAssertEqual(makeHistory().records.count, 2)
+    XCTAssertEqual(SessionHistory.corruptBackups(in: fileURL.deletingLastPathComponent()), [])
   }
 
   func testNonArrayJSONIsMovedAside() throws {
