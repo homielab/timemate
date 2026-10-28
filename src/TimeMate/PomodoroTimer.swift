@@ -482,17 +482,20 @@ class PomodoroTimer: ObservableObject {
   /// Adds `minutes` to the running or paused session ("+5 min" on the break screen
   /// or in the popover during focus; the history records the longer length). A
   /// break that already ended and waits on the break screen starts again for
-  /// `minutes`. Does nothing when idle or during a postponed break.
-  func extend(by minutes: Int) {
+  /// `minutes`. Does nothing when idle or during a postponed break. Returns
+  /// whether the time was added.
+  @discardableResult
+  func extend(by minutes: Int) -> Bool {
     guard
       let adjustment = SessionSequence.extend(
         countdown, by: Self.seconds(forMinutes: minutes), now: now())
-    else { return }
+    else { return false }
     let wasWaiting = isWaitingToContinue
     isWaitingToContinue = false
     apply(adjustment)
     if wasWaiting { startTicking() }
     saveSnapshot()
+    return true
   }
 
   /// Puts off the running break by `minutes`: the break screen goes away and

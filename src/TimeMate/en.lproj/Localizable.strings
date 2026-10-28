@@ -179,6 +179,9 @@
 "Start focus on ${label}" = "Start focus on ${label}";
 "Add ${minutes} minute" = "Add ${minutes} minute";
 "Add ${minutes} minutes" = "Add ${minutes} minutes";
+"Added 1 minute" = "Added 1 minute";
+"Added %d minutes" = "Added %d minutes";
+"No session to extend" = "No session to extend";
 "Starts or resumes the current TimeMate session." = "Starts or resumes the current TimeMate session.";
 "Pauses the running TimeMate session." = "Pauses the running TimeMate session.";
 "Ends the current TimeMate session and moves to the next one." = "Ends the current TimeMate session and moves to the next one.";

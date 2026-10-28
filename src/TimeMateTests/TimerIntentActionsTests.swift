@@ -173,7 +173,7 @@ final class TimerIntentActionsTests: XCTestCase {
     currentTime += 20
     timer.handleTick()
 
-    TimerIntentActions.extend(timer, minutes: 5)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), 5)
 
     // Debug builds read minutes as seconds.
     XCTAssertEqual(timer.state, .active)
@@ -184,23 +184,42 @@ final class TimerIntentActionsTests: XCTestCase {
     TimerIntentActions.start(timer)
     TimerIntentActions.pause(timer)
 
-    TimerIntentActions.extend(timer, minutes: 10)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 10), 10)
 
     XCTAssertEqual(timer.state, .paused)
     XCTAssertEqual(timer.timeRemaining, 135)
   }
 
   func testExtendDoesNothingWhenIdle() {
-    TimerIntentActions.extend(timer, minutes: 5)
+    XCTAssertNil(TimerIntentActions.extend(timer, minutes: 5))
     XCTAssertEqual(timer.state, .idle)
     XCTAssertEqual(timer.timeRemaining, 125)
+  }
+
+  func testExtendDoesNothingDuringAPostponedBreak() {
+    TimerIntentActions.skip(timer)
+    TimerIntentActions.start(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    timer.postponeBreak(minutes: 3)
+    XCTAssertTrue(timer.isBreakPostponed)
+    let endDate = timer.endDate
+
+    XCTAssertNil(TimerIntentActions.extend(timer, minutes: 5))
+    XCTAssertTrue(timer.isBreakPostponed)
+    XCTAssertEqual(timer.endDate, endDate)
+  }
+
+  func testExtendTextSaysWhatChanged() {
+    XCTAssertEqual(TimerIntentActions.extendText(added: 1), "Added 1 minute")
+    XCTAssertEqual(TimerIntentActions.extendText(added: 5), "Added 5 minutes")
+    XCTAssertEqual(TimerIntentActions.extendText(added: nil), "No session to extend")
   }
 
   func testExtendRestartsAFinishedBreak() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true
 
-    TimerIntentActions.extend(timer, minutes: 3)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 3), 3)
 
     XCTAssertFalse(timer.isWaitingToContinue)
     XCTAssertEqual(timer.state, .active)
@@ -211,11 +230,11 @@ final class TimerIntentActionsTests: XCTestCase {
     TimerIntentActions.start(timer)
     TimerIntentActions.pause(timer)
 
-    TimerIntentActions.extend(timer, minutes: 0)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 0), 1)
     XCTAssertEqual(timer.timeRemaining, 126)
     TimerIntentActions.extend(timer, minutes: -5)
     XCTAssertEqual(timer.timeRemaining, 127)
-    TimerIntentActions.extend(timer, minutes: 500)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 500), 60)
     XCTAssertEqual(timer.timeRemaining, 187)
   }
 

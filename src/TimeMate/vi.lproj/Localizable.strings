@@ -179,6 +179,9 @@
 "Start focus on ${label}" = "Bắt đầu tập trung vào ${label}";
 "Add ${minutes} minute" = "Thêm ${minutes} phút";
 "Add ${minutes} minutes" = "Thêm ${minutes} phút";
+"Added 1 minute" = "Đã thêm 1 phút";
+"Added %d minutes" = "Đã thêm %d phút";
+"No session to extend" = "Không có phiên nào để thêm thời gian";
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
 "Ends the current TimeMate session and moves to the next one." = "Kết thúc phiên TimeMate hiện tại và chuyển sang phiên tiếp theo.";

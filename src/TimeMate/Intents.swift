@@ -30,10 +30,25 @@ enum TimerIntentActions {
 
   /// Adds `minutes` (kept within `extendRange`) to a running or paused session,
   /// or restarts a finished break waiting on the break screen for that long,
-  /// like "+5 min". Does nothing when idle or during a postponed break.
-  static func extend(_ timer: PomodoroTimer, minutes: Int) {
+  /// like "+5 min". Does nothing when idle or during a postponed break. Returns
+  /// the minutes added, or nil when nothing changed.
+  @discardableResult
+  static func extend(_ timer: PomodoroTimer, minutes: Int) -> Int? {
     let clamped = min(max(minutes, extendRange.lowerBound), extendRange.upperBound)
-    timer.extend(by: clamped)
+    return timer.extend(by: clamped) ? clamped : nil
+  }
+
+  /// Spoken / shown answer of "Add Time": "Added 5 minutes", or "No session to
+  /// extend" when `added` is nil (idle, or a postponed break).
+  static func extendText(added: Int?) -> String {
+    guard let added else {
+      return NSLocalizedString("No session to extend", comment: "Shortcuts Add Time result")
+    }
+    if added == 1 {
+      return NSLocalizedString("Added 1 minute", comment: "Shortcuts Add Time result")
+    }
+    return String(
+      format: NSLocalizedString("Added %d minutes", comment: "Shortcuts Add Time result"), added)
   }
 
   /// Pauses a running timer; does nothing otherwise.
@@ -164,9 +179,10 @@ struct ExtendSessionIntent: AppIntent {
   }
 
   @MainActor
-  func perform() async throws -> some IntentResult {
-    TimerIntentActions.extend(.shared, minutes: minutes)
-    return .result()
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    let added = TimerIntentActions.extend(.shared, minutes: minutes)
+    return .result(
+      dialog: IntentDialog(stringLiteral: TimerIntentActions.extendText(added: added)))
   }
 }
 

@@ -132,6 +132,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Shortcuts → **Add Time** now says what happened: "Added 5 minutes", or "No session to extend" when the timer is idle or the break is postponed, instead of finishing silently as if time was added.
 - Settings → Keyboard Shortcuts: keypad keys and F13–F20 now show their name (e.g. "⌃⌘Keypad 1", "⌃⌥F15") instead of a number like "#83". VoiceOver says arrow, Return, Tab, Delete, Escape, Home, End and Page Up/Down keys by name ("Control Left Arrow") instead of reading the symbol.
 - A notification macOS refuses to show (for example notifications turned off for TimeMate) is now logged in Console.app (TimeMate, category `app`) instead of failing silently, so a missing "session complete" or daily goal banner can be traced.
 - Break screen: with several displays every screen shows the same relaxation tip, and it stays the same when a display is connected or removed during the break. Each new break picks a new tip.
