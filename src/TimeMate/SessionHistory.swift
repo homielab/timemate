@@ -42,6 +42,9 @@ final class SessionHistory: ObservableObject {
   static let retentionDays = 90
 
   @Published private(set) var records: [Record] = []
+  /// The goal streak of the days trimmed from `records`; saved next to the
+  /// history file (see `carryFileURL(for:)`).
+  private(set) var goalStreakCarry: GoalStreakCarry?
 
   /// Where the history is saved; `nil` keeps it in memory only.
   private let fileURL: URL?
@@ -71,6 +74,7 @@ final class SessionHistory: ObservableObject {
     self.now = now
     self.calendar = calendar
     let loaded = Self.load(from: fileURL, now: now())
+    goalStreakCarry = Self.loadCarry(from: fileURL.map(Self.carryFileURL(for:)))
     records = trimmed(loaded.records)
     needsBackupBeforeSave = loaded.skippedRecords > 0
 
@@ -99,6 +103,14 @@ final class SessionHistory: ObservableObject {
     let folder = Bundle.main.bundleIdentifier ?? "TimeMate"
     return base.appendingPathComponent(folder, isDirectory: true)
       .appendingPathComponent("session-history.json")
+  }
+
+  /// `session-history-streak.json` next to the history file `url`: the goal
+  /// streak of trimmed days. Older versions don't write it; it is created on the
+  /// first save.
+  static func carryFileURL(for url: URL) -> URL {
+    url.deletingLastPathComponent()
+      .appendingPathComponent(url.deletingPathExtension().lastPathComponent + "-streak.json")
   }
 
   /// Records a completed session that ended at `end` after running `duration`
@@ -133,6 +145,7 @@ final class SessionHistory: ObservableObject {
   /// Deletes all recorded sessions.
   func reset() {
     records = []
+    goalStreakCarry = nil
     save()
   }
 
@@ -149,11 +162,43 @@ final class SessionHistory: ObservableObject {
 
   // MARK: - Storage
 
+  /// Drops sessions older than `retentionDays`. First the goal streak up to the
+  /// cutoff's day is carried (from the untrimmed records, which still hold that
+  /// whole day), unless the carry already covers that day.
   private func trimmed(_ records: [Record]) -> [Record] {
     guard
       let cutoff = calendar.date(byAdding: .day, value: -Self.retentionDays, to: now())
     else { return records }
+    let cutoffDay = calendar.startOfDay(for: cutoff)
+    if goalStreakCarry.map({ $0.throughDay < cutoffDay }) ?? true {
+      goalStreakCarry = GoalStreakCarry.advanced(
+        goalStreakCarry, through: cutoffDay, records: records, calendar: calendar)
+    }
     return records.filter { $0.end >= cutoff }
+  }
+
+  /// A missing or unreadable carry file means no carry; the streak is then
+  /// counted from the kept history only.
+  private static func loadCarry(from url: URL?) -> GoalStreakCarry? {
+    guard let url, FileManager.default.fileExists(atPath: url.path) else { return nil }
+    do {
+      return try makeDecoder().decode(GoalStreakCarry.self, from: Data(contentsOf: url))
+    } catch {
+      Logger.history.error(
+        "Could not read the goal streak carry: \(error.localizedDescription, privacy: .public)")
+      return nil
+    }
+  }
+
+  /// Written before the history, so a save cut short never leaves trimmed
+  /// history without the carry of its days.
+  private func saveCarry(to url: URL) throws {
+    let carryURL = Self.carryFileURL(for: url)
+    if let goalStreakCarry {
+      try Self.makeEncoder().encode(goalStreakCarry).write(to: carryURL, options: .atomic)
+    } else if FileManager.default.fileExists(atPath: carryURL.path) {
+      try FileManager.default.removeItem(at: carryURL)
+    }
   }
 
   private static func makeEncoder() -> JSONEncoder {
@@ -259,6 +304,7 @@ final class SessionHistory: ObservableObject {
     do {
       try FileManager.default.createDirectory(
         at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try saveCarry(to: fileURL)
       let data = try Self.makeEncoder().encode(records)
       try data.write(to: fileURL, options: .atomic)
     } catch {

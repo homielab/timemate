@@ -190,18 +190,20 @@ enum SessionStatistics {
   /// Consecutive days that met `goal`, counted back from the last of `days`
   /// (oldest first, today last). A today that hasn't met the goal yet doesn't break
   /// the streak, it just isn't part of it. 0 with no goal. The same goal applies to
-  /// every day, since the goal isn't stored per day.
-  static func goalStreak(days: [Day], goal: Int) -> Int {
+  /// every day, since the goal isn't stored per day. `carried` days (from before
+  /// the first of `days`, see `GoalStreakCarry`) are added only when the streak
+  /// reaches back over all of `days`.
+  static func goalStreak(days: [Day], goal: Int, carried: Int = 0) -> Int {
     guard goal > DailyGoal.off else { return 0 }
     var streak = 0
     for (offset, day) in days.reversed().enumerated() {
       if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
         streak += 1
       } else if offset > 0 {
-        break
+        return streak
       }
     }
-    return streak
+    return streak + max(0, carried)
   }
 
   /// `date,pomodoros,minutes` with one row per day, dates as `yyyy-MM-dd` in the
@@ -251,9 +253,19 @@ extension SessionHistory {
       from: records, today: currentDate, length: days, calendar: calendar)
   }
 
-  /// Consecutive days up to today that met `goal`, from the kept history.
+  /// Consecutive days up to today that met `goal`: the kept history, plus the
+  /// days carried from trimmed history when the streak runs back to them.
   func goalStreak(goal: Int) -> Int {
-    SessionStatistics.goalStreak(
+    let today = calendar.startOfDay(for: currentDate)
+    if let carry = goalStreakCarry, carry.throughDay < today,
+      let span = calendar.dateComponents([.day], from: carry.throughDay, to: today).day, span > 0
+    {
+      return SessionStatistics.goalStreak(
+        days: SessionStatistics.days(
+          from: records, endingOn: currentDate, count: span, calendar: calendar),
+        goal: goal, carried: carry.streak(goal: goal))
+    }
+    return SessionStatistics.goalStreak(
       days: SessionStatistics.days(
         from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
       goal: goal)

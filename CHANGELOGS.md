@@ -20,7 +20,7 @@ All notable changes to TimeMate will be documented in this file.
   sessions. It is saved with each completed focus session in the history and shown in the
   "session complete" notification; it stays until you change it. Older history files load as
   before.
-- **Goal streak**: Settings → Statistics shows "Streak: N days", the days in a row that met your daily goal (up to the 90 kept days; today not done yet doesn't break it). The popover shows it too under the goal progress bar (hidden when it is 0 or the goal is off), and the Shortcuts action **Get Today's Progress** says it.
+- **Goal streak**: Settings → Statistics shows "Streak: N days", the days in a row that met your daily goal (also beyond the 90 days of kept history; today not done yet doesn't break it). The popover shows it too under the goal progress bar (hidden when it is 0 or the goal is off), and the Shortcuts action **Get Today's Progress** says it.
 - Settings → Automation: **Auto-start next session** is now two switches, **Auto-start breaks** and
   **Auto-start focus**, so breaks can run by themselves while you decide when to get back to
   work (or the other way round). Until you change them, both follow your old setting.

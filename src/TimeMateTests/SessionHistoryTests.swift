@@ -372,6 +372,76 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(makeHistory().records.count, 1)
   }
 
+  // MARK: - Goal streak carry
+
+  private var carryURL: URL { SessionHistory.carryFileURL(for: fileURL) }
+
+  /// A history file as an older version wrote it (no carry file), with one focus
+  /// session per day from `days` days ago up to yesterday.
+  private func writeOldFile(days: Int) throws {
+    let records = (1...days).reversed().map { offset in
+      SessionHistory.Record(
+        start: daysAgo(offset).addingTimeInterval(-1500), end: daysAgo(offset), kind: .focus,
+        completed: true)
+    }
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    try FileManager.default.createDirectory(
+      at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try encoder.encode(records).write(to: fileURL)
+  }
+
+  func testCarryFileSitsNextToTheHistory() {
+    XCTAssertEqual(carryURL.lastPathComponent, "session-history-streak.json")
+    XCTAssertEqual(carryURL.deletingLastPathComponent(), fileURL.deletingLastPathComponent())
+  }
+
+  func testOlderFileLoadsAndKeepsTheStreakOfItsTrimmedDays() throws {
+    try writeOldFile(days: 100)
+    let history = makeHistory()
+    XCTAssertEqual(history.records.count, SessionHistory.retentionDays)
+    XCTAssertEqual(history.goalStreak(goal: 1), 100)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: carryURL.path))
+
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    XCTAssertTrue(FileManager.default.fileExists(atPath: carryURL.path))
+    XCTAssertEqual(history.goalStreak(goal: 1), 101)
+    XCTAssertEqual(makeHistory().goalStreak(goal: 1), 101)
+  }
+
+  func testCarryKeepsCountingOnLaterDays() throws {
+    try writeOldFile(days: 100)
+    makeHistory().recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    for _ in 1...5 {
+      currentTime = daysAgo(-1)
+      makeHistory().recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    }
+    XCTAssertEqual(makeHistory().goalStreak(goal: 1), 106)
+    currentTime = daysAgo(-2)  // two days without a session break the streak
+    XCTAssertEqual(makeHistory().goalStreak(goal: 1), 0)
+  }
+
+  func testUnreadableCarryFileIsCountedAgainFromTheHistory() throws {
+    try writeOldFile(days: 100)
+    try FileManager.default.createDirectory(
+      at: carryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try Data("not json".utf8).write(to: carryURL)
+    let history = makeHistory()
+    XCTAssertEqual(history.goalStreak(goal: 1), 100)
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    XCTAssertEqual(makeHistory().goalStreak(goal: 1), 101)
+  }
+
+  func testResetRemovesTheCarry() throws {
+    try writeOldFile(days: 100)
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: currentTime)
+    history.reset()
+    XCTAssertFalse(FileManager.default.fileExists(atPath: carryURL.path))
+    XCTAssertEqual(history.goalStreak(goal: 1), 0)
+    XCTAssertEqual(makeHistory().goalStreak(goal: 1), 0)
+  }
+
   // MARK: - Day changes
 
   func testTodayRedrawsAndResetsWhenTheDayChanges() {

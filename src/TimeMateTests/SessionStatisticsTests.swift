@@ -457,7 +457,7 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(days.first?.date, date(2026, 12, 29, in: utc))
   }
 
-  func testHistoryStreakIsCappedByTheKeptNinetyDays() {
+  func testHistoryKeepsNinetyDaysWhenOlderSessionsAreAddedLater() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 12, in: utc)
     let history = SessionHistory(
@@ -466,8 +466,89 @@ final class SessionStatisticsTests: XCTestCase {
       history.recordCompletedSession(
         .focus, duration: 25 * 60, end: utc.date(byAdding: .day, value: -offset, to: today)!)
     }
+    // Sessions older than the kept days are dropped as they come in.
     XCTAssertEqual(history.goalStreak(goal: 1), SessionHistory.retentionDays)
     XCTAssertEqual(history.goalStreak(goal: 2), 0)
+  }
+
+  /// Uses the app for `counts.count` days in a row (one entry per day, oldest
+  /// first, the last one today), recording each day's pomodoros at noon.
+  private func useDaily(_ counts: [Int], calendar: Calendar) -> SessionHistory {
+    let first = date(2026, 1, 1, 12, in: calendar)
+    var now = first
+    let history = SessionHistory(
+      fileURL: nil, now: { now }, calendar: calendar, notificationCenter: NotificationCenter())
+    for (offset, count) in counts.enumerated() {
+      now = calendar.date(byAdding: .day, value: offset, to: first)!
+      for _ in 0..<count {
+        history.recordCompletedSession(.focus, duration: 25 * 60, end: now)
+      }
+    }
+    return history
+  }
+
+  func testStreakLongerThanTheKeptDaysCountsTheTrimmedDays() {
+    let history = useDaily(Array(repeating: 1, count: 100), calendar: calendar("UTC"))
+    XCTAssertLessThan(history.records.count, 100)
+    XCTAssertEqual(history.goalStreak(goal: 1), 100)
+    XCTAssertEqual(history.goalStreak(goal: 2), 0)
+  }
+
+  func testAMissedTrimmedDayCountsOnlyTheDaysAfterIt() {
+    var counts = Array(repeating: 2, count: 100)
+    counts[3] = 0
+    counts[6] = 1
+    let history = useDaily(counts, calendar: calendar("UTC"))
+    XCTAssertEqual(history.goalStreak(goal: 1), 96)
+    XCTAssertEqual(history.goalStreak(goal: 2), 93)
+  }
+
+  func testChangingTheGoalDropsCarriedDaysThatMissTheNewGoal() {
+    // The first 10 days had one pomodoro, the next 90 two.
+    let counts = Array(repeating: 1, count: 10) + Array(repeating: 2, count: 90)
+    let history = useDaily(counts, calendar: calendar("UTC"))
+    XCTAssertEqual(history.goalStreak(goal: 1), 100)
+    XCTAssertEqual(history.goalStreak(goal: 2), 90)
+    XCTAssertEqual(history.goalStreak(goal: 3), 0)
+  }
+
+  func testCarriedDaysCountOnlyWhileTheStreakReachesThem() {
+    var counts = Array(repeating: 1, count: 100)
+    counts[95] = 0
+    let history = useDaily(counts, calendar: calendar("UTC"))
+    XCTAssertEqual(history.goalStreak(goal: 1), 4)
+  }
+
+  func testTodayNotDoneYetStillCarriesTheTrimmedDays() {
+    let history = useDaily(Array(repeating: 1, count: 100) + [0], calendar: calendar("UTC"))
+    XCTAssertEqual(history.goalStreak(goal: 1), 100)
+  }
+
+  func testCarryAcrossTheDaylightSavingChangeInNewYork() {
+    // 2026-03-08 (23 hours) is among the trimmed days.
+    let history = useDaily(Array(repeating: 1, count: 160), calendar: calendar("America/New_York"))
+    XCTAssertEqual(history.goalStreak(goal: 1), 160)
+  }
+
+  func testCarryStreakIsZeroOutsideTheGoalRange() {
+    let carry = GoalStreakCarry(throughDay: Date(), streaks: [5, 3])
+    XCTAssertEqual(carry.streak(goal: 1), 5)
+    XCTAssertEqual(carry.streak(goal: 2), 3)
+    XCTAssertEqual(carry.streak(goal: 3), 0)
+    XCTAssertEqual(carry.streak(goal: 0), 0)
+    XCTAssertEqual(carry.streak(goal: 25), 0)
+  }
+
+  func testCarryIsAddedOnlyWhenTheStreakCoversEveryDay() {
+    let utc = calendar("UTC")
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: streakDays([1, 1, 1], in: utc), goal: 1, carried: 7), 10)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: streakDays([1, 1, 0], in: utc), goal: 1, carried: 7), 9)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: streakDays([0, 1, 1], in: utc), goal: 1, carried: 7), 2)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: streakDays([1, 1], in: utc), goal: 0, carried: 7), 0)
   }
 
   // MARK: - Label totals
