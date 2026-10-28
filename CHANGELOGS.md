@@ -125,6 +125,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Reset** (⌃⌥R shortcut or the Shortcuts action) on a finished break that waits on the break screen now returns to a fresh focus session instead of starting the break over.
 - The "session complete" notification no longer goes missing when TimeMate has quit or crashed, or is late because the Mac slept: it is scheduled for the end of the session and still shows once, on time.
 - **Reset All Settings** now also turns off Start at Login, so the Mac no longer opens TimeMate at login after a reset.
 - The menu bar tooltip showed the time from the last update, so in the icon-only and minutes-only styles it stayed at the full session length while you worked; it now shows the time left when you hover.

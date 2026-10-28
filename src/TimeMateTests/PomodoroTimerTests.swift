@@ -107,6 +107,19 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.state, .active)
   }
 
+  func testStopTimerOnAWaitingBreakReturnsToFocus() {
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    timer.stopTimer()
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
   func testKeepBreakScreenOpenWithOverlayOffStartsFocusAutomatically() {
     defaults.set(false, forKey: SettingsKey.overlayEnabled)
     timer = makeTimer(keepBreakOpen: true)

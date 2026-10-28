@@ -359,9 +359,18 @@ class PomodoroTimer: ObservableObject {
     saveSnapshot()
   }
 
+  /// Resets the current session. On a finished break that waits on the break
+  /// screen it moves on to a fresh focus session instead of replaying the break.
   func stopTimer() {
     defer { saveSnapshot() }
     clearSessionNotifications()
+    if isWaitingToContinue {
+      isWaitingToContinue = false
+      timer?.cancel()
+      endDate = nil
+      advanceToNextSession(start: false)
+      return
+    }
     isWaitingToContinue = false
     state = .idle
     endDate = nil

@@ -87,6 +87,27 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.state, .idle)
   }
 
+  func testResetOnAFinishedBreakReturnsToFocus() {
+    defaults.set(true, forKey: SettingsKey.keepBreakScreenOpen)
+    timer = PomodoroTimer(
+      defaults: defaults, now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter())
+    TimerIntentActions.start(timer)
+    currentTime += 125
+    timer.handleTick()  // focus ends, the break waits to be started
+    TimerIntentActions.start(timer)
+    currentTime += 60
+    timer.handleTick()  // break ends, waits on the break screen
+    XCTAssertTrue(timer.isWaitingToContinue)
+
+    TimerIntentActions.reset(timer)
+
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.timeRemaining, 125)
+  }
+
   func testStartContinuesPastAFinishedBreak() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true
