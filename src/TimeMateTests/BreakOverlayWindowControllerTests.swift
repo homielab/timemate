@@ -14,10 +14,13 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
   /// Fade-outs the controller started; the test ends them (`done`) when it wants.
   private var fadeOuts: [() -> Void] = []
   private var frontmostIsFullscreen = false
+  /// Settle re-checks the controller scheduled; `runScheduledRechecks()` runs them.
+  private var scheduledRechecks: [DispatchWorkItem] = []
 
   override func setUp() {
     super.setUp()
     fadeOuts = []
+    scheduledRechecks = []
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     defaults = UserDefaults(suiteName: Self.suiteName)
     defaults.set(30, forKey: SettingsKey.focusDuration)
@@ -76,12 +79,20 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
       timer: timer, defaults: defaults, animated: false,
       isFullscreenProbe: { [weak self] in self?.frontmostIsFullscreen ?? false },
       workspaceNotificationCenter: workspace, fallbackPollInterval: fallbackPollInterval,
-      settleDelay: settleDelay)
+      settleDelay: settleDelay,
+      scheduleRecheck: { [weak self] _, work in self?.scheduledRechecks.append(work) })
     timer.startTimer()
     timer.skipSession()
     XCTAssertFalse(controller.isShowingOverlay)
     XCTAssertTrue(controller.isWaitingForWindowedApp)
     return controller
+  }
+
+  /// Runs the settle re-checks scheduled so far, as if their delay had passed.
+  private func runScheduledRechecks() {
+    let due = scheduledRechecks
+    scheduledRechecks = []
+    for work in due where !work.isCancelled { work.perform() }
   }
 
   private func runTicks(_ count: Int) {
@@ -132,14 +143,15 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertTrue(controller.hasPendingSettleRecheck)
 
     frontmostIsFullscreen = false
-    XCTAssertTrue(waitUntil { controller.isShowingOverlay }, "shown without the fallback poll")
+    runScheduledRechecks()
+    XCTAssertTrue(controller.isShowingOverlay, "shown without the fallback poll")
     XCTAssertFalse(controller.isWaitingForWindowedApp)
     XCTAssertFalse(controller.hasPendingSettleRecheck)
   }
 
   func testSettleRechecksInABurstRunOnce() {
     let workspace = NotificationCenter()
-    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.2)
+    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.05)
 
     workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
     workspace.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
@@ -148,8 +160,7 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     let evaluations = controller.evaluationCount
     XCTAssertTrue(controller.hasPendingSettleRecheck)
 
-    XCTAssertTrue(waitUntil { !controller.hasPendingSettleRecheck })
-    drainMainQueue()
+    runScheduledRechecks()
 
     XCTAssertEqual(controller.evaluationCount, evaluations + 1)
     XCTAssertFalse(controller.hasPendingSettleRecheck)
@@ -159,22 +170,28 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
   func testClicksWhileWaitingScheduleAThrottledRecheck() {
     let controller = makeWaitingController(workspace: NotificationCenter(), settleDelay: 0.05)
     XCTAssertTrue(controller.isMonitoringClicks)
-    let start = Date()
+    let start = Date(timeIntervalSince1970: 2_000_000_000)
 
     controller.handleClickWhileWaiting(now: start)
-    XCTAssertTrue(waitUntil { !controller.hasPendingSettleRecheck })
+    XCTAssertTrue(controller.hasPendingSettleRecheck)
+    runScheduledRechecks()
+    XCTAssertFalse(controller.hasPendingSettleRecheck)
     controller.handleClickWhileWaiting(now: start.addingTimeInterval(0.5))
     XCTAssertFalse(controller.hasPendingSettleRecheck, "at most one per second")
+    XCTAssertTrue(scheduledRechecks.isEmpty)
 
     frontmostIsFullscreen = false
     controller.handleClickWhileWaiting(now: start.addingTimeInterval(1.1))
-    XCTAssertTrue(waitUntil { controller.isShowingOverlay })
+    XCTAssertTrue(controller.hasPendingSettleRecheck)
+    XCTAssertFalse(controller.isShowingOverlay, "not before the settle delay")
+    runScheduledRechecks()
+    XCTAssertTrue(controller.isShowingOverlay)
     XCTAssertFalse(controller.isMonitoringClicks, "the click monitor is removed once shown")
   }
 
   func testBreakEndingWhileWaitingCancelsTheSettleRecheck() {
     let workspace = NotificationCenter()
-    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.1)
+    let controller = makeWaitingController(workspace: workspace, settleDelay: 0.05)
     workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
     drainMainQueue()
     XCTAssertTrue(controller.hasPendingSettleRecheck)
@@ -183,10 +200,7 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
 
     XCTAssertFalse(controller.hasPendingSettleRecheck)
     XCTAssertFalse(controller.isMonitoringClicks)
-    let evaluations = controller.evaluationCount
-    XCTAssertFalse(
-      waitUntil(timeout: 0.2) { controller.evaluationCount > evaluations },
-      "the cancelled re-check never runs")
+    XCTAssertTrue(scheduledRechecks.allSatisfy(\.isCancelled), "the cancelled re-check never runs")
   }
 
   func testNoBackgroundChecksWhileWaitingWithoutFallbackPoll() {

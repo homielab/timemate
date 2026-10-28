@@ -59,6 +59,9 @@ class BreakOverlayWindowController: NSObject {
   private let workspaceNotificationCenter: NotificationCenter
   private let fallbackPollInterval: TimeInterval?
   private let settleDelay: TimeInterval?
+  /// Runs a settle re-check after a delay; replaced in tests to run it on demand.
+  typealias RecheckScheduler = (_ delay: TimeInterval, _ work: DispatchWorkItem) -> Void
+  private let scheduleRecheck: RecheckScheduler
   private var frontmostAppObservers: [NSObjectProtocol] = []
   private var fullscreenPoll: Timer?
   private var settleRecheck: DispatchWorkItem?
@@ -108,6 +111,7 @@ class BreakOverlayWindowController: NSObject {
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
     fallbackPollInterval: TimeInterval? = OverlayPolicy.fallbackPollInterval,
     settleDelay: TimeInterval? = OverlayPolicy.settleRecheckDelay,
+    scheduleRecheck: @escaping RecheckScheduler = BreakOverlayWindowController.scheduleOnMain,
     runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade,
     tip: @escaping () -> String = RelaxationTips.random
   ) {
@@ -115,6 +119,7 @@ class BreakOverlayWindowController: NSObject {
     self.workspaceNotificationCenter = workspaceNotificationCenter
     self.fallbackPollInterval = fallbackPollInterval
     self.settleDelay = settleDelay
+    self.scheduleRecheck = scheduleRecheck
     self.runFade = runFade
     self.timer = timer
     self.defaults = defaults
@@ -122,6 +127,11 @@ class BreakOverlayWindowController: NSObject {
     self.model = BreakOverlayModel(timer: timer, defaults: defaults, tip: tip)
     super.init()
     setupSubscriptions()
+  }
+
+  /// Runs the work on the main queue after the delay.
+  static func scheduleOnMain(after delay: TimeInterval, _ work: DispatchWorkItem) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
   }
 
   /// Animates the windows' opacity with `NSAnimationContext`.
@@ -396,7 +406,7 @@ class BreakOverlayWindowController: NSObject {
       self?.reevaluate()
     }
     settleRecheck = work
-    DispatchQueue.main.asyncAfter(deadline: .now() + settleDelay, execute: work)
+    scheduleRecheck(settleDelay, work)
   }
 
   /// Evaluates the break screen again with the last known timer state.
