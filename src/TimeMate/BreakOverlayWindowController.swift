@@ -50,6 +50,7 @@ class BreakOverlayWindowController: NSObject {
   let animated: Bool
   let model: BreakOverlayModel
   private var cancellables = Set<AnyCancellable>()
+  private var defaultsObserver: DefaultsObserver?
   private var eventMonitor: Any?
   private var screenObserver: NSObjectProtocol?
   /// Re-checks whether the frontmost app left full screen while the break screen waits.
@@ -166,15 +167,9 @@ class BreakOverlayWindowController: NSObject {
     }
     .store(in: &cancellables)
 
-    NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: defaults)
-      .sink { [weak self] _ in
-        if Thread.isMainThread {
-          self?.handleDefaultsChange()
-        } else {
-          DispatchQueue.main.async { self?.handleDefaultsChange() }
-        }
-      }
-      .store(in: &cancellables)
+    defaultsObserver = DefaultsObserver(
+      defaults: defaults, keys: [SettingsKey.overlayEnabled, SettingsKey.overlaySkipFullscreen]
+    ) { [weak self] in self?.handleDefaultsChange() }
   }
 
   private func handleDefaultsChange() {

@@ -56,6 +56,7 @@ class PomodoroTimer: ObservableObject {
 
   // MARK: - Private Properties
   var cancellables = Set<AnyCancellable>()
+  private var defaultsObserver: DefaultsObserver?
   private var timer: AnyCancellable?
   private var totalDuration: Int = 0
   /// The label of the session as it began ("" = none), so typing the next task
@@ -134,15 +135,13 @@ class PomodoroTimer: ObservableObject {
       .store(in: &cancellables)
     // Settings → Durations writes to these defaults; an idle timer shows the
     // new length right away instead of on the next Start.
-    NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: defaults)
-      .sink { [weak self] _ in
-        if Thread.isMainThread {
-          self?.handleDefaultsChange()
-        } else {
-          DispatchQueue.main.async { self?.handleDefaultsChange() }
-        }
-      }
-      .store(in: &cancellables)
+    defaultsObserver = DefaultsObserver(
+      defaults: defaults,
+      keys: [
+        SettingsKey.focusDuration, SettingsKey.shortBreakDuration, SettingsKey.longBreakDuration,
+        SettingsKey.notificationsEnabled,
+      ]
+    ) { [weak self] in self?.handleDefaultsChange() }
     notificationCenter.publisher(for: .NSSystemClockDidChange)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.handleSystemClockChange() }

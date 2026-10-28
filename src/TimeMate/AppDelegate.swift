@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private var isScreenLocked = false
   private(set) lazy var hotKeyManager = HotKeyManager { [weak self] in self?.timer.perform($0) }
   private var cancellables = Set<AnyCancellable>()
+  private var defaultsObserver: DefaultsObserver?
   let openSettingsRequests = PassthroughSubject<Void, Never>()
   private var menuBarStyle = MenuBarTimeStyle.minutesSeconds
 
@@ -125,18 +126,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
     observeScreenState()
 
-    NotificationCenter.default.publisher(
-      for: UserDefaults.didChangeNotification, object: UserDefaults.standard
-    )
-    .sink { [weak self] _ in
-      guard let self else { return }
-      if Thread.isMainThread {
-        self.updateTickMode()
-      } else {
-        DispatchQueue.main.async { self.updateTickMode() }
-      }
-    }
-    .store(in: &cancellables)
+    // updateTickMode reads only the break screen switch from the defaults.
+    defaultsObserver = DefaultsObserver(
+      defaults: .standard, keys: [SettingsKey.overlayEnabled]
+    ) { [weak self] in self?.updateTickMode() }
   }
 
   /// With the display off or the screen locked nothing shows the countdown, so
