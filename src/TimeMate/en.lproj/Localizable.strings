@@ -226,6 +226,22 @@
 "Reset Timer" = "Reset Timer";
 "Stops the TimeMate timer and starts the current session over." = "Stops the TimeMate timer and starts the current session over.";
 "Space" = "Space";
+"Keypad %@" = "Keypad %@";
+"Clear" = "Clear";
+"Enter" = "Enter";
+"Return" = "Return";
+"Tab" = "Tab";
+"Delete" = "Delete";
+"Forward Delete" = "Forward Delete";
+"Escape" = "Escape";
+"Left Arrow" = "Left Arrow";
+"Right Arrow" = "Right Arrow";
+"Up Arrow" = "Up Arrow";
+"Down Arrow" = "Down Arrow";
+"Home" = "Home";
+"End" = "End";
+"Page Up" = "Page Up";
+"Page Down" = "Page Down";
 
 "Don't interrupt full-screen apps" = "Don't interrupt full-screen apps";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives.";

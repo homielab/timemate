@@ -101,6 +101,44 @@ final class HotKeyTests: XCTestCase {
     XCTAssertEqual(shortcut.displayString(bundle: try bundle("vi")), "⌃⌥Dấu cách")
   }
 
+  func testSymbolKeysAreSpokenByName() throws {
+    let left = HotKeyShortcut(keyCode: UInt32(kVK_LeftArrow), modifiers: UInt32(controlKey))
+    XCTAssertEqual(left.spokenString(bundle: try bundle("en")), "Control Left Arrow")
+    XCTAssertEqual(left.spokenString(bundle: try bundle("vi")), "Control Mũi tên trái")
+    XCTAssertEqual(left.displayString(bundle: try bundle("vi")), "⌃←")
+    let named = [
+      kVK_Return, kVK_Tab, kVK_Delete, kVK_ForwardDelete, kVK_Escape, kVK_LeftArrow,
+      kVK_RightArrow, kVK_UpArrow, kVK_DownArrow, kVK_Home, kVK_End, kVK_PageUp, kVK_PageDown,
+    ]
+    for keyCode in named {
+      let spoken = HotKeyShortcut.spokenKeyName(for: UInt32(keyCode), bundle: try bundle("en"))
+      XCTAssertTrue(spoken.allSatisfy { $0.isLetter || $0 == " " }, spoken)
+    }
+  }
+
+  func testKeypadAndHighFunctionKeysHaveLabels() throws {
+    let keypad = HotKeyShortcut(
+      keyCode: UInt32(kVK_ANSI_Keypad1), modifiers: UInt32(controlKey | cmdKey))
+    XCTAssertFalse(keypad.displayString.contains("#"))
+    XCTAssertEqual(keypad.displayString(bundle: try bundle("en")), "⌃⌘Keypad 1")
+    XCTAssertEqual(keypad.spokenString(bundle: try bundle("en")), "Control Command Keypad 1")
+    XCTAssertEqual(
+      HotKeyShortcut.keyLabel(for: UInt32(kVK_ANSI_KeypadEnter), bundle: try bundle("en")),
+      "Keypad Enter")
+    let keys = [
+      kVK_ANSI_Keypad0, kVK_ANSI_Keypad2, kVK_ANSI_Keypad3, kVK_ANSI_Keypad4, kVK_ANSI_Keypad5,
+      kVK_ANSI_Keypad6, kVK_ANSI_Keypad7, kVK_ANSI_Keypad8, kVK_ANSI_Keypad9,
+      kVK_ANSI_KeypadDecimal, kVK_ANSI_KeypadMultiply, kVK_ANSI_KeypadPlus,
+      kVK_ANSI_KeypadDivide, kVK_ANSI_KeypadMinus, kVK_ANSI_KeypadEquals, kVK_ANSI_KeypadClear,
+      kVK_F13, kVK_F14, kVK_F15, kVK_F16, kVK_F17, kVK_F18, kVK_F19, kVK_F20,
+    ]
+    for keyCode in keys {
+      let label = HotKeyShortcut.keyLabel(for: UInt32(keyCode), bundle: try bundle("vi"))
+      XCTAssertFalse(label.hasPrefix("#"), "key \(keyCode)")
+    }
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_F20)), "F20")
+  }
+
   func testSymbolKeysStayTheSameInEveryLanguage() throws {
     XCTAssertEqual(
       HotKeyShortcut.keyLabel(for: UInt32(kVK_Return), bundle: try bundle("vi")), "↩")

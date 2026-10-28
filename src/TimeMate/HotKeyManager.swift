@@ -160,7 +160,8 @@ struct HotKeyShortcut: Equatable {
     ]
     let modifierNames = names.compactMap { modifiers & UInt32($0.0) != 0 ? $0.1 : nil }
       .map { bundle.localizedString(forKey: $0, value: $0, table: nil) }
-    return (modifierNames + [Self.keyLabel(for: keyCode, bundle: bundle)]).joined(separator: " ")
+    return (modifierNames + [Self.spokenKeyName(for: keyCode, bundle: bundle)])
+      .joined(separator: " ")
   }
 
   private static let keyLabels: [Int: String] = [
@@ -179,7 +180,29 @@ struct HotKeyShortcut: Equatable {
     kVK_RightArrow: "→", kVK_UpArrow: "↑", kVK_DownArrow: "↓", kVK_Home: "↖", kVK_End: "↘",
     kVK_PageUp: "⇞", kVK_PageDown: "⇟", kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3",
     kVK_F4: "F4", kVK_F5: "F5", kVK_F6: "F6", kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9",
-    kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
+    kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12", kVK_F13: "F13", kVK_F14: "F14",
+    kVK_F15: "F15", kVK_F16: "F16", kVK_F17: "F17", kVK_F18: "F18", kVK_F19: "F19",
+    kVK_F20: "F20",
+  ]
+
+  /// Keypad keys, shown as "Keypad 1" so they differ from the main row's "1".
+  /// Clear and Enter are words and get translated.
+  private static let keypadKeys: [Int: String] = [
+    kVK_ANSI_Keypad0: "0", kVK_ANSI_Keypad1: "1", kVK_ANSI_Keypad2: "2",
+    kVK_ANSI_Keypad3: "3", kVK_ANSI_Keypad4: "4", kVK_ANSI_Keypad5: "5",
+    kVK_ANSI_Keypad6: "6", kVK_ANSI_Keypad7: "7", kVK_ANSI_Keypad8: "8",
+    kVK_ANSI_Keypad9: "9", kVK_ANSI_KeypadDecimal: ".", kVK_ANSI_KeypadMultiply: "*",
+    kVK_ANSI_KeypadPlus: "+", kVK_ANSI_KeypadDivide: "/", kVK_ANSI_KeypadMinus: "-",
+    kVK_ANSI_KeypadEquals: "=", kVK_ANSI_KeypadClear: "Clear", kVK_ANSI_KeypadEnter: "Enter",
+  ]
+
+  /// Words VoiceOver says for keys whose label is a symbol ("↩", "←"), looked
+  /// up in Localizable.strings; the visible label keeps the symbol.
+  private static let spokenNames: [Int: String] = [
+    kVK_Return: "Return", kVK_Tab: "Tab", kVK_Delete: "Delete",
+    kVK_ForwardDelete: "Forward Delete", kVK_Escape: "Escape", kVK_LeftArrow: "Left Arrow",
+    kVK_RightArrow: "Right Arrow", kVK_UpArrow: "Up Arrow", kVK_DownArrow: "Down Arrow",
+    kVK_Home: "Home", kVK_End: "End", kVK_PageUp: "Page Up", kVK_PageDown: "Page Down",
   ]
 
   /// Keys shown by name rather than a symbol; the name is looked up in
@@ -191,7 +214,20 @@ struct HotKeyShortcut: Equatable {
     if let name = namedKeys[Int(keyCode)] {
       return bundle.localizedString(forKey: name, value: name, table: nil)
     }
+    if let key = keypadKeys[Int(keyCode)] {
+      let name = bundle.localizedString(forKey: key, value: key, table: nil)
+      let format = bundle.localizedString(forKey: "Keypad %@", value: "Keypad %@", table: nil)
+      return String(format: format, name)
+    }
     return keyLabels[Int(keyCode)] ?? "#\(keyCode)"
+  }
+
+  /// Name of a key as VoiceOver should say it: a word for symbol keys, else its label.
+  static func spokenKeyName(for keyCode: UInt32, bundle: Bundle = .main) -> String {
+    if let name = spokenNames[Int(keyCode)] {
+      return bundle.localizedString(forKey: name, value: name, table: nil)
+    }
+    return keyLabel(for: keyCode, bundle: bundle)
   }
 }
 

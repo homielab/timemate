@@ -226,6 +226,22 @@
 "Reset Timer" = "Đặt lại hẹn giờ";
 "Stops the TimeMate timer and starts the current session over." = "Dừng hẹn giờ TimeMate và bắt đầu lại phiên hiện tại.";
 "Space" = "Dấu cách";
+"Keypad %@" = "Bàn phím số %@";
+"Clear" = "Xoá";
+"Enter" = "Enter";
+"Return" = "Return";
+"Tab" = "Tab";
+"Delete" = "Xoá lùi";
+"Forward Delete" = "Xoá tới";
+"Escape" = "Esc";
+"Left Arrow" = "Mũi tên trái";
+"Right Arrow" = "Mũi tên phải";
+"Up Arrow" = "Mũi tên lên";
+"Down Arrow" = "Mũi tên xuống";
+"Home" = "Home";
+"End" = "End";
+"Page Up" = "Page Up";
+"Page Down" = "Page Down";
 
 "Don't interrupt full-screen apps" = "Không làm gián đoạn ứng dụng toàn màn hình";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "Khi ứng dụng đang dùng ở toàn màn hình (thuyết trình, video…), màn hình nghỉ ngơi chờ đến khi bạn thoát ra. Thông báo vẫn hiện.";
