@@ -264,8 +264,8 @@ private struct LabelRow: View {
 }
 
 /// One thin column per day, oldest first, today last; a day that met the daily
-/// goal is green. Hovering a column names the day; VoiceOver reads each column
-/// day by day, like the rows of the 7-day view (`spokenDays`).
+/// goal is green. Hovering a column shows, and VoiceOver reads, the same text
+/// (`spokenDays`): the day, its pomodoros and minutes, and whether it met the goal.
 struct BarStrip: View {
   let days: [SessionStatistics.Day]
   let maxPomodoros: Int
@@ -274,7 +274,7 @@ struct BarStrip: View {
 
   private let height: CGFloat = 40
 
-  /// What VoiceOver reads for each column, in column order.
+  /// The tooltip and VoiceOver label of each column, in column order.
   static func spokenDays(
     _ days: [SessionStatistics.Day], goal: Int, calendar: Calendar,
     locale: Locale = StatisticsFormat.appLocale, bundle: Bundle = .main
@@ -284,7 +284,7 @@ struct BarStrip: View {
         StatisticsFormat.spokenDay(day.date, calendar: calendar, locale: locale),
         pomodoros: day.pomodoros, minutes: day.focusMinutes,
         goalReached: DailyGoal.isReached(completed: day.pomodoros, goal: goal),
-        bundle: bundle)
+        bundle: bundle, locale: locale)
     }
   }
 
@@ -302,11 +302,7 @@ struct BarStrip: View {
             maxHeight: day.pomodoros == 0
               ? 2 : max(3, height * CGFloat(day.pomodoros) / CGFloat(maxPomodoros))
           )
-          .help(
-            Text(
-              verbatim:
-                "\(StatisticsFormat.dayLabel(day.date, calendar: calendar)): \(day.pomodoros)")
-          )
+          .help(Text(spoken[index]))
           .accessibilityElement()
           .accessibilityLabel(Text(spoken[index]))
       }

@@ -421,6 +421,30 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertTrue(spoken[1].contains("100 minutes"), spoken[1])
     XCTAssertTrue(spoken[1].hasSuffix("goal reached"), spoken[1])
     XCTAssertFalse(spoken[0].contains("goal reached"), spoken[0])
+
+    let viPath = try XCTUnwrap(Bundle.main.path(forResource: "vi", ofType: "lproj"))
+    let vi = try XCTUnwrap(Bundle(path: viPath))
+    let viSpoken = BarStrip.spokenDays(
+      days, goal: 4, calendar: utc, locale: Locale(identifier: "vi_VN"), bundle: vi)
+    XCTAssertEqual(viSpoken.count, 2)
+    XCTAssertTrue(viSpoken[0].lowercased().contains("chủ nhật"), viSpoken[0])
+    XCTAssertTrue(viSpoken[0].contains("0 pomodoro"), viSpoken[0])
+    XCTAssertTrue(viSpoken[1].contains("4 pomodoro"), viSpoken[1])
+    XCTAssertTrue(viSpoken[1].contains("100 phút"), viSpoken[1])
+    XCTAssertTrue(viSpoken[1].hasSuffix("đạt mục tiêu"), viSpoken[1])
+    XCTAssertFalse(viSpoken[0].contains("đạt mục tiêu"), viSpoken[0])
+  }
+
+  func testBarStripSpokenDaysSingularInEnglish() throws {
+    let utc = calendar("UTC")
+    let days = [
+      SessionStatistics.Day(date: date(2026, 3, 9, in: utc), pomodoros: 1, focusSeconds: 60)
+    ]
+    let path = try XCTUnwrap(Bundle.main.path(forResource: "en", ofType: "lproj"))
+    let en = try XCTUnwrap(Bundle(path: path))
+    let spoken = BarStrip.spokenDays(
+      days, goal: 0, calendar: utc, locale: Locale(identifier: "en_US"), bundle: en)
+    XCTAssertTrue(spoken[0].hasSuffix("1 pomodoro, 1 minute"), spoken[0])
   }
 
   func testShortDayLabelFollowsTheGivenLocale() {

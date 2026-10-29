@@ -133,6 +133,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **30-day bar strip tooltip**: hovering a column now shows the full day in your language, e.g. "Monday, March 9: 4 pomodoros, 100 minutes, goal reached", instead of a bare "Mon 9: 4".
 - **Export CSV with a Buddhist or Japanese calendar**: the `date` column and the file name now use Gregorian years (`2026-10-29`, not `2569-10-29` or `0008-10-29`), like the sessions export, so spreadsheets read them as dates.
 - **Working past midnight**: a short break across midnight no longer resets the long-break cycle, so pomodoros at 23:45 and 00:05 still lead to your long break. The cycle starts over on a new day only after more than an hour without a session (or more than 4 hours on the same day).
 - **Shortcuts in Vietnamese**: the **Start Focus** action and its description, and the description of **Start Focus with Label**, now show in Vietnamese instead of English.
