@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Automation → **Resume when I'm back** (off by default, needs "Pause when the Mac sleeps or the screen locks"): a focus session paused by sleep or the lock continues a moment after you unlock the screen or wake the Mac. A session you paused yourself, or one paused for over four hours, stays paused.
 - App Store release notes for this version in `docs/whats-new/` (English and Vietnamese).
 - Global shortcut **Add 5 Minutes** (⌃⌥E, off by default; turn it on in Settings → Keyboard Shortcuts): adds 5 minutes to the running or paused session from any app, like +5 min.
 - Settings → Statistics → **Export all (90 days)…** saves one row per day for the whole kept history, not only the 7 or 30 days on screen. Daily CSV file names now say the period: `TimeMate-statistics-7d-<date>.csv`, `-30d-` or `-all-`.

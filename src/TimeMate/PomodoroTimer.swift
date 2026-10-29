@@ -70,6 +70,14 @@ class PomodoroTimer: ObservableObject {
   /// When the paused session was paused; `nil` unless paused (or unknown, from
   /// an older snapshot). Resuming after a stale pause starts the cycle over.
   private(set) var pausedAt: Date?
+  /// The paused session was paused by sleep or a locked screen, not by the
+  /// user; with `resumeOnReturn` on it continues when the user is back.
+  var pausedBySleep = false
+  /// Whether the screen is locked, per the system's lock and unlock notifications.
+  var isScreenLocked = false
+  /// Runs a block after a delay; the resume after unlock waits `resumeDelay`.
+  /// Tests collect the blocks and run them.
+  let scheduleResume: (TimeInterval, @escaping () -> Void) -> Void
   /// When the current session began, before any pause; `nil` when none runs or
   /// it came from a snapshot saved before this was kept (the history then
   /// takes the end minus the duration).
@@ -110,9 +118,13 @@ class PomodoroTimer: ObservableObject {
     removeSessionNotifications: @escaping () -> Void = SessionNotification.removeDelivered,
     removePendingSessionNotification: @escaping () -> Void = SessionNotification.removePending,
     playSound: @escaping (String, Float) -> Void = { AlarmSound.play($0, volume: $1) },
-    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen
+    isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
+    scheduleResume: @escaping (TimeInterval, @escaping () -> Void) -> Void = {
+      DispatchQueue.main.asyncAfter(deadline: .now() + $0, execute: $1)
+    }
   ) {
     self.isFullscreenProbe = isFullscreenProbe
+    self.scheduleResume = scheduleResume
     self.defaults = defaults
     self.postNotification = postNotification
     self.removeSessionNotifications = removeSessionNotifications
@@ -138,9 +150,24 @@ class PomodoroTimer: ObservableObject {
     workspaceNotificationCenter.publisher(for: NSWorkspace.screensDidSleepNotification)
       .sink { [weak self] _ in self?.handleScreenInactive() }
       .store(in: &cancellables)
+    // The user is back: with "Resume when I'm back" on, a session paused by
+    // sleep or the lock continues (`handleUserReturned`).
+    workspaceNotificationCenter.publisher(for: NSWorkspace.screensDidWakeNotification)
+      .sink { [weak self] _ in self?.handleUserReturned() }
+      .store(in: &cancellables)
     distributedNotificationCenter
       .publisher(for: Notification.Name(PomodoroTimer.screenLockedNotificationName))
-      .sink { [weak self] _ in self?.handleScreenInactive() }
+      .sink { [weak self] _ in
+        self?.isScreenLocked = true
+        self?.handleScreenInactive()
+      }
+      .store(in: &cancellables)
+    distributedNotificationCenter
+      .publisher(for: Notification.Name(PomodoroTimer.screenUnlockedNotificationName))
+      .sink { [weak self] _ in
+        self?.isScreenLocked = false
+        self?.handleUserReturned()
+      }
       .store(in: &cancellables)
     // Settings → Durations writes to these defaults; an idle timer shows the
     // new length right away instead of on the next Start. The others change
@@ -198,6 +225,7 @@ class PomodoroTimer: ObservableObject {
     }
     state = .active
     pausedAt = nil
+    pausedBySleep = false
     lastActivity = now()
     endDate = now().addingTimeInterval(TimeInterval(timeRemaining))
     startTicking()
@@ -350,7 +378,7 @@ class PomodoroTimer: ObservableObject {
       state: state, isBreak: isBreak,
       pauseOnSleep: defaults.bool(forKey: SettingsKey.pauseOnSleep))
     {
-      pauseTimer()
+      pauseForSleep()
       return
     }
     handleTick()
@@ -359,7 +387,9 @@ class PomodoroTimer: ObservableObject {
 
   /// The Mac woke up: catch up with the wall clock right away. A session whose
   /// end passed during sleep finishes once, then ticking resumes if active.
+  /// A focus session paused by the sleep may resume (`handleUserReturned`).
   func handleDidWake() {
+    handleUserReturned()
     guard state == .active else { return }
     handleTick()
     if state == .active {
@@ -403,6 +433,7 @@ class PomodoroTimer: ObservableObject {
     guard state == .active, endDate == runningEndDate else { return }
     state = .paused
     pausedAt = now()
+    pausedBySleep = false
     endDate = nil
     timer?.cancel()
     saveSnapshot()

@@ -11,6 +11,7 @@ struct AutomationSection: View {
   @AppStorage(SettingsKey.autoStartOnLaunch) private var autoStartOnLaunch = false
 
   @AppStorage(SettingsKey.pauseOnSleep) private var pauseOnSleep = false
+  @AppStorage(SettingsKey.resumeOnReturn) private var resumeOnReturn = false
 
   var body: some View {
     SettingsSection(titleKey: "Automation", systemImage: "play.circle") {
@@ -38,8 +39,13 @@ struct AutomationSection: View {
         titleKey: "Pause when the Mac sleeps or the screen locks", isOn: $pauseOnSleep
       )
       .help(
-        "Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself."
+        "Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself, or turn on Resume when I'm back."
       )
+      SettingsToggleRow(titleKey: "Resume when I'm back", isOn: $resumeOnReturn)
+        .help(
+          "Continue a session paused by sleep or the lock a moment after you unlock the screen or wake the Mac. A session you paused yourself stays paused."
+        )
+        .disabled(!pauseOnSleep)
     }
   }
 }

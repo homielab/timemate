@@ -82,7 +82,9 @@
 // Reset All Settings feature
 "Reset All Settings" = "Đặt lại Tất cả Cài đặt";
 "Pause when the Mac sleeps or the screen locks" = "Tạm dừng khi Mac ngủ hoặc khoá màn hình";
-"Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself." = "Tạm dừng phiên tập trung đang chạy khi Mac ngủ hoặc khoá màn hình. Bạn tự tiếp tục lại.";
+"Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself, or turn on Resume when I'm back." = "Tạm dừng phiên tập trung đang chạy khi Mac ngủ hoặc khoá màn hình. Bạn tự tiếp tục lại, hoặc bật Tự tiếp tục khi tôi quay lại.";
+"Resume when I'm back" = "Tự tiếp tục khi tôi quay lại";
+"Continue a session paused by sleep or the lock a moment after you unlock the screen or wake the Mac. A session you paused yourself stays paused." = "Tiếp tục phiên bị dừng do ngủ hoặc khoá màn hình ngay sau khi bạn mở khoá hoặc đánh thức Mac. Phiên bạn tự tạm dừng vẫn dừng.";
 "Reset Settings?" = "Đặt lại Cài đặt?";
 "This will restore all settings to their default values, including Start at Login, and restart the app. A running session and today's goal notification are kept. Are you sure?" = "Thao tác này sẽ khôi phục tất cả cài đặt về giá trị mặc định (kể cả Khởi động cùng máy) và khởi động lại ứng dụng. Phiên đang chạy và thông báo mục tiêu hôm nay được giữ lại. Bạn có chắc không?";
 "Cancel" = "Hủy";

@@ -274,6 +274,132 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(relaunched.timeRemaining, 100)
   }
 
+  // MARK: - Resume when I'm back
+
+  private func unlockScreen() {
+    distributedCenter.post(
+      name: Notification.Name(PomodoroTimer.screenUnlockedNotificationName), object: nil)
+  }
+
+  /// A focus timer with "Pause on sleep" on, 20 s into its session.
+  private func makeRunningSleepTimer(resumeOnReturn: Bool = true) {
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    defaults.set(resumeOnReturn, forKey: SettingsKey.resumeOnReturn)
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    runTicks(timer, 20)
+  }
+
+  func testResumeOnReturnContinuesAfterUnlock() {
+    makeRunningSleepTimer()
+    lockScreen()
+    XCTAssertEqual(timer.state, .paused)
+    advanceClock(by: 30 * 60)
+    unlockScreen()
+    // A short delay after the unlock, not at once.
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(scheduledResumes.map(\.delay), [PomodoroTimer.resumeDelay])
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 100)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    runTicks(timer, 10)
+    XCTAssertEqual(timer.timeRemaining, 90)
+  }
+
+  func testResumeOnReturnContinuesAfterDisplayOrMacWakes() {
+    makeRunningSleepTimer()
+    workspaceCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+    workspaceCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .active)
+
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+    advanceClock(by: 600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, 100)
+  }
+
+  func testResumeOnReturnWaitsForUnlockWhenTheMacWakesLocked() {
+    makeRunningSleepTimer()
+    lockScreen()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    workspaceCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+    unlockScreen()
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .active)
+  }
+
+  func testResumeOnReturnSkipsWhenScreenLocksAgainDuringTheDelay() {
+    makeRunningSleepTimer()
+    lockScreen()
+    unlockScreen()
+    lockScreen()
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+  }
+
+  func testResumeOnReturnLeavesASessionPausedByTheUser() {
+    makeRunningSleepTimer()
+    timer.pauseTimer()
+    lockScreen()
+    unlockScreen()
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertFalse(timer.pausedBySleep)
+  }
+
+  func testResumeOnReturnOffKeepsTheSessionPaused() {
+    makeRunningSleepTimer(resumeOnReturn: false)
+    lockScreen()
+    unlockScreen()
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+  }
+
+  func testResumeOnReturnSkipsAStalePause() {
+    // Locked for lunch and forgotten until the evening: Resume decides, and
+    // starts a new cycle instead of resuming by itself.
+    defaults.set(true, forKey: SettingsKey.pauseOnSleep)
+    defaults.set(true, forKey: SettingsKey.resumeOnReturn)
+    timer = makeTimer(focus: 120)
+    timer.startTimer()
+    finishSession(timer)
+    finishSession(timer)
+    runTicks(timer, 20)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    lockScreen()
+    advanceClock(by: SessionCycle.staleAfter + 60)
+    unlockScreen()
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+    timer.startTimer()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
+  func testResumeOnReturnDoesNotResumeAfterTheUserPausedOnceResumed() {
+    makeRunningSleepTimer()
+    lockScreen()
+    unlockScreen()
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .active)
+    timer.pauseTimer()
+    workspaceCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+    runScheduledResumes()
+    XCTAssertEqual(timer.state, .paused)
+  }
+
   // MARK: - System clock changes
 
   func testClockSetForwardKeepsTheRemainingTime() {

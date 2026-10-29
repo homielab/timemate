@@ -35,6 +35,8 @@ enum SettingsKey {
   static let keepAwake = "keepAwake"
   /// Pause a running focus session when the Mac sleeps or the screen locks (off by default).
   static let pauseOnSleep = "pauseOnSleep"
+  /// Resume a session paused by sleep or the lock when the user is back (off by default).
+  static let resumeOnReturn = "resumeOnReturn"
   static let overlayEnabled = "overlayEnabled"
   static let overlaySkipFullscreen = "overlaySkipFullscreen"
   static let autoStartOnLaunch = "autoStartOnLaunch"

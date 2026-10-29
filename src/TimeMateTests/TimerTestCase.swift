@@ -21,6 +21,9 @@ class TimerTestCase: XCTestCase {
   var timer: PomodoroTimer!
   /// How often the timer took the "session complete" notification away.
   var notificationRemovals = 0
+  /// Resumes after unlock the timer scheduled, with their delays; run them
+  /// with `runScheduledResumes()`.
+  var scheduledResumes: [(delay: TimeInterval, block: () -> Void)] = []
 
   override func setUp() {
     super.setUp()
@@ -32,6 +35,7 @@ class TimerTestCase: XCTestCase {
     distributedCenter = NotificationCenter()
     currentUptime = 50_000
     notificationRemovals = 0
+    scheduledResumes = []
     // A fixed calendar: the fake clock starts at 13:46 UTC, so calendar days
     // (and the stale-cycle rule) don't depend on the Mac's time zone.
     var calendar = Calendar(identifier: .gregorian)
@@ -78,7 +82,18 @@ class TimerTestCase: XCTestCase {
       uptime: { [weak self] in self?.currentUptime ?? 0 },
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
       removePendingSessionNotification: {},
-      isFullscreenProbe: { false })
+      isFullscreenProbe: { false },
+      scheduleResume: { [weak self] in self?.scheduledResumes.append((delay: $0, block: $1)) })
+  }
+
+  /// Lets each scheduled resume's delay pass on the fake clock, then runs it.
+  func runScheduledResumes() {
+    let pending = scheduledResumes
+    scheduledResumes = []
+    for resume in pending {
+      advanceClock(by: resume.delay)
+      resume.block()
+    }
   }
 
   /// Advances the fake clock one second per tick, like the real 1 s timer.

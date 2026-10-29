@@ -29,4 +29,33 @@ final class SleepPausePolicyTests: XCTestCase {
         SleepPausePolicy.shouldPause(state: state, isBreak: true, pauseOnSleep: true))
     }
   }
+
+  func testResumesOnlyASleepPauseWithTheSettingOnAndTheScreenUnlocked() {
+    XCTAssertTrue(
+      SleepPausePolicy.shouldResume(
+        state: .paused, pausedBySleep: true, resumeOnReturn: true, isScreenLocked: false,
+        pauseIsStale: false))
+    XCTAssertFalse(
+      SleepPausePolicy.shouldResume(
+        state: .paused, pausedBySleep: false, resumeOnReturn: true, isScreenLocked: false,
+        pauseIsStale: false))
+    XCTAssertFalse(
+      SleepPausePolicy.shouldResume(
+        state: .paused, pausedBySleep: true, resumeOnReturn: false, isScreenLocked: false,
+        pauseIsStale: false))
+    XCTAssertFalse(
+      SleepPausePolicy.shouldResume(
+        state: .paused, pausedBySleep: true, resumeOnReturn: true, isScreenLocked: true,
+        pauseIsStale: false))
+    XCTAssertFalse(
+      SleepPausePolicy.shouldResume(
+        state: .paused, pausedBySleep: true, resumeOnReturn: true, isScreenLocked: false,
+        pauseIsStale: true))
+    for state in [PomodoroState.idle, .active] {
+      XCTAssertFalse(
+        SleepPausePolicy.shouldResume(
+          state: state, pausedBySleep: true, resumeOnReturn: true, isScreenLocked: false,
+          pauseIsStale: false))
+    }
+  }
 }
