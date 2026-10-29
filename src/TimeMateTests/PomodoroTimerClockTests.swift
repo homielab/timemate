@@ -414,6 +414,34 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .longBreak)
   }
 
+  func testContinueWorkJustAfterMidnightKeepsTheCycle() {
+    var utc = Calendar(identifier: .gregorian)
+    utc.timeZone = TimeZone(identifier: "UTC")!
+    currentTime = utc.date(
+      from: DateComponents(year: 2026, month: 3, day: 10, hour: 23, minute: 45))!
+    timer = makeTimer(keepBreakOpen: true)
+    timer.startTimer()
+    for round in 0..<3 {
+      if round > 0 {
+        advanceClock(by: 6 * 60)
+        timer.continueWork()
+      }
+      finishSession(timer)  // focus -> short break, auto-started
+      finishSession(timer)  // short break waits on the break screen
+    }
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    let afterMidnight = utc.date(
+      from: DateComponents(year: 2026, month: 3, day: 11, hour: 0, minute: 2))!
+    advanceClock(by: afterMidnight.timeIntervalSince(currentTime))
+    timer.continueWork()
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .longBreak)
+  }
+
   func testResumingAPausedSessionNeverResetsTheCycle() {
     completeThreeFocusSessions()
     timer.startTimer()

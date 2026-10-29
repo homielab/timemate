@@ -189,9 +189,9 @@ class PomodoroTimer: ObservableObject {
   }
 
   /// Starts the cycle over on focus, with no sessions counted, when the timer
-  /// is idle and the last session is from another day or over four hours old:
-  /// three pomodoros last night do not make this morning's first one end in a
-  /// long break. A running or paused session is never touched.
+  /// is idle and the last session is over four hours old, or from another day
+  /// and over an hour old (`SessionCycle.isStale`): three pomodoros last night
+  /// do not make this morning's first one end in a long break. A running or paused session is never touched.
   private func restartCycleIfStale() {
     guard state == .idle,
       focusSessionsCompleted != 0 || currentSessionType != .focus || isWaitingToContinue,
@@ -458,6 +458,7 @@ class PomodoroTimer: ObservableObject {
 
   /// Ends a break that waits on the break screen and starts the next session.
   /// A break left waiting overnight or for over four hours starts a fresh cycle
+  /// (`SessionCycle.isStale`; a few minutes across midnight keep the cycle)
   /// on focus instead, like Start on a stale idle timer.
   func continueWork() {
     defer { saveSnapshot() }

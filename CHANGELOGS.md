@@ -133,6 +133,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Working past midnight**: a short break across midnight no longer resets the long-break cycle, so pomodoros at 23:45 and 00:05 still lead to your long break. The cycle starts over on a new day only after more than an hour without a session (or more than 4 hours on the same day).
 - **Shortcuts in Vietnamese**: the **Start Focus** action and its description, and the description of **Start Focus with Label**, now show in Vietnamese instead of English.
 - **Session lengths stored outside Settings**: a huge length set with `defaults write` or left in a damaged preferences file no longer crashes TimeMate at every launch. Stored lengths now run between 1 minute and 24 hours, and Settings → Durations shows the length the timer actually uses.
 - **Export CSV**: the oldest day, 90 days back, now counts every session of that day instead of only the ones after the current time of day, so its pomodoros, minutes and `goal_reached` match the streak and the sessions collected that day.

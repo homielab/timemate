@@ -12,15 +12,21 @@ enum SessionCycle {
 
   /// How long the timer may sit idle before the cycle starts over.
   static let staleAfter: TimeInterval = 4 * 60 * 60
+  /// How long the timer may sit idle across midnight before the cycle starts
+  /// over: a short break that crosses midnight keeps the cycle.
+  static let dayChangeGap: TimeInterval = 60 * 60
 
   /// Whether the focus sessions counted towards the long break are too old to
-  /// count: the last session began or ended on another calendar day (in
-  /// `calendar`'s time zone) or more than `staleAfter` before `now`. No known
-  /// activity (`nil`) is stale too. A clock set back is not.
+  /// count: the last session began or ended more than `staleAfter` before
+  /// `now`, or on another calendar day (in `calendar`'s time zone) and more
+  /// than `dayChangeGap` before `now` — last night versus this morning, while
+  /// pomodoros either side of midnight still make one cycle. No known activity
+  /// (`nil`) is stale too. A clock set back is not.
   static func isStale(lastActivity: Date?, now: Date, calendar: Calendar) -> Bool {
     guard let lastActivity else { return true }
-    if !calendar.isDate(lastActivity, inSameDayAs: now) { return true }
-    return now.timeIntervalSince(lastActivity) > staleAfter
+    let gap = now.timeIntervalSince(lastActivity)
+    if gap > staleAfter { return true }
+    return gap > dayChangeGap && !calendar.isDate(lastActivity, inSameDayAs: now)
   }
 
   /// `stored` clamped to `validRange`; a missing value gives the default.

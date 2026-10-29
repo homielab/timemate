@@ -140,20 +140,46 @@ final class SessionCycleTests: XCTestCase {
         lastActivity: last, now: march10(13).addingTimeInterval(1), calendar: utc))
   }
 
-  func testCycleIsStaleOnTheNextCalendarDay() {
+  func testCycleIsStaleAfterMoreThanFourHoursOnTheSameDay() {
+    XCTAssertTrue(
+      SessionCycle.isStale(lastActivity: march10(9), now: march10(14), calendar: utc))
+  }
+
+  func testShortGapAcrossMidnightKeepsTheCycle() {
     let lateNight = march10(23, 50)
     let afterMidnight = lateNight.addingTimeInterval(20 * 60)
-    XCTAssertTrue(SessionCycle.isStale(lastActivity: lateNight, now: afterMidnight, calendar: utc))
+    XCTAssertFalse(SessionCycle.isStale(lastActivity: lateNight, now: afterMidnight, calendar: utc))
+    XCTAssertFalse(
+      SessionCycle.isStale(
+        lastActivity: march10(23, 30), now: march10(23, 30).addingTimeInterval(3600),
+        calendar: utc))
+  }
+
+  func testCycleIsStaleOnTheNextDayAfterMoreThanAnHour() {
+    let lateNight = march10(23)
+    XCTAssertTrue(
+      SessionCycle.isStale(
+        lastActivity: lateNight, now: lateNight.addingTimeInterval(9 * 3600), calendar: utc))
+    XCTAssertTrue(
+      SessionCycle.isStale(
+        lastActivity: march10(23, 30), now: march10(23, 30).addingTimeInterval(3601),
+        calendar: utc))
+  }
+
+  func testSameDayGapOverAnHourKeepsTheCycle() {
+    XCTAssertFalse(
+      SessionCycle.isStale(lastActivity: march10(9), now: march10(11), calendar: utc))
   }
 
   func testCalendarDayFollowsTheCalendarsTimeZone() {
-    // 23:50 and 00:10 UTC are both on March 11 in Ho Chi Minh City (UTC+7).
+    // 16:30 and 18:00 UTC are 23:30 and 01:00 in Ho Chi Minh City (UTC+7):
+    // a 90 minute gap across midnight there, on the same day in UTC.
     var saigon = utc
     saigon.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")!
-    let lateNight = march10(23, 50)
-    let afterMidnight = lateNight.addingTimeInterval(20 * 60)
-    XCTAssertFalse(
-      SessionCycle.isStale(lastActivity: lateNight, now: afterMidnight, calendar: saigon))
+    let last = march10(16, 30)
+    let now = march10(18)
+    XCTAssertTrue(SessionCycle.isStale(lastActivity: last, now: now, calendar: saigon))
+    XCTAssertFalse(SessionCycle.isStale(lastActivity: last, now: now, calendar: utc))
   }
 
   func testUnknownLastActivityIsStale() {
