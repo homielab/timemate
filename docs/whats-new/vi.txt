@@ -5,7 +5,8 @@ Bộ hẹn giờ
 • Nút +5 phút cộng thêm năm phút cho phiên tập trung đang chạy hoặc đang tạm dừng khi bạn đang vào guồng, hoặc kéo dài giờ nghỉ.
 • Ghi lại việc bạn đang làm ở ô "Bạn đang làm gì?" và chọn lại nhanh từ các nhãn gần đây.
 • Tách riêng công tắc tự bắt đầu giờ nghỉ và tự bắt đầu phiên tập trung.
-• Tùy chọn: tạm dừng phiên tập trung khi Mac ngủ hoặc khóa màn hình.
+• Tùy chọn: tạm dừng phiên tập trung khi Mac ngủ hoặc khóa màn hình, và bật "Tự tiếp tục khi tôi quay lại" để phiên chạy tiếp sau khi bạn mở khóa màn hình hoặc đánh thức Mac.
+• Phiên tạm dừng nhiều giờ, ví dụ qua đêm, sẽ bắt đầu chu kỳ mới khi bạn tiếp tục, và vẫn giữ thời gian còn lại.
 • Nút Bắt đầu lại hỏi xác nhận khi phiên đang diễn ra.
 
 Thống kê

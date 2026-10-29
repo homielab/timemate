@@ -5,7 +5,8 @@ Timer
 • +5 min adds five minutes to a running or paused focus session when you are in the flow, or makes a break longer.
 • Name what you are working on with "What are you working on?", and pick it again from your recent labels.
 • Separate switches for auto-start of breaks and of focus sessions.
-• Optional: pause the focus session when the Mac sleeps or the screen locks.
+• Optional: pause the focus session when the Mac sleeps or the screen locks, and turn on "Resume when I'm back" to continue it a moment after you unlock the screen or wake the Mac.
+• A session paused for hours, for example overnight, starts a fresh cycle when you resume it, and keeps its time left.
 • Restart asks for confirmation while a session is in progress.
 
 Statistics
