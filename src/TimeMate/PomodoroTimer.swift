@@ -556,13 +556,16 @@ class PomodoroTimer: ObservableObject {
   /// Adds `minutes` to the running or paused session ("+5 min" on the break screen
   /// or in the popover during focus; the history records the longer length). A
   /// break that already ended and waits on the break screen starts again for
-  /// `minutes`. Does nothing when idle or during a postponed break. Returns
-  /// whether the time was added.
+  /// `minutes`. A session never grows past `SessionDuration.minuteRange`'s upper
+  /// bound (180 minutes); only the part that fits is added. Does nothing when
+  /// idle, during a postponed break or at that limit. Returns whether time was
+  /// added.
   @discardableResult
   func extend(by minutes: Int) -> Bool {
     guard
       let adjustment = SessionSequence.extend(
-        countdown, by: Self.seconds(forMinutes: minutes), now: now())
+        countdown, by: Self.seconds(forMinutes: minutes), limit: Self.sessionLimitSeconds,
+        now: now())
     else { return false }
     let wasWaiting = isWaitingToContinue
     isWaitingToContinue = false
@@ -584,6 +587,20 @@ class PomodoroTimer: ObservableObject {
     startTicking()
     saveSnapshot()
   }
+
+  /// Longest a session may become through "+5 min" or "Add Time", in seconds.
+  static var sessionLimitSeconds: Int {
+    seconds(forMinutes: SessionDuration.minuteRange.upperBound)
+  }
+
+  /// Whether the current session already lasts the longest a session may be, so
+  /// it cannot be extended (a break waiting on the break screen can).
+  var isAtSessionLimit: Bool {
+    state != .idle && !isWaitingToContinue && totalDuration >= Self.sessionLimitSeconds
+  }
+
+  /// Length of the current session in seconds.
+  var sessionLengthSeconds: Int { totalDuration }
 
   private var countdown: SessionSequence.Countdown {
     SessionSequence.Countdown(

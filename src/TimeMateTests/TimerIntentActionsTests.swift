@@ -234,7 +234,7 @@ final class TimerIntentActionsTests: XCTestCase {
     currentTime += 20
     timer.handleTick()
 
-    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), 5)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), .added(5))
 
     // Debug builds read minutes as seconds.
     XCTAssertEqual(timer.state, .active)
@@ -245,14 +245,14 @@ final class TimerIntentActionsTests: XCTestCase {
     TimerIntentActions.start(timer)
     TimerIntentActions.pause(timer)
 
-    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 10), 10)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 10), .added(10))
 
     XCTAssertEqual(timer.state, .paused)
     XCTAssertEqual(timer.timeRemaining, 135)
   }
 
   func testExtendDoesNothingWhenIdle() {
-    XCTAssertNil(TimerIntentActions.extend(timer, minutes: 5))
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), .noSession)
     XCTAssertEqual(timer.state, .idle)
     XCTAssertEqual(timer.timeRemaining, 125)
   }
@@ -265,22 +265,38 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertTrue(timer.isBreakPostponed)
     let endDate = timer.endDate
 
-    XCTAssertNil(TimerIntentActions.extend(timer, minutes: 5))
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), .noSession)
     XCTAssertTrue(timer.isBreakPostponed)
     XCTAssertEqual(timer.endDate, endDate)
   }
 
   func testExtendTextSaysWhatChanged() {
-    XCTAssertEqual(TimerIntentActions.extendText(added: 1), "Added 1 minute")
-    XCTAssertEqual(TimerIntentActions.extendText(added: 5), "Added 5 minutes")
-    XCTAssertEqual(TimerIntentActions.extendText(added: nil), "No session to extend")
+    XCTAssertEqual(TimerIntentActions.extendText(.added(1)), "Added 1 minute")
+    XCTAssertEqual(TimerIntentActions.extendText(.added(5)), "Added 5 minutes")
+    XCTAssertEqual(TimerIntentActions.extendText(.noSession), "No session to extend")
+    XCTAssertEqual(
+      TimerIntentActions.extendText(.atLimit), "Already at the 180-minute limit")
+  }
+
+  func testExtendStopsAtTheSessionLimit() {
+    TimerIntentActions.start(timer)
+    TimerIntentActions.pause(timer)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 53), .added(53))
+    XCTAssertEqual(timer.timeRemaining, 178)
+
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), .added(2))
+    XCTAssertEqual(timer.timeRemaining, 180)
+    XCTAssertTrue(timer.isAtSessionLimit)
+
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5), .atLimit)
+    XCTAssertEqual(timer.timeRemaining, 180)
   }
 
   func testExtendRestartsAFinishedBreak() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true
 
-    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 3), 3)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 3), .added(3))
 
     XCTAssertFalse(timer.isWaitingToContinue)
     XCTAssertEqual(timer.state, .active)
@@ -291,12 +307,13 @@ final class TimerIntentActionsTests: XCTestCase {
     TimerIntentActions.start(timer)
     TimerIntentActions.pause(timer)
 
-    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 0), 1)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 0), .added(1))
     XCTAssertEqual(timer.timeRemaining, 126)
     TimerIntentActions.extend(timer, minutes: -5)
     XCTAssertEqual(timer.timeRemaining, 127)
-    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 500), 60)
-    XCTAssertEqual(timer.timeRemaining, 187)
+    // 127 + 60 would pass the 180-minute limit, so only 53 fit.
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 500), .added(53))
+    XCTAssertEqual(timer.timeRemaining, 180)
   }
 
   func testStartContinuesPastAFinishedBreak() {

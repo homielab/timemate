@@ -140,6 +140,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- "+5 min" and the Shortcuts "Add Time" action no longer stretch a session past 180 minutes (the longest length in Settings → Durations): only the minutes that fit are added, and at the limit Shortcuts answers "Already at the 180-minute limit".
 - A session paused overnight (or for over 4 hours) no longer resumes the old cycle: it keeps its time left but starts a fresh cycle, so yesterday's pomodoros don't end it in a long break.
 - **Export sessions CSV…** now writes when a paused session really started; it used to show the end minus the session length (a session started at 09:00, paused 09:10–09:40 and done at 10:05 showed 09:40). Sessions recorded before this update keep their old start.
 - Settings → Durations → **Cycles** shows the number of focus sessions the timer really uses (e.g. 8, not an out-of-range 12 stored in defaults). VoiceOver reads it as "4 focus sessions" with a hint, in English and Vietnamese.

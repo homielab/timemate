@@ -187,6 +187,7 @@
 "Add ${minutes} minutes" = "Add ${minutes} minutes";
 "Added 1 minute" = "Added 1 minute";
 "Added %d minutes" = "Added %d minutes";
+"Already at the %d-minute limit" = "Already at the %d-minute limit";
 "No session to extend" = "No session to extend";
 "Starts or resumes the current TimeMate session." = "Starts or resumes the current TimeMate session.";
 "Pauses the running TimeMate session." = "Pauses the running TimeMate session.";

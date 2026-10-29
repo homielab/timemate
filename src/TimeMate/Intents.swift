@@ -30,21 +30,43 @@ enum TimerIntentActions {
   /// Shortest and longest extension "Add Time" accepts, in minutes.
   static let extendRange = 1...60
 
-  /// Adds `minutes` (kept within `extendRange`) to a running or paused session,
-  /// or restarts a finished break waiting on the break screen for that long,
-  /// like "+5 min". Does nothing when idle or during a postponed break. Returns
-  /// the minutes added, or nil when nothing changed.
-  @discardableResult
-  static func extend(_ timer: PomodoroTimer, minutes: Int) -> Int? {
-    let clamped = min(max(minutes, extendRange.lowerBound), extendRange.upperBound)
-    return timer.extend(by: clamped) ? clamped : nil
+  /// Outcome of "Add Time".
+  enum ExtendResult: Equatable {
+    case added(Int)
+    case atLimit
+    case noSession
   }
 
-  /// Spoken / shown answer of "Add Time": "Added 5 minutes", or "No session to
-  /// extend" when `added` is nil (idle, or a postponed break).
-  static func extendText(added: Int?) -> String {
-    guard let added else {
+  /// Adds `minutes` (kept within `extendRange`) to a running or paused session,
+  /// or restarts a finished break waiting on the break screen for that long,
+  /// like "+5 min". The session stops at the 180-minute limit, so fewer minutes
+  /// may be added. Does nothing when idle or during a postponed break.
+  @discardableResult
+  static func extend(_ timer: PomodoroTimer, minutes: Int) -> ExtendResult {
+    let clamped = min(max(minutes, extendRange.lowerBound), extendRange.upperBound)
+    if timer.isAtSessionLimit { return .atLimit }
+    let wasWaiting = timer.isWaitingToContinue
+    let before = wasWaiting ? 0 : timer.sessionLengthSeconds
+    guard timer.extend(by: clamped) else { return .noSession }
+    let addedSeconds = timer.sessionLengthSeconds - before
+    let perMinute = PomodoroTimer.seconds(forMinutes: 1)
+    return .added((addedSeconds + perMinute - 1) / perMinute)
+  }
+
+  /// Spoken / shown answer of "Add Time": "Added 5 minutes", "Already at the
+  /// 180-minute limit", or "No session to extend" (idle, or a postponed break).
+  static func extendText(_ result: ExtendResult) -> String {
+    let added: Int
+    switch result {
+    case .noSession:
       return NSLocalizedString("No session to extend", comment: "Shortcuts Add Time result")
+    case .atLimit:
+      return String(
+        format: NSLocalizedString(
+          "Already at the %d-minute limit", comment: "Shortcuts Add Time result"),
+        SessionDuration.minuteRange.upperBound)
+    case .added(let minutes):
+      added = minutes
     }
     if added == 1 {
       return NSLocalizedString("Added 1 minute", comment: "Shortcuts Add Time result")
@@ -203,7 +225,7 @@ struct ExtendSessionIntent: AppIntent {
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let added = TimerIntentActions.extend(.shared, minutes: minutes)
     return .result(
-      dialog: IntentDialog(stringLiteral: TimerIntentActions.extendText(added: added)))
+      dialog: IntentDialog(stringLiteral: TimerIntentActions.extendText(added)))
   }
 }
 

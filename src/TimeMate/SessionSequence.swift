@@ -99,15 +99,22 @@ enum SessionSequence {
 
   /// Adds `extra` seconds to the running session. A break that already ended and
   /// waits on the break screen starts again for `extra`. `nil` means nothing
-  /// changes (idle, a postponed break, or nothing to add).
-  static func extend(_ countdown: Countdown, by extra: Int, now: Date) -> Adjustment? {
-    guard extra > 0, !countdown.isBreakPostponed else { return nil }
+  /// changes (idle, a postponed break, nothing to add, or the session already
+  /// lasts `limit` seconds). The session never grows past `limit`.
+  static func extend(
+    _ countdown: Countdown, by requested: Int, limit: Int = .max, now: Date
+  ) -> Adjustment? {
+    guard requested > 0, !countdown.isBreakPostponed else { return nil }
     if countdown.isWaitingToContinue {
       guard isBreak(countdown.sessionType) else { return nil }
+      let extra = min(requested, limit)
+      guard extra > 0 else { return nil }
       return Adjustment(
         state: .active, totalDuration: extra, timeRemaining: extra,
         endDate: now.addingTimeInterval(TimeInterval(extra)))
     }
+    let extra = min(requested, limit - countdown.totalDuration)
+    guard extra > 0 else { return nil }
     switch countdown.state {
     case .active:
       guard let endDate = countdown.endDate else { return nil }

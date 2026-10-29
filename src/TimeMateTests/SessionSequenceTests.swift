@@ -96,6 +96,28 @@ final class SessionSequenceTests: XCTestCase {
     XCTAssertEqual(result.progress, 160.0 / 360.0, accuracy: 0.0001)
   }
 
+  func testExtendAddsOnlyUpToTheLimit() throws {
+    let result = try XCTUnwrap(
+      SessionSequence.extend(countdown(total: 178, remaining: 50), by: 5, limit: 180, now: now))
+    XCTAssertEqual(result.totalDuration, 180)
+    XCTAssertEqual(result.timeRemaining, 102)
+  }
+
+  func testExtendAtTheLimitChangesNothing() {
+    XCTAssertNil(
+      SessionSequence.extend(countdown(total: 180), by: 5, limit: 180, now: now))
+    XCTAssertNil(
+      SessionSequence.extend(
+        countdown(state: .paused, total: 200), by: 5, limit: 180, now: now))
+  }
+
+  func testExtendWaitingBreakIsKeptWithinTheLimit() throws {
+    let result = try XCTUnwrap(
+      SessionSequence.extend(
+        countdown(state: .idle, waiting: true), by: 300, limit: 180, now: now))
+    XCTAssertEqual(result.totalDuration, 180)
+  }
+
   func testExtendPausedBreakAddsToRemaining() throws {
     let result = try XCTUnwrap(
       SessionSequence.extend(countdown(state: .paused), by: 60, now: now))

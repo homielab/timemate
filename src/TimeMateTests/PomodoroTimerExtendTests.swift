@@ -28,6 +28,15 @@ final class PomodoroTimerExtendTests: TimerTestCase {
     #endif
   }
 
+  func testExtendStopsAtTheSessionLimit() {
+    timer.startTimer()
+    while timer.extend(by: 60) {}
+    XCTAssertEqual(timer.timeRemaining, PomodoroTimer.sessionLimitSeconds)
+    XCTAssertTrue(timer.isAtSessionLimit)
+    XCTAssertFalse(timer.extend(by: 5))
+    XCTAssertEqual(timer.timeRemaining, PomodoroTimer.sessionLimitSeconds)
+  }
+
   func testExtendPushesEndDateOfRunningBreakByFiveMinutes() {
     startShortBreak()
     let endDate = timer.endDate!

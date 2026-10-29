@@ -187,6 +187,7 @@
 "Add ${minutes} minutes" = "Thêm ${minutes} phút";
 "Added 1 minute" = "Đã thêm 1 phút";
 "Added %d minutes" = "Đã thêm %d phút";
+"Already at the %d-minute limit" = "Đã đạt giới hạn %d phút";
 "No session to extend" = "Không có phiên nào để thêm thời gian";
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
