@@ -54,7 +54,7 @@ final class HotKeyTests: XCTestCase {
 
   // MARK: - Persistence
 
-  func testMissingDefaultsGiveDefaultShortcutsAndOnlyResetOff() {
+  func testMissingDefaultsGiveDefaultShortcutsAndResetAndExtendOff() {
     let manager = HotKeyManager(defaults: defaults)
     for action in HotKeyAction.allCases {
       XCTAssertEqual(manager.shortcut(for: action), action.defaultShortcut)
@@ -62,6 +62,15 @@ final class HotKeyTests: XCTestCase {
     XCTAssertTrue(manager.isEnabled(.startPause))
     XCTAssertTrue(manager.isEnabled(.skip))
     XCTAssertFalse(manager.isEnabled(.reset))
+    XCTAssertFalse(manager.isEnabled(.extend))
+  }
+
+  func testDefaultShortcutsAreAllDifferent() {
+    XCTAssertEqual(HotKeyAction.extend.defaultShortcut.displayString, "⌃⌥E")
+    let shortcuts = HotKeyAction.allCases.map(\.defaultShortcut)
+    for (i, a) in shortcuts.enumerated() {
+      for b in shortcuts[(i + 1)...] { XCTAssertNotEqual(a, b) }
+    }
   }
 
   func testResetShortcutCanBeTurnedOnAndRecorded() {

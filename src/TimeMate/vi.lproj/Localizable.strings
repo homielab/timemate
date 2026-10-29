@@ -235,6 +235,7 @@
 "Preview Break End Sound" = "Nghe thử âm hết giờ nghỉ";
 "Plays when a break ends. Until you pick one, it is the same as the alarm sound." = "Phát khi hết giờ nghỉ. Khi chưa chọn, dùng giống âm báo.";
 "Reset Timer" = "Đặt lại hẹn giờ";
+"Add 5 Minutes" = "Thêm 5 phút";
 "Stops the TimeMate timer and starts the current session over." = "Dừng hẹn giờ TimeMate và bắt đầu lại phiên hiện tại.";
 "Space" = "Dấu cách";
 "Keypad %@" = "Bàn phím số %@";

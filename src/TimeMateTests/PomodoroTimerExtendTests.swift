@@ -122,6 +122,29 @@ final class PomodoroTimerExtendTests: TimerTestCase {
     XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(fiveMinutes))
   }
 
+  func testExtendHotKeyAddsFiveMinutesWhileRunningOrPaused() {
+    timer.startTimer()
+    timer.perform(.extend)
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(3 + fiveMinutes))
+    timer.pauseTimer()
+    timer.perform(.extend)
+    XCTAssertEqual(timer.state, .paused)
+    XCTAssertEqual(timer.timeRemaining, 3 + 2 * Int(fiveMinutes))
+  }
+
+  func testExtendHotKeyDoesNothingWhenIdleOrDuringPostponedBreak() {
+    timer.perform(.extend)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.timeRemaining, 3)
+
+    startShortBreak()
+    timer.postponeBreak(minutes: 3)
+    let endDate = timer.endDate
+    timer.perform(.extend)
+    XCTAssertTrue(timer.isBreakPostponed)
+    XCTAssertEqual(timer.endDate, endDate)
+  }
+
   func testPostponeHidesBreakAndBringsItBackOnTime() {
     startShortBreak()
     timer.postponeBreak(minutes: 3)

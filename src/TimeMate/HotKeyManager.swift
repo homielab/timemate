@@ -12,6 +12,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
   case startPause = 1
   case skip = 2
   case reset = 3
+  case extend = 4
 
   var id: UInt32 { rawValue }
 
@@ -25,17 +26,18 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .startPause: name = "Start / Pause"
     case .skip: name = "Skip Session"
     case .reset: name = "Reset Timer"
+    case .extend: name = "Add 5 Minutes"
     }
     return bundle.localizedString(forKey: name, value: name, table: nil)
   }
 
-  /// Start/pause and skip are on from the start; reset only once the user
-  /// turns it on, so a stray press can't throw away a running session.
+  /// Start/pause and skip are on from the start; reset and extend only once
+  /// the user turns them on, so a stray press can't change a running session.
   var isEnabledByDefault: Bool {
-    self != .reset
+    self == .startPause || self == .skip
   }
 
-  /// ⌃⌥P, ⌃⌥S and ⌃⌥R: free in macOS and the common apps, easy to press.
+  /// ⌃⌥P, ⌃⌥S, ⌃⌥R and ⌃⌥E: free in macOS and the common apps, easy to press.
   var defaultShortcut: HotKeyShortcut {
     switch self {
     case .startPause:
@@ -47,6 +49,9 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .reset:
       return HotKeyShortcut(
         keyCode: UInt32(kVK_ANSI_R), modifiers: UInt32(controlKey | optionKey))
+    case .extend:
+      return HotKeyShortcut(
+        keyCode: UInt32(kVK_ANSI_E), modifiers: UInt32(controlKey | optionKey))
     }
   }
 
@@ -55,6 +60,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .startPause: return SettingsKey.hotKeyStartPauseKeyCode
     case .skip: return SettingsKey.hotKeySkipKeyCode
     case .reset: return SettingsKey.hotKeyResetKeyCode
+    case .extend: return SettingsKey.hotKeyExtendKeyCode
     }
   }
 
@@ -63,6 +69,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .startPause: return SettingsKey.hotKeyStartPauseModifiers
     case .skip: return SettingsKey.hotKeySkipModifiers
     case .reset: return SettingsKey.hotKeyResetModifiers
+    case .extend: return SettingsKey.hotKeyExtendModifiers
     }
   }
 
@@ -71,6 +78,7 @@ enum HotKeyAction: UInt32, CaseIterable, Identifiable {
     case .startPause: return SettingsKey.hotKeyStartPauseEnabled
     case .skip: return SettingsKey.hotKeySkipEnabled
     case .reset: return SettingsKey.hotKeyResetEnabled
+    case .extend: return SettingsKey.hotKeyExtendEnabled
     }
   }
 }
@@ -79,7 +87,8 @@ extension PomodoroTimer {
   /// Runs a global shortcut: start/pause toggles the timer (and continues past
   /// a break screen waiting for the user); skip moves to the next session;
   /// reset stops the timer and starts the current session over, like Reset in
-  /// the popover and the menu bar item's menu.
+  /// the popover and the menu bar item's menu; extend adds 5 minutes to the
+  /// running or paused session, like "+5 min" (nothing when idle).
   func perform(_ action: HotKeyAction) {
     switch action {
     case .startPause:
@@ -92,6 +101,8 @@ extension PomodoroTimer {
       skipSession()
     case .reset:
       stopTimer()
+    case .extend:
+      TimerIntentActions.extend(self, minutes: 5)
     }
   }
 }

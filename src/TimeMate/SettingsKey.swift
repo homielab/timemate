@@ -52,6 +52,10 @@ enum SettingsKey {
   static let hotKeyResetModifiers = "hotKeyResetModifiers"
   /// The Reset shortcut is off until the user turns it on.
   static let hotKeyResetEnabled = "hotKeyResetEnabled"
+  static let hotKeyExtendKeyCode = "hotKeyExtendKeyCode"
+  static let hotKeyExtendModifiers = "hotKeyExtendModifiers"
+  /// The Add 5 Minutes shortcut is off until the user turns it on.
+  static let hotKeyExtendEnabled = "hotKeyExtendEnabled"
   /// Pomodoros to finish per day (`DailyGoal`); 0 = no goal.
   static let dailyGoal = "dailyGoal"
   /// When the "daily goal reached" notification last went out, so it shows once a day.

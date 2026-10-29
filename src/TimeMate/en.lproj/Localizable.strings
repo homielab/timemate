@@ -235,6 +235,7 @@
 "Preview Break End Sound" = "Preview Break End Sound";
 "Plays when a break ends. Until you pick one, it is the same as the alarm sound." = "Plays when a break ends. Until you pick one, it is the same as the alarm sound.";
 "Reset Timer" = "Reset Timer";
+"Add 5 Minutes" = "Add 5 Minutes";
 "Stops the TimeMate timer and starts the current session over." = "Stops the TimeMate timer and starts the current session over.";
 "Space" = "Space";
 "Keypad %@" = "Keypad %@";
