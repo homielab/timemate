@@ -213,22 +213,36 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(try Data(contentsOf: backups[0]), Data(mixed.utf8))
   }
 
-  func testUnreadableRecordsAreBackedUpBeforeReset() throws {
+  func testResetDeletesTheBackupOfUnreadableRecords() throws {
     let mixed = """
       [
         {"completed": true, "end": "2026-03-10T14:30:00Z", "kind": "x",
-         "start": "2026-03-10T14:05:00Z"}
+         "start": "2026-03-10T14:05:00Z", "label": "Private"}
       ]
       """
     let folder = fileURL.deletingLastPathComponent()
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     try Data(mixed.utf8).write(to: fileURL)
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1))
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder).count, 1, "save backs up the file")
 
-    makeHistory().reset()
+    history.reset()
 
-    let backups = SessionHistory.corruptBackups(in: folder)
-    XCTAssertEqual(backups.count, 1)
-    XCTAssertEqual(try Data(contentsOf: backups[0]), Data(mixed.utf8))
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder), [])
+    XCTAssertEqual(makeHistory().records, [])
+  }
+
+  func testResetDeletesTheBackupOfAnUnreadableFile() throws {
+    let folder = fileURL.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data("not json".utf8).write(to: fileURL)
+    let history = makeHistory()
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder).count, 1)
+
+    history.reset()
+
+    XCTAssertEqual(SessionHistory.corruptBackups(in: folder), [])
     XCTAssertEqual(makeHistory().records, [])
   }
 

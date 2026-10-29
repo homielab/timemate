@@ -142,11 +142,23 @@ final class SessionHistory: ObservableObject {
     return labels
   }
 
-  /// Deletes all recorded sessions.
+  /// Deletes all recorded sessions, and the backups of unreadable history
+  /// files, which may still hold session labels. A backup that can't be
+  /// deleted is logged and doesn't stop the reset.
   func reset() {
     records = []
     goalStreakCarry = nil
+    needsBackupBeforeSave = false
     save()
+    guard let fileURL else { return }
+    for backup in Self.corruptBackups(in: fileURL.deletingLastPathComponent()) {
+      do {
+        try FileManager.default.removeItem(at: backup)
+      } catch {
+        Logger.history.error(
+          "Could not delete a history backup: \(error.localizedDescription, privacy: .public)")
+      }
+    }
   }
 
   /// Completed focus sessions and focus time of the calendar day containing
