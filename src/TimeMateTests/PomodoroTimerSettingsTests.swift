@@ -95,14 +95,14 @@ final class PomodoroTimerSettingsTests: TimerTestCase {
     XCTAssertEqual(history.todayTotals().focusSeconds, 3)
   }
 
-  func testSkippedSessionsAreNotRecorded() {
+  func testSessionsSkippedBeforeHalfAreNotRecorded() {
     timer.startTimer()
-    runTicks(timer, 2)
-    timer.skipSession()  // focus skipped
+    runTicks(timer, 1)
+    timer.skipSession()  // focus skipped before half
     timer.skipSession()  // short break skipped
 
     XCTAssertEqual(history.records, [])
-    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
   }
 
   func testPausedTimeIsNotCountedAsFocus() {

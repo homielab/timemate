@@ -142,6 +142,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Skipping a focus session after half of it ran now records the time you focused in History, Today, the daily goal and Statistics, as it already counted in the cycle. A focus session skipped earlier still records nothing.
 - "+5 min" and the Shortcuts "Add Time" action no longer stretch a session past 180 minutes (the longest length in Settings → Durations): only the minutes that fit are added, and at the limit Shortcuts answers "Already at the 180-minute limit".
 - At the 180-minute limit, "+5 min" in the popover and on the break screen is dimmed and says why ("Already at the 180-minute limit", also read by VoiceOver), and the Add 5 Minutes shortcut shows that message instead of doing nothing.
 - A session paused overnight (or for over 4 hours) no longer resumes the old cycle: it keeps its time left but starts a fresh cycle, so yesterday's pomodoros don't end it in a long break.

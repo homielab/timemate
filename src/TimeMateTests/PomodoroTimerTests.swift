@@ -396,6 +396,35 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
   }
 
+  func testSkipFocusPastHalfRecordsTheTimeItRan() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    runTicks(timer, 2)
+    timer.skipSession()
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(history.records.first?.seconds, 2)
+    XCTAssertEqual(history.records.first?.end, currentTime)
+    XCTAssertEqual(history.records.first?.label, "Write report")
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+  }
+
+  func testSkipFocusBeforeHalfRecordsNothing() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.skipSession()
+    XCTAssertTrue(history.records.isEmpty)
+    XCTAssertEqual(history.todayTotals().pomodoros, 0)
+  }
+
+  func testSkipBreakRecordsNothing() {
+    timer.startTimer()
+    finishSession(timer)
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.skipSession()
+    XCTAssertEqual(history.records.count, 1)
+  }
+
   func testSkipPausedFocusBeforeHalfDoesNotCountIt() {
     timer.startTimer()
     runTicks(timer, 1)

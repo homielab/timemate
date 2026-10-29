@@ -530,11 +530,19 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
+    let elapsed = TimeInterval(max(0, totalDuration - secondsRemaining))
     let counts =
       state != .idle
-      && SessionSequence.skipCounts(
-        elapsed: TimeInterval(totalDuration - secondsRemaining),
-        total: TimeInterval(totalDuration))
+      && SessionSequence.skipCounts(elapsed: elapsed, total: TimeInterval(totalDuration))
+    // A focus session skipped past half counts in the cycle, so its real
+    // focus time (pauses excluded) goes into History, Today and the goal too.
+    if counts, currentSessionType == .focus {
+      let pomodorosBefore = history.todayTotals().pomodoros
+      history.recordCompletedSession(
+        .focus, duration: elapsed, start: startedAt, end: now(),
+        label: sessionLabel(for: .focus))
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+    }
     clearSessionNotifications()
     isWaitingToContinue = false
     endDate = nil
