@@ -120,7 +120,10 @@ certificate. The tests include a check that `en.lproj` and `vi.lproj` have the s
 same format specifiers (`%@`, `%d`, `%lld`…), so a new string must be added to both languages.
 Texts with a count that needs singular and plural forms ("1 pomodoro" / "2 pomodoros") go in
 `Localizable.stringsdict` of both languages instead of `Localizable.strings` (Vietnamese only
-needs the `other` form); the same check covers them.
+needs the `other` form); the same check covers them. Shortcuts reads the titles, descriptions,
+summaries and parameter prompts in `Intents.swift` from `Localizable.strings` with the English text
+as the key (`\(\.$label)` becomes `${label}`); `IntentStringsTests` fails when one is missing, so
+a reworded description needs its key changed in both languages.
 
 ### Project Layout
 

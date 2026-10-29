@@ -172,9 +172,11 @@
 "Pause Timer" = "Pause Timer";
 "Get Timer Status" = "Get Timer Status";
 "Get Today's Progress" = "Get Today's Progress";
+"Start Focus" = "Start Focus";
+"Starts a TimeMate focus session, or resumes the current session. A break that has not started yet is skipped." = "Starts a TimeMate focus session, or resumes the current session. A break that has not started yet is skipped.";
 "Start Focus with Label" = "Start Focus with Label";
 "Add Time" = "Add Time";
-"Sets what you are working on and starts or resumes the current TimeMate session. A running session keeps its label." = "Sets what you are working on and starts or resumes the current TimeMate session. A running session keeps its label.";
+"Sets what you are working on and starts a TimeMate focus session, or resumes the current session. A running session keeps its label." = "Sets what you are working on and starts a TimeMate focus session, or resumes the current session. A running session keeps its label.";
 "Adds minutes (1 to 60) to the running or paused TimeMate session, or restarts a finished break for that long." = "Adds minutes (1 to 60) to the running or paused TimeMate session, or restarts a finished break for that long.";
 "Label" = "Label";
 "Minutes" = "Minutes";
