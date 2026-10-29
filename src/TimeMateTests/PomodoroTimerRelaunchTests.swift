@@ -125,6 +125,36 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     XCTAssertEqual(history.records.count, 2)
   }
 
+  func testPausedSessionKeepsItsStartAfterRelaunch() {
+    timer = makeTimer(focus: 300)
+    let began = currentTime!
+    timer.startTimer()
+    runTicks(timer, 100)
+    timer.pauseTimer()
+    let relaunched = relaunch(after: 1800)
+    relaunched.startTimer()
+    finishSession(relaunched)
+    XCTAssertEqual(history.records.last?.start, began)
+    XCTAssertEqual(history.records.last?.duration, 300)
+  }
+
+  func testSnapshotWithoutStartRecordsEndMinusLength() throws {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    runTicks(timer, 100)
+    timer.pauseTimer()
+    // A snapshot saved by an older version has no start.
+    var snapshot = try XCTUnwrap(TimerSnapshot.load(from: defaults))
+    snapshot.startedAt = nil
+    snapshot.save(to: defaults)
+    let relaunched = relaunch(after: 1800)
+    relaunched.startTimer()
+    let resumed = currentTime!
+    finishSession(relaunched)
+    XCTAssertEqual(history.records.last?.start, resumed.addingTimeInterval(-100))
+    XCTAssertEqual(history.records.last?.duration, 300)
+  }
+
   func testPostponedBreakSurvivesRelaunch() {
     timer = makeTimer(focus: 3, short: 2)
     timer.startTimer()

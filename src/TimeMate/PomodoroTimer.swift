@@ -67,6 +67,10 @@ class PomodoroTimer: ObservableObject {
   /// When a session last began or ended; an idle timer whose cycle is older
   /// than `SessionCycle.isStale` allows starts the cycle over.
   private(set) var lastActivity: Date?
+  /// When the current session began, before any pause; `nil` when none runs or
+  /// it came from a snapshot saved before this was kept (the history then
+  /// takes the end minus the duration).
+  private(set) var startedAt: Date?
   /// When the latest tick fired, per `now`; lets tests verify the injected clock.
   private(set) var lastTickAt: Date?
   /// Wall-clock moment the running session ends. The remaining time is always
@@ -181,6 +185,7 @@ class PomodoroTimer: ObservableObject {
     if state != .paused {
       resetForCurrentSession()
       startedLabel = sessionLabel ?? ""
+      startedAt = now()
     }
     state = .active
     lastActivity = now()
@@ -201,6 +206,7 @@ class PomodoroTimer: ObservableObject {
     focusSessionsCompleted = 0
     currentSessionType = .focus
     startedLabel = nil
+    startedAt = nil
     resetForCurrentSession()
   }
 
@@ -261,6 +267,7 @@ class PomodoroTimer: ObservableObject {
       // The postponed break comes back at its full length; long after it came
       // due (the Mac slept) it waits for Start instead of covering the screen.
       resetForCurrentSession()
+      startedAt = isLongOverdue ? nil : tickTime
       if isLongOverdue {
         self.endDate = nil
         timer?.cancel()
@@ -290,8 +297,8 @@ class PomodoroTimer: ObservableObject {
       // Only sessions that run to the end count; skipping never reaches here.
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
-        currentSessionType, duration: TimeInterval(totalDuration), end: endDate,
-        label: sessionLabel(for: currentSessionType))
+        currentSessionType, duration: TimeInterval(totalDuration), start: startedAt,
+        end: endDate, label: sessionLabel(for: currentSessionType))
       // A session that ended long ago (the Mac slept through it) finishes
       // silently, like one restored after quitting the app, and the next
       // session waits for Start: no break screen for a break that is long gone.
@@ -489,6 +496,7 @@ class PomodoroTimer: ObservableObject {
     currentSessionType = next.sessionType
     focusSessionsCompleted = next.focusSessionsCompleted
     startedLabel = nil
+    startedAt = nil
     resetForCurrentSession()
     if start ?? autoStart.shouldStart(next: next.sessionType) {
       beginSession()
@@ -558,7 +566,8 @@ class PomodoroTimer: ObservableObject {
       state: state, sessionType: currentSessionType, endDate: endDate,
       remaining: timeRemaining, totalDuration: totalDuration,
       focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
-      isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity
+      isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity,
+      startedAt: startedAt
     ).save(to: defaults)
   }
 
@@ -577,6 +586,7 @@ class PomodoroTimer: ObservableObject {
     focusSessionsCompleted = snapshot.focusSessionsCompleted
     startedLabel = snapshot.label
     lastActivity = snapshot.lastActivity
+    startedAt = snapshot.startedAt
     defer { restartCycleIfStale() }
     resetForCurrentSession()
 
@@ -609,7 +619,7 @@ class PomodoroTimer: ObservableObject {
       lastActivity = end
       let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
-        currentSessionType, duration: TimeInterval(duration), end: end,
+        currentSessionType, duration: TimeInterval(duration), start: startedAt, end: end,
         label: sessionLabel(for: currentSessionType))
       sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
       advanceToNextSession(start: startNext)

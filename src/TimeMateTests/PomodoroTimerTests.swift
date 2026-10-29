@@ -334,6 +334,30 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.timeRemaining, 1090)
   }
 
+  func testPausedSessionRecordsItsRealStart() {
+    timer = makeTimer(focus: 1200)
+    let began = currentTime!
+    timer.startTimer()
+    runTicks(timer, 600)
+    timer.pauseTimer()
+    advanceClock(by: 1800)
+    timer.startTimer()
+    finishSession(timer)
+    let record = history.records.last
+    XCTAssertEqual(record?.start, began)
+    XCTAssertEqual(record?.end, began.addingTimeInterval(1200 + 1800))
+    XCTAssertEqual(record?.duration, 1200)
+  }
+
+  func testUnpausedSessionStartsAtEndMinusLength() {
+    timer = makeTimer(focus: 1200)
+    let began = currentTime!
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(history.records.last?.start, began)
+    XCTAssertEqual(history.records.last?.duration, 1200)
+  }
+
   // MARK: - Restart / skip / stop
 
   func testRestartCycleResetsEverything() {

@@ -20,16 +20,19 @@ final class SessionHistory: ObservableObject {
       }
     }
 
-    /// Effective start: the end minus the session length, so paused time is
-    /// not counted as focus time.
+    /// When the session began. Files written before `seconds` existed store the
+    /// end minus the session length here instead.
     let start: Date
     let end: Date
     let kind: Kind
     let completed: Bool
     /// What the focus session was for; missing in files written before labels.
     var label: String? = nil
+    /// The session length, paused time excluded; missing in older files, where
+    /// `end - start` is that length.
+    var seconds: TimeInterval? = nil
 
-    var duration: TimeInterval { max(0, end.timeIntervalSince(start)) }
+    var duration: TimeInterval { max(0, seconds ?? end.timeIntervalSince(start)) }
   }
 
   struct DayTotals: Equatable {
@@ -114,13 +117,18 @@ final class SessionHistory: ObservableObject {
   }
 
   /// Records a completed session that ended at `end` after running `duration`
-  /// seconds, with an optional `label` (see `SessionLabel.normalized`).
+  /// seconds, with an optional `label` (see `SessionLabel.normalized`). `start`
+  /// is when it began, pauses included; `nil` (or a value later than `end` minus
+  /// `duration`) records `end` minus `duration`.
   func recordCompletedSession(
-    _ sessionType: SessionType, duration: TimeInterval, end: Date, label: String? = nil
+    _ sessionType: SessionType, duration: TimeInterval, start: Date? = nil, end: Date,
+    label: String? = nil
   ) {
+    let fallback = end.addingTimeInterval(-max(0, duration))
     let record = Record(
-      start: end.addingTimeInterval(-max(0, duration)), end: end,
-      kind: Record.Kind(sessionType), completed: true, label: SessionLabel.normalized(label))
+      start: start.flatMap { $0 <= fallback ? $0 : nil } ?? fallback, end: end,
+      kind: Record.Kind(sessionType), completed: true, label: SessionLabel.normalized(label),
+      seconds: max(0, duration))
     records = trimmed(records + [record])
     save()
   }

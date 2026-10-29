@@ -22,6 +22,10 @@ struct TimerSnapshot: Codable, Equatable {
   /// When a session last began or ended. `nil` in snapshots saved before this
   /// field existed; the cycle then counts as stale (`SessionCycle.isStale`).
   var lastActivity: Date?
+  /// When the current session began, before any pause. `nil` when idle or in
+  /// snapshots saved before this field existed: the history then records the
+  /// session as starting at its end minus its duration.
+  var startedAt: Date? = nil
 
   /// Whether the values make sense together; anything else is treated as damaged.
   var isValid: Bool {

@@ -107,7 +107,8 @@ final class SessionHistoryTests: XCTestCase {
     let json = try XCTUnwrap(
       JSONSerialization.jsonObject(with: data) as? [[String: Any]])
     XCTAssertEqual(json.count, 1)
-    XCTAssertEqual(Set(json[0].keys), ["start", "end", "kind", "completed"])
+    XCTAssertEqual(Set(json[0].keys), ["start", "end", "kind", "completed", "seconds"])
+    XCTAssertEqual(json[0]["seconds"] as? Double, 300)
     XCTAssertEqual(json[0]["kind"] as? String, "short")
     XCTAssertEqual(json[0]["completed"] as? Bool, true)
   }
