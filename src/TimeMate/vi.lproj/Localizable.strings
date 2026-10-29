@@ -290,3 +290,5 @@
 "Shift" = "Shift";
 "Command" = "Command";
 "Long break after this many focus sessions" = "Nghỉ dài sau số phiên tập trung này";
+"By hour" = "Theo giờ";
+"Most focused: %@" = "Tập trung nhất: %@";

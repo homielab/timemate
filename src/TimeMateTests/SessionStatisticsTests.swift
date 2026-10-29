@@ -803,4 +803,69 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(breakdown.unlabeledMinutes, 55)
     XCTAssertEqual(SessionStatistics.labelBreakdown([]).otherSeconds, 0)
   }
+
+  func testHourlyFocusSplitsSessionsAcrossHours() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      labeled(nil, end: date(2026, 3, 10, 10, 15, in: utc)),  // 9:50–10:15
+      labeled(nil, end: date(2026, 3, 9, 14, 30, in: utc), minutes: 90),  // 13:00–14:30
+      labeled(nil, end: date(2026, 3, 1, 9, in: utc)),  // outside the 7 days
+    ]
+
+    let hours = SessionStatistics.hourlyFocus(
+      from: records, today: today, length: 7, calendar: utc)
+
+    XCTAssertEqual(hours.count, 24)
+    XCTAssertEqual(hours[9], 600)
+    XCTAssertEqual(hours[10], 900)
+    XCTAssertEqual(hours[13], 3600)
+    XCTAssertEqual(hours[14], 1800)
+    XCTAssertEqual(hours.reduce(0, +), (25 + 90) * 60)
+    XCTAssertEqual(SessionStatistics.mostFocusedHour(hours), 13)
+  }
+
+  func testHourlyFocusIgnoresBreaksAndEmptyHistory() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let end = date(2026, 3, 10, 9, in: utc)
+    let records = [
+      Record(start: end.addingTimeInterval(-300), end: end, kind: .short, completed: true),
+      Record(start: end.addingTimeInterval(-900), end: end, kind: .focus, completed: false),
+    ]
+    for history in [[], records] {
+      let hours = SessionStatistics.hourlyFocus(
+        from: history, today: today, length: 30, calendar: utc)
+      XCTAssertEqual(hours, Array(repeating: 0, count: 24))
+      XCTAssertNil(SessionStatistics.mostFocusedHour(hours))
+    }
+  }
+
+  func testHourlyFocusAcrossDaylightSavingChanges() {
+    let newYork = calendar("America/New_York")
+    // 2026-03-08: 2:00 jumps to 3:00. 1:50–3:15 local is 25 real minutes.
+    let spring = labeled(nil, end: date(2026, 3, 8, 3, 15, in: newYork))
+    // 2026-11-01: 1:00–2:00 happens twice. A session over both 1 AMs counts into hour 1.
+    let fallEnd = date(2026, 11, 1, 1, 30, in: newYork).addingTimeInterval(3600)
+    let fall = Record(
+      start: fallEnd.addingTimeInterval(-3600), end: fallEnd, kind: .focus, completed: true)
+
+    let springHours = SessionStatistics.hourlyFocus(
+      from: [spring], today: date(2026, 3, 8, 12, in: newYork), length: 7, calendar: newYork)
+    XCTAssertEqual(springHours[1], 600)
+    XCTAssertEqual(springHours[2], 0)
+    XCTAssertEqual(springHours[3], 900)
+
+    let fallHours = SessionStatistics.hourlyFocus(
+      from: [fall], today: date(2026, 11, 1, 12, in: newYork), length: 7, calendar: newYork)
+    XCTAssertEqual(fallHours[1], 3600)
+    XCTAssertEqual(fallHours.reduce(0, +), 3600)
+  }
+
+  func testMostFocusedHourPicksEarliestOnTie() {
+    var hours = [TimeInterval](repeating: 0, count: 24)
+    hours[15] = 600
+    hours[9] = 600
+    XCTAssertEqual(SessionStatistics.mostFocusedHour(hours), 9)
+  }
 }

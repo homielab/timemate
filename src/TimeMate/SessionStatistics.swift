@@ -163,6 +163,40 @@ enum SessionStatistics {
       .map { LabelTotal(label: $0.label, pomodoros: $0.pomodoros, focusSeconds: $0.seconds) }
   }
 
+  /// Focus seconds per hour of the day (24 entries, index = local hour) over the last
+  /// `length` days (the window of `period`, by session end). Each completed focus
+  /// session runs from `end - duration` to `end` and is split across the hours it
+  /// touches, so 9:50–10:15 adds 10 minutes to hour 9 and 15 to hour 10. The repeated
+  /// hour of a DST fall-back counts into that hour; a skipped hour stays empty.
+  static func hourlyFocus(
+    from records: [SessionHistory.Record], today: Date, length: Int, calendar: Calendar
+  ) -> [TimeInterval] {
+    var hours = [TimeInterval](repeating: 0, count: 24)
+    let lastDay = calendar.startOfDay(for: today)
+    guard
+      let firstDay = calendar.date(byAdding: .day, value: -(max(1, length) - 1), to: lastDay),
+      let end = calendar.date(byAdding: .day, value: 1, to: lastDay)
+    else { return hours }
+    let start = calendar.startOfDay(for: firstDay)
+    for record in records
+    where record.kind == .focus && record.completed && record.end >= start && record.end < end {
+      var cursor = record.end.addingTimeInterval(-record.duration)
+      while cursor < record.end {
+        let hourEnd = calendar.dateInterval(of: .hour, for: cursor)?.end ?? record.end
+        let chunkEnd = min(max(hourEnd, cursor.addingTimeInterval(1)), record.end)
+        hours[calendar.component(.hour, from: cursor)] += chunkEnd.timeIntervalSince(cursor)
+        cursor = chunkEnd
+      }
+    }
+    return hours
+  }
+
+  /// The hour (0–23) with the most focus time; on a tie the earliest. Nil when empty.
+  static func mostFocusedHour(_ hours: [TimeInterval]) -> Int? {
+    guard let best = hours.max(), best > 0 else { return nil }
+    return hours.firstIndex(of: best)
+  }
+
   /// What the Statistics list shows: the `limit` longest named labels, the rest of
   /// the named ones together as "Other", and the time without a label.
   struct LabelBreakdown: Equatable {
@@ -285,6 +319,12 @@ extension SessionHistory {
   /// Focus time per label over the last `days` days.
   func labelTotals(days: Int) -> [SessionStatistics.LabelTotal] {
     SessionStatistics.labelTotals(
+      from: records, today: currentDate, length: days, calendar: calendar)
+  }
+
+  /// Focus seconds per hour of the day over the last `days` days.
+  func hourlyFocus(days: Int) -> [TimeInterval] {
+    SessionStatistics.hourlyFocus(
       from: records, today: currentDate, length: days, calendar: calendar)
   }
 

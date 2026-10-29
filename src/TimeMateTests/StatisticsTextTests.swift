@@ -190,4 +190,16 @@ final class StatisticsTextTests: XCTestCase {
         "Thứ Hai, 20 tháng 10", pomodoros: 1, minutes: 25, bundle: vi, locale: vn),
       "Ngày tốt nhất: Thứ Hai, 20 tháng 10: 1 pomodoro, 25 phút")
   }
+
+  func testMostFocusedHourInBothLanguages() throws {
+    var utc = Calendar(identifier: .gregorian)
+    utc.timeZone = TimeZone(identifier: "UTC")!
+    let enRange = StatisticsFormat.hourRange(9, calendar: utc, locale: Locale(identifier: "en_US"))
+    XCTAssertTrue(enRange.contains("9") && enRange.contains("10"), enRange)
+    XCTAssertEqual(
+      StatisticsText.mostFocused(enRange, bundle: try bundle("en")), "Most focused: \(enRange)")
+    XCTAssertEqual(
+      StatisticsText.mostFocused("09:00 – 10:00", bundle: try bundle("vi")),
+      "Tập trung nhất: 09:00 – 10:00")
+  }
 }

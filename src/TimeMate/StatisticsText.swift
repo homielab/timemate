@@ -137,6 +137,13 @@ enum StatisticsText {
     format("%1$@, %2$lld minutes", bundle, locale, name, minutes)
   }
 
+  /// "Most focused: 9 – 10 AM": the hour range with the most focus time.
+  static func mostFocused(_ hours: String, bundle: Bundle = .main, locale: Locale = .current)
+    -> String
+  {
+    format("Most focused: %@", bundle, locale, hours)
+  }
+
   static func localized(_ key: String, bundle: Bundle = .main) -> String {
     bundle.localizedString(forKey: key, value: nil, table: nil)
   }

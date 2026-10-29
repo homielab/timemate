@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Statistics → **By hour**: a small 24-column chart of your focus minutes per hour of the day over the chosen 7 or 30 days, with "Most focused: 9 – 10 AM" below it. A session over the hour is split between both hours. Hovering a column, or VoiceOver, gives its hour and minutes.
 - Settings → Automation → **Auto-pause when I'm away** (Off, 3, 5 or 10 minutes; off by default): leave the desk without locking and a running focus session pauses after that long without keyboard, mouse or trackpad input. The minutes away don't count, so History stays honest. With **Resume when I'm back** on (it now works with this setting too), the session continues when you use the Mac again.
 - Settings → Statistics shows your record goal streak under the current one, e.g. "Best: 12 days in the last 90 days", when it is longer than the current streak.
 - The break screen shows today's progress under the tip, as in the menu bar popover: "Today: 3/8 pomodoros · 75 min · Streak: 5 days" (only the pomodoros without a daily goal; hidden before your first pomodoro of the day). VoiceOver reads it as one line.

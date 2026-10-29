@@ -33,6 +33,8 @@ struct StatisticsSection: View {
 
       LabelTotalsView(history: model.timer.history, days: days)
 
+      HourlyFocusView(history: model.timer.history, days: days)
+
       MenuItemButton(title: "Export CSV…", systemImage: "square.and.arrow.up") {
         StatisticsExporter.export(
           model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)),
@@ -245,6 +247,56 @@ private struct LabelTotalsView: View {
   }
 }
 
+/// "By hour": one thin column per hour of the day (0–23) with the focus minutes of
+/// the chosen period. Hovering a column shows, and VoiceOver reads, "9 – 10 AM, 25
+/// minutes"; the strip as a whole reads "Most focused: 9 – 10 AM". Hidden when empty.
+private struct HourlyFocusView: View {
+  @ObservedObject var history: SessionHistory
+  let days: Int
+
+  private let height: CGFloat = 32
+
+  var body: some View {
+    let hours = history.hourlyFocus(days: days)
+    if let best = SessionStatistics.mostFocusedHour(hours) {
+      let calendar = history.calendar
+      let longest = hours[best]
+      let summary = StatisticsText.mostFocused(
+        StatisticsFormat.hourRange(best, calendar: calendar))
+      VStack(alignment: .leading, spacing: 4) {
+        Text("By hour")
+          .font(.caption)
+          .foregroundColor(.secondary)
+        HStack(alignment: .bottom, spacing: 1) {
+          ForEach(0..<24, id: \.self) { hour in
+            let spoken = StatisticsText.spokenLabel(
+              StatisticsFormat.hourRange(hour, calendar: calendar),
+              minutes: Int((hours[hour] / 60).rounded()))
+            RoundedRectangle(cornerRadius: 1)
+              .fill(Color.accentColor)
+              .opacity(hours[hour] <= 0 ? 0.15 : 0.8)
+              .frame(
+                maxWidth: .infinity,
+                minHeight: 2,
+                maxHeight: hours[hour] <= 0
+                  ? 2 : max(3, height * CGFloat(hours[hour] / longest))
+              )
+              .help(Text(spoken))
+              .accessibilityElement()
+              .accessibilityLabel(Text(spoken))
+          }
+        }
+        .frame(height: height, alignment: .bottom)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(summary))
+        Text(summary)
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
+    }
+  }
+}
+
 private struct LabelRow: View {
   let name: Text
   let spokenName: String
@@ -390,6 +442,22 @@ enum StatisticsFormat {
   /// Full name for VoiceOver, e.g. "Monday, October 20".
   static func spokenDay(_ date: Date, calendar: Calendar, locale: Locale = appLocale) -> String {
     format(date, template: "EEEEMMMMd", calendar: calendar, locale: locale)
+  }
+
+  /// One hour of the day as a range, e.g. "9 – 10 AM" / "09:00 – 10:00".
+  static func hourRange(_ hour: Int, calendar: Calendar, locale: Locale = appLocale) -> String {
+    var components = DateComponents()
+    components.year = 2001
+    components.month = 1
+    components.day = 1
+    components.hour = hour
+    let start = calendar.date(from: components) ?? Date(timeIntervalSinceReferenceDate: 0)
+    let formatter = DateIntervalFormatter()
+    formatter.calendar = calendar
+    formatter.timeZone = calendar.timeZone
+    formatter.locale = locale
+    formatter.dateTemplate = "j"
+    return formatter.string(from: start, to: start.addingTimeInterval(3600))
   }
 
   private static func format(
