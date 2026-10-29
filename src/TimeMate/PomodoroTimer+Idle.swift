@@ -21,7 +21,10 @@ extension PomodoroTimer {
     idleWatch = nil
     guard let threshold = IdlePausePolicy.threshold(minutes: idlePauseMinutes) else { return }
     if state == .active, !isBreak {
-      let delay = IdlePausePolicy.nextCheckDelay(idleSeconds: idleSeconds(), threshold: threshold)
+      let idle = idleSeconds()
+      let delay = IdlePausePolicy.nextCheckDelay(
+        idleSeconds: idle, threshold: threshold,
+        isDisplayKeptAwake: idle >= threshold && isDisplayKeptAwake())
       idleWatch = scheduleIdleCheck(delay) { [weak self] in self?.checkAway() }
     } else if canResumeAfterSleep() {
       idleWatch = scheduleIdleCheck(IdlePausePolicy.returnCheckInterval) { [weak self] in

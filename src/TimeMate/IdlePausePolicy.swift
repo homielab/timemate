@@ -5,7 +5,8 @@ import Foundation
 /// "Auto-pause when I'm away": a running focus session pauses once the Mac has
 /// had no keyboard, mouse or trackpad input for the chosen number of minutes,
 /// and the minutes away go back on the clock, so the history only counts time
-/// at the desk. Breaks keep running.
+/// at the desk. Breaks keep running. While another app keeps the display awake
+/// (a video call, a video playing), the user is watching, not away.
 enum IdlePausePolicy {
   /// The setting when off (the default).
   static let off = 0
@@ -17,6 +18,9 @@ enum IdlePausePolicy {
   static let minimumCheckDelay: TimeInterval = 1
   /// How often a session paused while away looks for the user coming back.
   static let returnCheckInterval: TimeInterval = 2
+  /// How often to look again while idle past the threshold but another app
+  /// keeps the display awake.
+  static let keptAwakeCheckInterval: TimeInterval = 30
   /// Idle for less than this: someone just used the keyboard, mouse or trackpad.
   static let backWithin: TimeInterval = 5
 
@@ -35,11 +39,13 @@ enum IdlePausePolicy {
   }
 
   /// Whether the running session pauses: only a focus session, and only once
-  /// the user has been away for `threshold` seconds.
+  /// the user has been away for `threshold` seconds, and not while another app
+  /// keeps the display awake (a meeting or a video, watched without input).
   static func shouldPause(
-    state: PomodoroState, isBreak: Bool, idleSeconds: TimeInterval, threshold: TimeInterval?
+    state: PomodoroState, isBreak: Bool, idleSeconds: TimeInterval, threshold: TimeInterval?,
+    isDisplayKeptAwake: Bool = false
   ) -> Bool {
-    guard let threshold else { return false }
+    guard let threshold, !isDisplayKeptAwake else { return false }
     return state == .active && !isBreak && idleSeconds >= threshold
   }
 
@@ -56,9 +62,13 @@ enum IdlePausePolicy {
   }
 
   /// When to look at the idle time again: the user can't reach `threshold`
-  /// sooner than `threshold - idleSeconds` from now.
-  static func nextCheckDelay(idleSeconds: TimeInterval, threshold: TimeInterval) -> TimeInterval {
-    max(minimumCheckDelay, threshold - idleSeconds)
+  /// sooner than `threshold - idleSeconds` from now. Already past it while
+  /// another app keeps the display awake: every `keptAwakeCheckInterval`.
+  static func nextCheckDelay(
+    idleSeconds: TimeInterval, threshold: TimeInterval, isDisplayKeptAwake: Bool = false
+  ) -> TimeInterval {
+    if idleSeconds >= threshold, isDisplayKeptAwake { return keptAwakeCheckInterval }
+    return max(minimumCheckDelay, threshold - idleSeconds)
   }
 
   /// Whether the keyboard, mouse or trackpad was just used.

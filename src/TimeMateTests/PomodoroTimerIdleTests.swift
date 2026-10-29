@@ -39,6 +39,20 @@ final class PomodoroTimerIdleTests: TimerTestCase {
     XCTAssertTrue(history.records.isEmpty)
   }
 
+  func testMeetingOrVideoKeepsTheSessionRunning() {
+    makeRunningTimer()
+    displayKeptAwake = true
+    tickAway(threshold + 5)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertFalse(timer.pausedBySleep)
+    runIdleCheck()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(idleChecks.first?.delay, IdlePausePolicy.keptAwakeCheckInterval)
+    displayKeptAwake = false
+    runIdleCheck()
+    XCTAssertEqual(timer.state, .paused)
+  }
+
   func testShortIdleKeepsCounting() {
     makeRunningTimer()
     tickAway(threshold - 1)

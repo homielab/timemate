@@ -37,6 +37,17 @@ final class IdlePausePolicyTests: XCTestCase {
     }
   }
 
+  func testDoesNotPauseWhileTheDisplayIsKeptAwake() {
+    XCTAssertFalse(
+      IdlePausePolicy.shouldPause(
+        state: .active, isBreak: false, idleSeconds: 999, threshold: 180,
+        isDisplayKeptAwake: true))
+    XCTAssertTrue(
+      IdlePausePolicy.shouldPause(
+        state: .active, isBreak: false, idleSeconds: 999, threshold: 180,
+        isDisplayKeptAwake: false))
+  }
+
   func testRemainingAfterAwayGivesBackTheTimeAway() {
     XCTAssertEqual(
       IdlePausePolicy.remainingAfterAway(
@@ -68,6 +79,12 @@ final class IdlePausePolicyTests: XCTestCase {
     XCTAssertEqual(
       IdlePausePolicy.nextCheckDelay(idleSeconds: 400, threshold: 300),
       IdlePausePolicy.minimumCheckDelay)
+    XCTAssertEqual(
+      IdlePausePolicy.nextCheckDelay(idleSeconds: 400, threshold: 300, isDisplayKeptAwake: true),
+      IdlePausePolicy.keptAwakeCheckInterval)
+    XCTAssertEqual(
+      IdlePausePolicy.nextCheckDelay(idleSeconds: 120, threshold: 300, isDisplayKeptAwake: true),
+      180)
   }
 
   func testUserIsBackAfterRecentInput() {

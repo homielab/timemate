@@ -27,6 +27,8 @@ class TimerTestCase: XCTestCase {
   var scheduledResumes: [(delay: TimeInterval, block: () -> Void)] = []
   /// Seconds since the last keyboard or mouse input, as the timer reads them.
   var idleTime: TimeInterval = 0
+  /// Fake "another app keeps the display awake" (a meeting, a video).
+  var displayKeptAwake = false
   /// Pending idle checks of "Auto-pause when I'm away" (at most one is live);
   /// run the next with `runIdleCheck()`.
   var idleChecks: [(id: Int, delay: TimeInterval, block: () -> Void)] = []
@@ -44,6 +46,7 @@ class TimerTestCase: XCTestCase {
     notificationRemovals = 0
     scheduledResumes = []
     idleTime = 0
+    displayKeptAwake = false
     idleChecks = []
     // A fixed calendar: the fake clock starts at 13:46 UTC, so calendar days
     // (and the stale-cycle rule) don't depend on the Mac's time zone.
@@ -94,6 +97,7 @@ class TimerTestCase: XCTestCase {
       isFullscreenProbe: { false },
       scheduleResume: { [weak self] in self?.scheduledResumes.append((delay: $0, block: $1)) },
       idleSeconds: { [weak self] in self?.idleTime ?? 0 },
+      isDisplayKeptAwake: { [weak self] in self?.displayKeptAwake ?? false },
       scheduleIdleCheck: { [weak self] delay, block in
         guard let self else { return AnyCancellable {} }
         let id = self.nextIdleCheckID

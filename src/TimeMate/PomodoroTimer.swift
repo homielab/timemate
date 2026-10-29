@@ -104,6 +104,9 @@ class PomodoroTimer: ObservableObject {
   /// Seconds since the last keyboard, mouse or trackpad input
   /// (`systemIdleSeconds`); tests inject a fake.
   let idleSeconds: () -> TimeInterval
+  /// Whether another app keeps the display awake (`DisplayAwakeProbe`); a
+  /// session then doesn't pause as away. Tests inject a fake.
+  let isDisplayKeptAwake: () -> Bool
   /// Runs a block once after a delay (`scheduleOnMainRunLoop`); the idle checks
   /// of "Auto-pause when I'm away" use it. Tests collect the blocks and run them.
   let scheduleIdleCheck: (TimeInterval, @escaping () -> Void) -> AnyCancellable
@@ -154,12 +157,14 @@ class PomodoroTimer: ObservableObject {
       DispatchQueue.main.asyncAfter(deadline: .now() + $0, execute: $1)
     },
     idleSeconds: @escaping () -> TimeInterval = PomodoroTimer.systemIdleSeconds,
+    isDisplayKeptAwake: @escaping () -> Bool = DisplayAwakeProbe.isKeptAwakeByOtherApp,
     scheduleIdleCheck: @escaping (TimeInterval, @escaping () -> Void) -> AnyCancellable =
       PomodoroTimer.scheduleOnMainRunLoop
   ) {
     self.isFullscreenProbe = isFullscreenProbe
     self.scheduleResume = scheduleResume
     self.idleSeconds = idleSeconds
+    self.isDisplayKeptAwake = isDisplayKeptAwake
     self.scheduleIdleCheck = scheduleIdleCheck
     self.defaults = defaults
     self.postNotification = postNotification
@@ -416,7 +421,8 @@ class PomodoroTimer: ObservableObject {
     let idle = idleSeconds()
     guard
       IdlePausePolicy.shouldPause(
-        state: state, isBreak: isBreak, idleSeconds: idle, threshold: threshold)
+        state: state, isBreak: isBreak, idleSeconds: idle, threshold: threshold),
+      !isDisplayKeptAwake()
     else { return false }
     let left = IdlePausePolicy.remainingAfterAway(
       secondsLeft: endDate.timeIntervalSince(tickTime), idleSeconds: idle,
