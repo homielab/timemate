@@ -88,8 +88,10 @@ extension PomodoroTimer {
   /// a break screen waiting for the user); skip moves to the next session;
   /// reset stops the timer and starts the current session over, like Reset in
   /// the popover and the menu bar item's menu; extend adds 5 minutes to the
-  /// running or paused session, like "+5 min" (nothing when idle).
-  func perform(_ action: HotKeyAction) {
+  /// running or paused session, like "+5 min" (nothing when idle). Returns a
+  /// message to show when the action could not run because of the 180-minute limit.
+  @discardableResult
+  func perform(_ action: HotKeyAction) -> String? {
     switch action {
     case .startPause:
       if state == .active && !isWaitingToContinue {
@@ -102,8 +104,10 @@ extension PomodoroTimer {
     case .reset:
       stopTimer()
     case .extend:
-      TimerIntentActions.extend(self, minutes: 5)
+      let result = TimerIntentActions.extend(self, minutes: BreakOverlayAccessibility.extendMinutes)
+      if case .atLimit = result { return TimerIntentActions.extendText(result) }
     }
+    return nil
   }
 }
 

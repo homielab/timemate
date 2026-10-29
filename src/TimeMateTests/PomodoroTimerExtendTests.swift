@@ -231,4 +231,48 @@ final class PomodoroTimerExtendTests: TimerTestCase {
     timer.extend(by: 5)
     XCTAssertEqual(timer.endDate, endDate)
   }
+
+  // MARK: - canExtend
+
+  /// Starts a focus session lasting `minutes` (seconds-as-minutes in Debug).
+  private func startFocus(minutes: Int) {
+    timer = makeTimer(focus: minutes)
+    timer.startTimer()
+  }
+
+  func testCanExtendBelowTheLimit() {
+    startFocus(minutes: 179)
+    XCTAssertFalse(timer.isAtSessionLimit)
+    XCTAssertTrue(timer.canExtend)
+  }
+
+  func testCannotExtendAtTheLimit() {
+    startFocus(minutes: 179)
+    XCTAssertTrue(timer.extend(by: 5))
+    XCTAssertTrue(timer.isAtSessionLimit)
+    XCTAssertFalse(timer.canExtend)
+    timer.pauseTimer()
+    XCTAssertFalse(timer.canExtend)
+  }
+
+  func testCanExtendWhileWaitingOnTheBreakScreen() {
+    timer = makeTimer(keepBreakOpen: true)
+    startShortBreak()
+    finishSession(timer)
+    XCTAssertTrue(timer.isWaitingToContinue)
+    XCTAssertTrue(timer.canExtend)
+  }
+
+  func testCannotExtendWhileBreakIsPostponed() {
+    startShortBreak()
+    timer.postponeBreak(minutes: 1)
+    XCTAssertFalse(timer.canExtend)
+  }
+
+  func testExtendHotKeySaysWhyAtTheLimit() {
+    startFocus(minutes: 180)
+    XCTAssertEqual(timer.perform(.extend), TimerIntentActions.extendText(.atLimit))
+    startFocus(minutes: 30)
+    XCTAssertNil(timer.perform(.extend))
+  }
 }

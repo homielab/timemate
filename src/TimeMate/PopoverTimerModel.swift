@@ -15,6 +15,11 @@ final class PopoverTimerModel: ObservableObject {
   @Published private(set) var currentSessionType: SessionType
   @Published private(set) var focusSessionsCompleted: Int
   @Published private(set) var isBreakPostponed: Bool
+  /// Mirrors `PomodoroTimer.canExtend`: "+5 min" is disabled at the 180-minute limit.
+  @Published private(set) var canExtend: Bool
+
+  /// Why "+5 min" is disabled: "Already at the 180-minute limit".
+  var extendLimitText: String { TimerIntentActions.extendText(.atLimit) }
   /// A finished break waits on the break screen for "Continue Work".
   @Published private(set) var isWaitingToContinue: Bool
 
@@ -30,6 +35,7 @@ final class PopoverTimerModel: ObservableObject {
     focusSessionsCompleted = timer.focusSessionsCompleted
     isBreakPostponed = timer.isBreakPostponed
     isWaitingToContinue = timer.isWaitingToContinue
+    canExtend = timer.canExtend
     countdown = PopoverCountdown(timer: timer)
 
     timer.$state.removeDuplicates()
@@ -46,6 +52,9 @@ final class PopoverTimerModel: ObservableObject {
       .store(in: &cancellables)
     timer.$isWaitingToContinue.removeDuplicates()
       .sink { [weak self] in self?.isWaitingToContinue = $0 }
+      .store(in: &cancellables)
+    timer.$canExtend.removeDuplicates()
+      .sink { [weak self] in self?.canExtend = $0 }
       .store(in: &cancellables)
   }
 

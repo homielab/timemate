@@ -23,11 +23,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private var isPopoverOpen = false
   private var isDisplayAsleep = false
   private var isScreenLocked = false
-  private(set) lazy var hotKeyManager = HotKeyManager { [weak self] in self?.timer.perform($0) }
+  private(set) lazy var hotKeyManager = HotKeyManager { [weak self] action in
+    guard let self, let message = self.timer.perform(action) else { return }
+    self.showHotKeyMessage(message)
+  }
   private var cancellables = Set<AnyCancellable>()
   private var defaultsObserver: DefaultsObserver?
   let openSettingsRequests = PassthroughSubject<Void, Never>()
   private var menuBarStyle = MenuBarTimeStyle.minutesSeconds
+
+  /// Tells the user why a global shortcut did nothing ("Already at the 180-minute
+  /// limit"): a banner, and the same words read by VoiceOver.
+  private func showHotKeyMessage(_ message: String) {
+    let content = UNMutableNotificationContent()
+    content.title = "TimeMate"
+    content.body = message
+    SessionNotification.post(
+      UNNotificationRequest(identifier: "hotKeyMessage", content: content, trigger: nil))
+    NSAccessibility.post(
+      element: NSApp as Any, notification: .announcementRequested,
+      userInfo: [
+        .announcement: message,
+        .priority: NSAccessibilityPriorityLevel.high.rawValue,
+      ])
+  }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }

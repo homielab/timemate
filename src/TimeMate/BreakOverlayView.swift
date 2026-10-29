@@ -216,7 +216,11 @@ private struct BreakOverlayBottomActionsView: View {
       outlinedCapsule(Text(LocalizedStringKey("+5 min")))
     }
     .buttonStyle(.plain)
+    .disabled(!model.canExtend)
+    .opacity(model.canExtend ? 1 : 0.4)
+    .help(Text(verbatim: model.canExtend ? "" : model.extendLimitText))
     .accessibilityLabel(Text(LocalizedStringKey("Add 5 minutes to the break")))
+    .accessibilityHint(Text(verbatim: model.canExtend ? "" : model.extendLimitText))
   }
 
   private var postponeButtons: some View {

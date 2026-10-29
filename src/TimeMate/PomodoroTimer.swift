@@ -10,14 +10,24 @@ import os
 class PomodoroTimer: ObservableObject {
   // MARK: - Published Properties for UI
   @Published var timeRemaining: Int = 0
-  @Published var state: PomodoroState = .idle
+  @Published var state: PomodoroState = .idle {
+    didSet { refreshCanExtend() }
+  }
   @Published var currentSessionType: SessionType = .focus
   @Published var focusSessionsCompleted: Int = 0
   @Published var progress: Double = 1.0
-  @Published var isWaitingToContinue: Bool = false
+  @Published var isWaitingToContinue: Bool = false {
+    didSet { refreshCanExtend() }
+  }
   /// The break was put off with `postponeBreak(minutes:)`: the countdown runs
   /// until the break comes back, and the break overlay stays hidden.
-  @Published private(set) var isBreakPostponed: Bool = false
+  @Published private(set) var isBreakPostponed: Bool = false {
+    didSet { refreshCanExtend() }
+  }
+  /// Whether "+5 min" / "Add Time" can still lengthen the session: false once it
+  /// reaches the 180-minute limit or while a break is postponed, so the buttons
+  /// show as disabled. A break waiting on the break screen can be extended.
+  @Published private(set) var canExtend: Bool = true
 
   // MARK: - Settings
   // Settings are read live from the injected defaults on every use, so changes
@@ -59,7 +69,9 @@ class PomodoroTimer: ObservableObject {
   var cancellables = Set<AnyCancellable>()
   private var defaultsObserver: DefaultsObserver?
   private var timer: AnyCancellable?
-  private var totalDuration: Int = 0
+  private var totalDuration: Int = 0 {
+    didSet { refreshCanExtend() }
+  }
   /// The label of the session as it began ("" = none), so typing the next task
   /// before the bell does not relabel the one just done. `nil` = not captured
   /// (a snapshot from an older version): the label field is read live.
@@ -597,6 +609,11 @@ class PomodoroTimer: ObservableObject {
   /// it cannot be extended (a break waiting on the break screen can).
   var isAtSessionLimit: Bool {
     state != .idle && !isWaitingToContinue && totalDuration >= Self.sessionLimitSeconds
+  }
+
+  private func refreshCanExtend() {
+    let value = !isAtSessionLimit && !isBreakPostponed
+    if canExtend != value { canExtend = value }
   }
 
   /// Length of the current session in seconds.

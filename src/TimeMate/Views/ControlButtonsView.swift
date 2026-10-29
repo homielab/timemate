@@ -45,8 +45,13 @@ struct ControlButtonsView: View {
           Text("+5 min")
         }
         .buttonStyle(.bordered).controlSize(.small)
-        .help("Add 5 minutes to the focus session")
+        .disabled(!model.canExtend)
+        .help(
+          model.canExtend
+            ? Text("Add 5 minutes to the focus session") : Text(verbatim: model.extendLimitText)
+        )
         .accessibilityLabel("Add 5 minutes to the focus session")
+        .accessibilityHint(Text(verbatim: model.canExtend ? "" : model.extendLimitText))
       }
     }
   }

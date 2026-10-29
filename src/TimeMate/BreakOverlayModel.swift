@@ -14,6 +14,11 @@ final class BreakOverlayModel: ObservableObject {
   @Published private(set) var currentSessionType: SessionType
   @Published private(set) var isWaitingToContinue: Bool
   @Published private(set) var isBreakPostponed: Bool
+  /// Mirrors `PomodoroTimer.canExtend`: "+5 min" is disabled at the 180-minute limit.
+  @Published private(set) var canExtend: Bool
+
+  /// Why "+5 min" is disabled: "Already at the 180-minute limit".
+  var extendLimitText: String { TimerIntentActions.extendText(.atLimit) }
   /// The relaxation tip of the current break, shared by the windows on every screen.
   @Published private(set) var tip: String
   /// Today's progress ("Today: 3/8 pomodoros · 75 min" and the streak), as in the popover;
@@ -40,6 +45,7 @@ final class BreakOverlayModel: ObservableObject {
     self.currentSessionType = timer.currentSessionType
     self.isWaitingToContinue = timer.isWaitingToContinue
     self.isBreakPostponed = timer.isBreakPostponed
+    self.canExtend = timer.canExtend
     self.countdown = BreakOverlayCountdown(timer: timer, defaults: defaults, now: now)
 
     timer.$state.removeDuplicates()
@@ -53,6 +59,9 @@ final class BreakOverlayModel: ObservableObject {
       .store(in: &cancellables)
     timer.$isBreakPostponed.removeDuplicates()
       .sink { [weak self] in self?.isBreakPostponed = $0 }
+      .store(in: &cancellables)
+    timer.$canExtend.removeDuplicates()
+      .sink { [weak self] in self?.canExtend = $0 }
       .store(in: &cancellables)
   }
 
