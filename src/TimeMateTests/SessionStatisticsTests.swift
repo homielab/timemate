@@ -444,6 +444,27 @@ final class SessionStatisticsTests: XCTestCase {
       "TimeMate-statistics-2026-03-10.csv")
   }
 
+  func testCSVAndFileNamesUseGregorianYearsUnderOtherCalendars() {
+    for identifier in [Calendar.Identifier.buddhist, .japanese] {
+      var other = Calendar(identifier: identifier)
+      other.timeZone = TimeZone(identifier: "Asia/Bangkok")!
+      let gregorian = calendar("Asia/Bangkok")
+      let today = date(2026, 10, 29, 15, in: gregorian)
+      let records = [focus(end: date(2026, 10, 29, 9, in: gregorian))]
+      let days = SessionStatistics.days(from: records, endingOn: today, count: 2, calendar: other)
+
+      XCTAssertEqual(
+        SessionStatistics.csv(for: days, calendar: other),
+        "date,pomodoros,minutes\r\n2026-10-28,0,0\r\n2026-10-29,1,25\r\n", "\(identifier)")
+      XCTAssertEqual(
+        StatisticsExporter.defaultFileName(today: today, calendar: other),
+        "TimeMate-statistics-2026-10-29.csv", "\(identifier)")
+      XCTAssertEqual(
+        StatisticsExporter.sessionsFileName(today: today, calendar: other),
+        "TimeMate-sessions-2026-10-29.csv", "\(identifier)")
+    }
+  }
+
   func testSessionsFileNameUsesTheLocalDayNearMidnight() {
     let utc = calendar("UTC")
     let hanoi = calendar("Asia/Ho_Chi_Minh")

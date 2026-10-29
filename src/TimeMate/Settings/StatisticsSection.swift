@@ -395,10 +395,7 @@ enum StatisticsFormat {
 /// Saves the CSV where the user picks in a save panel.
 enum StatisticsExporter {
   static func defaultFileName(today: Date = Date(), calendar: Calendar = .current) -> String {
-    let parts = calendar.dateComponents([.year, .month, .day], from: today)
-    return String(
-      format: "TimeMate-statistics-%04d-%02d-%02d.csv", parts.year ?? 0, parts.month ?? 0,
-      parts.day ?? 0)
+    "TimeMate-statistics-\(SessionStatistics.isoDay(today, timeZone: calendar.timeZone)).csv"
   }
 
   static func sessionsFileName(today: Date = Date(), calendar: Calendar = .current) -> String {

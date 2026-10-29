@@ -221,16 +221,23 @@ enum SessionStatistics {
     return streak + max(0, carried)
   }
 
-  /// `date,pomodoros,minutes` with one row per day, dates as `yyyy-MM-dd` in the
-  /// calendar's time zone, lines ending in CRLF (RFC 4180). With a daily goal
+  /// `date` as `yyyy-MM-dd` in the Gregorian calendar and `timeZone`, whatever
+  /// calendar the user picked (Buddhist, Japanese…), so spreadsheets read it as a date.
+  static func isoDay(_ date: Date, timeZone: TimeZone) -> String {
+    var gregorian = Calendar(identifier: .gregorian)
+    gregorian.timeZone = timeZone
+    let parts = gregorian.dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+  }
+
+  /// `date,pomodoros,minutes` with one row per day, dates as Gregorian `yyyy-MM-dd`
+  /// in the calendar's time zone (days still split by `calendar`), lines ending in CRLF (RFC 4180). With a daily goal
   /// (`goal` > 0) a `goal_reached` column says 1 or 0 for each day.
   static func csv(for days: [Day], calendar: Calendar, goal: Int = DailyGoal.off) -> String {
     let withGoal = goal > DailyGoal.off
     var lines = [withGoal ? "date,pomodoros,minutes,goal_reached" : "date,pomodoros,minutes"]
     for day in days {
-      let parts = calendar.dateComponents([.year, .month, .day], from: day.date)
-      let date = String(
-        format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+      let date = isoDay(day.date, timeZone: calendar.timeZone)
       var line = "\(date),\(day.pomodoros),\(day.focusMinutes)"
       if withGoal {
         line += DailyGoal.isReached(completed: day.pomodoros, goal: goal) ? ",1" : ",0"
