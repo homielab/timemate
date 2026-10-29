@@ -1,0 +1,38 @@
+TimeMate 3.6 là bản cập nhật lớn: điều khiển phiên làm việc linh hoạt hơn, thống kê chi tiết hơn, hỗ trợ Phím tắt (Shortcuts) và Siri, cùng rất nhiều bản sửa lỗi.
+
+Bộ hẹn giờ
+• Đặt độ dài phiên tùy ý từ 1 đến 180 phút, ví dụ 50/10 hoặc một phiên tập trung 90 phút.
+• Nút +5 phút cộng thêm năm phút cho phiên tập trung đang chạy hoặc đang tạm dừng khi bạn đang vào guồng, hoặc kéo dài giờ nghỉ.
+• Ghi lại việc bạn đang làm ở ô "Bạn đang làm gì?" và chọn lại nhanh từ các nhãn gần đây.
+• Tách riêng công tắc tự bắt đầu giờ nghỉ và tự bắt đầu phiên tập trung.
+• Tùy chọn: tạm dừng phiên tập trung khi Mac ngủ hoặc khóa màn hình.
+• Nút Bắt đầu lại hỏi xác nhận khi phiên đang diễn ra.
+
+Thống kê
+• Đặt mục tiêu mỗi ngày và theo dõi chuỗi ngày liên tiếp đạt mục tiêu.
+• Xem 7 hoặc 30 ngày gần nhất, mức trung bình mỗi ngày, ngày tốt nhất và thời gian tập trung theo từng nhãn.
+• Xuất CSV theo ngày cho 7 ngày, 30 ngày hoặc toàn bộ 90 ngày lịch sử, hoặc từng phiên kèm nhãn.
+
+Thanh menu và bàn phím
+• Phím tắt toàn cục dùng được từ mọi ứng dụng: Bắt đầu/Tạm dừng, Bỏ qua, Đặt lại và Thêm 5 phút (⌃⌥E). Bật hoặc tự ghi tổ hợp phím trong Cài đặt → Phím tắt.
+• Phím Space bắt đầu hoặc tạm dừng trong cửa sổ hẹn giờ.
+• Nhấp chuột phải vào biểu tượng trên thanh menu để mở menu nhanh, rê chuột lên để xem thời gian còn lại.
+• Chọn cách hiển thị thời gian trên thanh menu: đầy đủ, chỉ số phút hoặc chỉ biểu tượng.
+
+Phím tắt (Shortcuts) và Siri
+• Tác vụ mới: Bắt đầu hẹn giờ, Bắt đầu tập trung, Bắt đầu tập trung kèm nhãn, Tạm dừng, Bỏ qua phiên, Thêm thời gian, Xem trạng thái hẹn giờ và Xem tiến độ hôm nay.
+
+Màn hình nghỉ và thông báo
+• Chọn thời gian chờ trước khi nút Bỏ qua hiện ra, hoãn hoặc kéo dài giờ nghỉ.
+• Màn hình nghỉ chờ khi bạn đang xem video toàn màn hình hoặc đang trình chiếu.
+• Có thể tắt tiếng chuông báo và chọn âm thanh riêng cho giờ nghỉ.
+• Thông báo cho biết phiên tiếp theo là gì, và vẫn đến đúng lúc sau khi Mac ngủ hoặc TimeMate đã thoát.
+
+Trợ năng
+• VoiceOver đọc rõ hơn ở cửa sổ hẹn giờ, Cài đặt và màn hình nghỉ; hỗ trợ Giảm chuyển động và Tăng độ tương phản.
+
+Sửa lỗi và hiệu năng
+• Tốn ít CPU và pin hơn, nhất là trong giờ nghỉ và khi tắt màn hình.
+• Phiên đang chạy được giữ lại khi thoát, cập nhật hoặc khởi động lại.
+• Khởi động cùng máy, Giữ Mac không ngủ và Giữ cửa sổ luôn ở trên nay hoạt động ổn định.
+• Nhiều bản sửa cho chu kỳ nghỉ dài, thống kê, xuất CSV và bản dịch tiếng Việt.

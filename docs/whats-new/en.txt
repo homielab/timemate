@@ -1,0 +1,38 @@
+TimeMate 3.6 is a big update: more control over your sessions, richer statistics, Shortcuts and Siri, and many fixes.
+
+Timer
+• Set any session length from 1 to 180 minutes, for example 50/10 or a 90-minute focus.
+• +5 min adds five minutes to a running or paused focus session when you are in the flow, or makes a break longer.
+• Name what you are working on with "What are you working on?", and pick it again from your recent labels.
+• Separate switches for auto-start of breaks and of focus sessions.
+• Optional: pause the focus session when the Mac sleeps or the screen locks.
+• Restart asks for confirmation while a session is in progress.
+
+Statistics
+• Set a daily goal and follow your streak of days that reached it.
+• See the last 7 or 30 days, your daily average, your best day and your focus time per label.
+• Export a daily CSV for 7 days, 30 days or the full 90-day history, or every session with its label.
+
+Menu bar and keyboard
+• Global shortcuts from any app: Start/Pause, Skip, Reset, and Add 5 Minutes (⌃⌥E). Turn them on or record your own in Settings → Keyboard Shortcuts.
+• Space starts or pauses in the popover.
+• Right-click the menu bar item for a quick menu, and hover it to see the time left.
+• Choose how the menu bar shows the time: full time, minutes only, or icon only.
+
+Shortcuts and Siri
+• New actions: Start Timer, Start Focus, Start Focus with Label, Pause Timer, Skip Session, Add Time, Get Timer Status and Get Today's Progress.
+
+Break screen and alerts
+• Choose how long the Skip button waits, and postpone or extend a break.
+• The break screen waits while you watch a full-screen video or present.
+• A silent alarm option and a separate sound for breaks.
+• Notifications tell you what comes next, and still arrive after the Mac sleeps or TimeMate quits.
+
+Accessibility
+• Better VoiceOver labels across the popover, Settings and the break screen, and support for Reduce Motion and Increase Contrast.
+
+Fixes and performance
+• Less CPU and battery use, especially during breaks and when the screen is off.
+• The running session survives quitting, updates and restarts.
+• Start at Login, Keep Mac awake and Keep window on top now work reliably.
+• Many fixes to the long-break cycle, statistics, CSV export and the Vietnamese translation.
