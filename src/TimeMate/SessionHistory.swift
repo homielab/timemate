@@ -162,9 +162,10 @@ final class SessionHistory: ObservableObject {
 
   // MARK: - Storage
 
-  /// Drops sessions older than `retentionDays`. First the goal streak up to the
-  /// cutoff's day is carried (from the untrimmed records, which still hold that
-  /// whole day), unless the carry already covers that day.
+  /// Drops sessions before the start of the cutoff's day, so the CSV export keeps
+  /// that day whole and its row matches the streak. First the goal streak up to
+  /// that day is carried (from the untrimmed records, which still hold it whole),
+  /// unless the carry already covers that day.
   private func trimmed(_ records: [Record]) -> [Record] {
     guard
       let cutoff = calendar.date(byAdding: .day, value: -Self.retentionDays, to: now())
@@ -174,7 +175,7 @@ final class SessionHistory: ObservableObject {
       goalStreakCarry = GoalStreakCarry.advanced(
         goalStreakCarry, through: cutoffDay, records: records, calendar: calendar)
     }
-    return records.filter { $0.end >= cutoff }
+    return records.filter { $0.end >= cutoffDay }
   }
 
   /// A missing or unreadable carry file means no carry; the streak is then

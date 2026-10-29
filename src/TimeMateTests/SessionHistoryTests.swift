@@ -363,6 +363,19 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(makeHistory().records.count, 2)
   }
 
+  func testRecordingKeepsTheWholeDayOfTheCutoff() {
+    let history = makeHistory()
+    // The cutoff is 2025-12-10 15:00: both sessions of that day are kept, so the
+    // day's CSV row counts them; the evening before it is dropped.
+    let morningOfTheCutoffDay = daysAgo(90).addingTimeInterval(-6 * 3600)
+    let eveningBefore = daysAgo(91).addingTimeInterval(8 * 3600)
+    history.recordCompletedSession(.focus, duration: 1500, end: morningOfTheCutoffDay)
+    history.recordCompletedSession(.focus, duration: 1500, end: eveningBefore)
+
+    XCTAssertEqual(history.records.map(\.end), [morningOfTheCutoffDay])
+    XCTAssertEqual(makeHistory().records.map(\.end), [morningOfTheCutoffDay])
+  }
+
   func testLoadingTrimsSessionsThatAgedOut() {
     let history = makeHistory()
     history.recordCompletedSession(.focus, duration: 60, end: daysAgo(80))

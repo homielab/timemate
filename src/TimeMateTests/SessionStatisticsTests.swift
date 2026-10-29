@@ -353,7 +353,7 @@ final class SessionStatisticsTests: XCTestCase {
       "date,pomodoros,minutes\r\n2026-01-01,1,25\r\n")
   }
 
-  func testExportCoversAtLeastTheRetentionWindowAndEveryRecord() {
+  func testExportCoversAtLeastTheRetentionWindowAndEverySessionOfItsOldestDay() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 15, in: utc)
 
@@ -362,12 +362,16 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(empty.count, 90)
     XCTAssertEqual(empty.last?.date, date(2026, 3, 10, in: utc))
 
-    // A record on day -90 (kept by the 90-day trim) still gets its row.
-    let old = utc.date(byAdding: .day, value: -90, to: date(2026, 3, 10, 20, in: utc))!
-    let withOld = SessionStatistics.allDays(
-      from: [focus(end: old)], today: today, minimumDays: 90, calendar: utc)
-    XCTAssertEqual(withOld.count, 91)
-    XCTAssertEqual(withOld.first?.pomodoros, 1)
+    // The history keeps all of 2025-12-10, the day 90 days back, so the row for
+    // that day counts both of its sessions instead of only the one after 15:00.
+    let history = SessionHistory(fileURL: nil, now: { today }, calendar: utc)
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2025, 12, 10, 9, in: utc))
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2025, 12, 10, 20, in: utc))
+
+    let lines = history.statisticsCSV().components(separatedBy: "\r\n")
+    XCTAssertEqual(lines.first, "date,pomodoros,minutes")
+    XCTAssertEqual(lines.count, 1 + 91 + 1)  // header + 90 days + the oldest day + ""
+    XCTAssertEqual(lines[1], "2025-12-10,2,50")
   }
 
   func testHistoryExportUsesItsClockAndCalendar() {
