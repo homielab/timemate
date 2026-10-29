@@ -166,11 +166,14 @@ final class BreakOverlayCountdown: ObservableObject {
       .sink { [weak self] remaining in
         guard let self else { return }
         if self.timeRemaining != remaining {
+          // Only a second counting down is a tick: '+5 min' raises the time left and must not
+          // shorten the skip delay.
+          let isCountingDown = remaining < self.timeRemaining
           self.timeRemaining = remaining
           self.currentTime = self.now()
           let isBreakActive =
             self.timer.state == .active && self.timer.isBreak && !self.timer.isBreakPostponed
-          if isBreakActive {
+          if isBreakActive && isCountingDown {
             _ = self.skipCountdown.tick()
           }
         }

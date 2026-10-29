@@ -156,6 +156,22 @@ final class BreakOverlayModelTests: XCTestCase {
     XCTAssertTrue(model.countdown.canSkip)
   }
 
+  func testExtendingTheBreakDoesNotShortenTheSkipDelay() {
+    timer.startTimer()
+    timer.skipSession()
+    model.beginBreakScreen()
+
+    for _ in 0..<5 {
+      model.extendBreak()
+    }
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 5)
+    XCTAssertFalse(model.countdown.canSkip)
+
+    runTicks(5)
+    XCTAssertEqual(model.countdown.skipSecondsRemaining, 0)
+    XCTAssertTrue(model.countdown.canSkip)
+  }
+
   func testGoingLiveAgainKeepsTheSkipCountdown() {
     timer.startTimer()
     timer.skipSession()
