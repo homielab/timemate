@@ -132,6 +132,20 @@
 			<string>%lld phút</string>
 		</dict>
 	</dict>
+	<key>Best: %lld days in the last 90 days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Kỷ lục: %#@days@ trong 90 ngày qua</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld ngày</string>
+		</dict>
+	</dict>
 	<key>Streak: %lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

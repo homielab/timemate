@@ -557,6 +557,19 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(SessionStatistics.goalStreak(days: days, goal: 4), 2)
   }
 
+  func testLongestStreakFindsTheRecordRun() {
+    let utc = calendar("UTC")
+    let twelveThenTwo = streakDays(Array(repeating: 4, count: 12) + [0, 4, 4], in: utc)
+    XCTAssertEqual(SessionStatistics.longestStreak(days: twelveThenTwo, goal: 4), 12)
+    XCTAssertEqual(SessionStatistics.goalStreak(days: twelveThenTwo, goal: 4), 2)
+    XCTAssertEqual(SessionStatistics.longestStreak(days: twelveThenTwo, goal: 0), 0)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: streakDays([5, 5, 5], in: utc), goal: 4), 3)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: streakDays([1, 0, 3], in: utc), goal: 4), 0)
+    XCTAssertEqual(SessionStatistics.longestStreak(days: [], goal: 4), 0)
+  }
+
   func testStreakIncludesTodayOnceReached() {
     let utc = calendar("UTC")
     let days = streakDays([0, 4, 4, 5], in: utc)

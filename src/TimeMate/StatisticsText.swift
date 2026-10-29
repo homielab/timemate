@@ -42,6 +42,11 @@ enum StatisticsText {
     format("Goal reached on %1$lld of %2$lld days", bundle, locale, reached, days)
   }
 
+  /// "Best: 12 days in the last 90 days": the longest goal streak kept.
+  static func bestStreak(days: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
+    format("Best: %lld days in the last 90 days", bundle, locale, days)
+  }
+
   /// "Streak: 3 days": consecutive days that met the daily goal.
   static func streak(days: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
     format("Streak: %lld days", bundle, locale, days)

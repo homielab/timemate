@@ -152,6 +152,22 @@
 			<string>%lld minutes</string>
 		</dict>
 	</dict>
+	<key>Best: %lld days in the last 90 days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Best: %#@days@ in the last 90 days</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld day</string>
+			<key>other</key>
+			<string>%lld days</string>
+		</dict>
+	</dict>
 	<key>Streak: %lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

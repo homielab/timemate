@@ -102,6 +102,12 @@ final class StatisticsTextTests: XCTestCase {
     XCTAssertEqual(StatisticsText.streak(days: 4, bundle: en), "Streak: 4 days")
     XCTAssertEqual(StatisticsText.streak(days: 1, bundle: vi), "Chuỗi: 1 ngày")
     XCTAssertEqual(StatisticsText.streak(days: 4, bundle: vi), "Chuỗi: 4 ngày")
+    XCTAssertEqual(
+      StatisticsText.bestStreak(days: 1, bundle: en), "Best: 1 day in the last 90 days")
+    XCTAssertEqual(
+      StatisticsText.bestStreak(days: 12, bundle: en), "Best: 12 days in the last 90 days")
+    XCTAssertEqual(
+      StatisticsText.bestStreak(days: 12, bundle: vi), "Kỷ lục: 12 ngày trong 90 ngày qua")
   }
 
   func testVietnameseDailyGoalTexts() throws {

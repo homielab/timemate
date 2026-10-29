@@ -68,15 +68,23 @@ struct StatisticsSection: View {
   }
 }
 
-/// "Streak: N days" under the goal row; hidden with no goal or no streak.
+/// "Streak: N days" under the goal row, hidden with no goal or no streak; then
+/// "Best: N days in the last 90 days" when the record beats the current streak.
 private struct GoalStreakLabel: View {
   @ObservedObject var history: SessionHistory
   let goal: Int
 
   var body: some View {
     let streak = history.goalStreak(goal: goal)
+    let best = history.longestGoalStreak(goal: goal)
     if streak > 0 {
       Text(StatisticsText.streak(days: streak))
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+    }
+    if best > streak {
+      Text(StatisticsText.bestStreak(days: best))
         .font(.caption)
         .foregroundColor(.secondary)
         .monospacedDigit()

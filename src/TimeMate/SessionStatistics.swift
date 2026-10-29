@@ -221,6 +221,19 @@ enum SessionStatistics {
     return streak + max(0, carried)
   }
 
+  /// The longest run of consecutive `days` that met `goal`, anywhere in `days`
+  /// (today included only once reached). 0 with no goal.
+  static func longestStreak(days: [Day], goal: Int) -> Int {
+    guard goal > DailyGoal.off else { return 0 }
+    var best = 0
+    var run = 0
+    for day in days {
+      run = DailyGoal.isReached(completed: day.pomodoros, goal: goal) ? run + 1 : 0
+      best = max(best, run)
+    }
+    return best
+  }
+
   /// `date` as `yyyy-MM-dd` in the Gregorian calendar and `timeZone`, whatever
   /// calendar the user picked (Buddhist, Japanese…), so spreadsheets read it as a date.
   static func isoDay(_ date: Date, timeZone: TimeZone) -> String {
@@ -288,6 +301,15 @@ extension SessionHistory {
         goal: goal, carried: carry.streak(goal: goal))
     }
     return SessionStatistics.goalStreak(
+      days: SessionStatistics.days(
+        from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
+      goal: goal)
+  }
+
+  /// The longest goal streak within the kept history (the last 90 days); trimmed
+  /// days are not counted, since the carry keeps only the current streak.
+  func longestGoalStreak(goal: Int) -> Int {
+    SessionStatistics.longestStreak(
       days: SessionStatistics.days(
         from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
       goal: goal)
