@@ -316,6 +316,7 @@ class BreakOverlayWindowController: NSObject {
       let isNewlyShown = windows.isEmpty
       if windows.isEmpty {
         model.chooseTip()
+        model.refreshToday()
         createWindows()
         startBreakCountdown()
       }

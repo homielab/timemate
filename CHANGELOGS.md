@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- The break screen shows today's progress under the tip, as in the menu bar popover: "Today: 3/8 pomodoros · 75 min · Streak: 5 days" (only the pomodoros without a daily goal; hidden before your first pomodoro of the day). VoiceOver reads it as one line.
 - Settings → Automation → **Resume when I'm back** (off by default, needs "Pause when the Mac sleeps or the screen locks"): a focus session paused by sleep or the lock continues a moment after you unlock the screen or wake the Mac. A session you paused yourself, or one paused for over four hours, stays paused.
 - App Store release notes for this version in `docs/whats-new/` (English and Vietnamese).
 - Global shortcut **Add 5 Minutes** (⌃⌥E, off by default; turn it on in Settings → Keyboard Shortcuts): adds 5 minutes to the running or paused session from any app, like +5 min.

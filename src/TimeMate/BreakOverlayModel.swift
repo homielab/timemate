@@ -16,10 +16,14 @@ final class BreakOverlayModel: ObservableObject {
   @Published private(set) var isBreakPostponed: Bool
   /// The relaxation tip of the current break, shared by the windows on every screen.
   @Published private(set) var tip: String
+  /// Today's progress ("Today: 3/8 pomodoros · 75 min" and the streak), as in the popover;
+  /// nil before the first pomodoro of the day, so the line is hidden.
+  @Published private(set) var today: TodaySummary?
 
   let timer: PomodoroTimer
   let countdown: BreakOverlayCountdown
   private let nextTip: () -> String
+  private let defaults: UserDefaults
   private var cancellables = Set<AnyCancellable>()
 
   init(
@@ -30,6 +34,7 @@ final class BreakOverlayModel: ObservableObject {
   ) {
     self.timer = timer
     self.nextTip = tip
+    self.defaults = defaults
     self.tip = tip()
     self.state = timer.state
     self.currentSessionType = timer.currentSessionType
@@ -59,6 +64,26 @@ final class BreakOverlayModel: ObservableObject {
   /// (a display change) must not call this, so the tip stays the same for the whole break.
   func chooseTip() {
     tip = nextTip()
+  }
+
+  /// One line: today's text, then the streak when it shows.
+  static func todayText(_ summary: TodaySummary) -> String {
+    summary.streakText.isEmpty
+      ? summary.visibleText : "\(summary.visibleText) · \(summary.streakText)"
+  }
+
+  /// Reads today's progress from the history for a break screen that is about to appear.
+  func refreshToday() {
+    let history = timer.history
+    let totals = history.todayTotals()
+    guard totals.pomodoros > 0 else {
+      today = nil
+      return
+    }
+    let storedGoal = defaults.object(forKey: SettingsKey.dailyGoal) as? Int
+    today = TodaySummary(
+      pomodoros: totals.pomodoros, minutes: totals.focusMinutes, goal: storedGoal,
+      streak: { history.goalStreak(goal: DailyGoal.sanitized(storedGoal)) })
   }
 
   /// Starts the countdown for a break screen that has just appeared: the skip delay

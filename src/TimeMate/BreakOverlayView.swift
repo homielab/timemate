@@ -86,6 +86,12 @@ struct BreakOverlayView: View {
               .opacity(isAnimating ? 1 : 0)
               .offset(y: isAnimating || reduceMotion ? 0 : 20)
               .animation(entrance(1.0, delay: 0.3), value: isAnimating)
+
+            if let today = model.today {
+              BreakOverlayTodayView(summary: today)
+                .opacity(isAnimating ? 1 : 0)
+                .animation(entrance(1.0, delay: 0.6), value: isAnimating)
+            }
           }
 
           // Center countdown text (observes countdown only)
@@ -118,6 +124,26 @@ struct BreakOverlayView: View {
         model.continueWork()
       }
     }
+  }
+}
+
+/// "Today: 3/8 pomodoros · 75 min · Streak: 5 days", read by VoiceOver as one label.
+private struct BreakOverlayTodayView: View {
+  let summary: TodaySummary
+
+  var body: some View {
+    HStack(spacing: 6) {
+      if summary.reached {
+        Image(systemName: "checkmark.circle.fill")
+          .foregroundColor(.green)
+      }
+      Text(BreakOverlayModel.todayText(summary))
+    }
+    .font(.system(size: 18, weight: .regular))
+    .foregroundColor(.white.opacity(0.7))
+    .monospacedDigit()
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(summary.accessibilityLabel)
   }
 }
 

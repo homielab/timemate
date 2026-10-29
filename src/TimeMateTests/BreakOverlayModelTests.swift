@@ -224,3 +224,67 @@ final class BreakOverlayModelTests: XCTestCase {
     XCTAssertEqual(secondary.model.tip, "tip 2")
   }
 }
+
+final class BreakOverlayModelTodayTests: XCTestCase {
+  private static let suiteName = "TimeMateBreakOverlayTodayTests"
+  private var defaults: UserDefaults!
+  private var history: SessionHistory!
+  private var model: BreakOverlayModel!
+
+  override func setUp() {
+    super.setUp()
+    UserDefaults().removePersistentDomain(forName: Self.suiteName)
+    defaults = UserDefaults(suiteName: Self.suiteName)
+    history = SessionHistory(fileURL: nil)
+    let timer = PomodoroTimer(
+      defaults: defaults, workspaceNotificationCenter: NotificationCenter(), history: history,
+      isFullscreenProbe: { false })
+    model = BreakOverlayModel(timer: timer, defaults: defaults, tip: { "tip" })
+  }
+
+  override func tearDown() {
+    model = nil
+    UserDefaults().removePersistentDomain(forName: Self.suiteName)
+    super.tearDown()
+  }
+
+  private func recordPomodoros(_ count: Int) {
+    for _ in 0..<count {
+      history.recordCompletedSession(.focus, duration: 1500, end: Date())
+    }
+  }
+
+  func testNoPomodoroTodayHidesTheLine() {
+    defaults.set(8, forKey: SettingsKey.dailyGoal)
+    model.refreshToday()
+    XCTAssertNil(model.today)
+  }
+
+  func testShowsGoalProgressAndVoiceOverLabel() throws {
+    defaults.set(8, forKey: SettingsKey.dailyGoal)
+    recordPomodoros(3)
+    model.refreshToday()
+    let today = try XCTUnwrap(model.today)
+    let expected = TodaySummary(
+      pomodoros: 3, minutes: 75, goal: 8, streak: { history.goalStreak(goal: 8) })
+    XCTAssertEqual(today, expected)
+    XCTAssertTrue(today.visibleText.contains("3/8"))
+    XCTAssertEqual(today.accessibilityLabel, expected.accessibilityLabel)
+    XCTAssertEqual(BreakOverlayModel.todayText(today), today.visibleText)
+  }
+
+  func testWithoutGoalShowsOnlyPomodoros() throws {
+    recordPomodoros(3)
+    model.refreshToday()
+    let today = try XCTUnwrap(model.today)
+    XCTAssertFalse(today.hasGoal)
+    XCTAssertFalse(today.visibleText.contains("/"))
+    XCTAssertEqual(BreakOverlayModel.todayText(today), today.visibleText)
+  }
+
+  func testStreakIsAppendedToTheLine() {
+    let summary = TodaySummary(pomodoros: 3, minutes: 75, goal: 8, streak: { 5 })
+    XCTAssertEqual(
+      BreakOverlayModel.todayText(summary), "\(summary.visibleText) · \(summary.streakText)")
+  }
+}
