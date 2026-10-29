@@ -137,6 +137,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- A session paused overnight (or for over 4 hours) no longer resumes the old cycle: it keeps its time left but starts a fresh cycle, so yesterday's pomodoros don't end it in a long break.
 - **Export sessions CSV…** now writes when a paused session really started; it used to show the end minus the session length (a session started at 09:00, paused 09:10–09:40 and done at 10:05 showed 09:40). Sessions recorded before this update keep their old start.
 - Settings → Durations → **Cycles** shows the number of focus sessions the timer really uses (e.g. 8, not an out-of-range 12 stored in defaults). VoiceOver reads it as "4 focus sessions" with a hint, in English and Vietnamese.
 - **Skip delay on the break screen**: pressing **+5 min** no longer counts as a passing second, so it cannot unlock **Skip Break** before the skip delay is over.

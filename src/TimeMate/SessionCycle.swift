@@ -29,6 +29,14 @@ enum SessionCycle {
     return gap > dayChangeGap && !calendar.isDate(lastActivity, inSameDayAs: now)
   }
 
+  /// Whether resuming a session paused at `pausedAt` starts the cycle over:
+  /// the pause is stale by the same rule as an idle timer (`isStale`). An
+  /// unknown pause time (`nil`, a snapshot from an older version) keeps the cycle.
+  static func pauseRestartsCycle(pausedAt: Date?, now: Date, calendar: Calendar) -> Bool {
+    guard let pausedAt else { return false }
+    return isStale(lastActivity: pausedAt, now: now, calendar: calendar)
+  }
+
   /// `stored` clamped to `validRange`; a missing value gives the default.
   static func sanitizedInterval(_ stored: Int?) -> Int {
     guard let stored else { return defaultInterval }

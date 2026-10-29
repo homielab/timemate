@@ -67,6 +67,9 @@ class PomodoroTimer: ObservableObject {
   /// When a session last began or ended; an idle timer whose cycle is older
   /// than `SessionCycle.isStale` allows starts the cycle over.
   private(set) var lastActivity: Date?
+  /// When the paused session was paused; `nil` unless paused (or unknown, from
+  /// an older snapshot). Resuming after a stale pause starts the cycle over.
+  private(set) var pausedAt: Date?
   /// When the current session began, before any pause; `nil` when none runs or
   /// it came from a snapshot saved before this was kept (the history then
   /// takes the end minus the duration).
@@ -174,6 +177,12 @@ class PomodoroTimer: ObservableObject {
     clearSessionNotifications()
     if state == .idle {
       restartCycleIfStale()
+    } else if state == .paused,
+      SessionCycle.pauseRestartsCycle(pausedAt: pausedAt, now: now(), calendar: history.calendar)
+    {
+      // Paused last night, resumed this morning: the session keeps the time
+      // it has left, but the pomodoros before it no longer count.
+      focusSessionsCompleted = 0
     }
     beginSession()
   }
@@ -188,6 +197,7 @@ class PomodoroTimer: ObservableObject {
       startedAt = now()
     }
     state = .active
+    pausedAt = nil
     lastActivity = now()
     endDate = now().addingTimeInterval(TimeInterval(timeRemaining))
     startTicking()
@@ -196,7 +206,8 @@ class PomodoroTimer: ObservableObject {
   /// Starts the cycle over on focus, with no sessions counted, when the timer
   /// is idle and the last session is over four hours old, or from another day
   /// and over an hour old (`SessionCycle.isStale`): three pomodoros last night
-  /// do not make this morning's first one end in a long break. A running or paused session is never touched.
+  /// do not make this morning's first one end in a long break. A running or paused
+  /// session is never touched here (a stale pause resets in `startTimer`).
   private func restartCycleIfStale() {
     guard state == .idle,
       focusSessionsCompleted != 0 || currentSessionType != .focus || isWaitingToContinue,
@@ -391,6 +402,7 @@ class PomodoroTimer: ObservableObject {
     handleTick()
     guard state == .active, endDate == runningEndDate else { return }
     state = .paused
+    pausedAt = now()
     endDate = nil
     timer?.cancel()
     saveSnapshot()
@@ -567,7 +579,7 @@ class PomodoroTimer: ObservableObject {
       remaining: timeRemaining, totalDuration: totalDuration,
       focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
       isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity,
-      startedAt: startedAt
+      startedAt: startedAt, pausedAt: state == .paused ? pausedAt : nil
     ).save(to: defaults)
   }
 
@@ -587,6 +599,7 @@ class PomodoroTimer: ObservableObject {
     startedLabel = snapshot.label
     lastActivity = snapshot.lastActivity
     startedAt = snapshot.startedAt
+    pausedAt = snapshot.state == .paused ? snapshot.pausedAt : nil
     defer { restartCycleIfStale() }
     resetForCurrentSession()
 

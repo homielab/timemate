@@ -213,6 +213,14 @@ final class SessionCycleTests: XCTestCase {
     XCTAssertFalse(SessionCycle.isStale(lastActivity: last, now: now, calendar: utc))
   }
 
+  func testOnlyAStalePauseRestartsTheCycle() {
+    XCTAssertFalse(
+      SessionCycle.pauseRestartsCycle(pausedAt: march10(9), now: march10(10), calendar: utc))
+    XCTAssertTrue(
+      SessionCycle.pauseRestartsCycle(pausedAt: march10(9), now: march10(14), calendar: utc))
+    XCTAssertFalse(SessionCycle.pauseRestartsCycle(pausedAt: nil, now: march10(9), calendar: utc))
+  }
+
   func testUnknownLastActivityIsStale() {
     XCTAssertTrue(SessionCycle.isStale(lastActivity: nil, now: march10(9), calendar: utc))
   }

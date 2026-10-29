@@ -442,16 +442,59 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .longBreak)
   }
 
-  func testResumingAPausedSessionNeverResetsTheCycle() {
+  func testResumingAfterAShortPauseKeepsTheCycle() {
     completeThreeFocusSessions()
     timer.startTimer()
     runTicks(timer, 1)
     timer.pauseTimer()
-    advanceClock(by: 10 * 3600)
+    advanceClock(by: 3600)
     timer.startTimer()
     XCTAssertEqual(timer.focusSessionsCompleted, 3)
     finishSession(timer)
     XCTAssertEqual(timer.currentSessionType, .longBreak)
+  }
+
+  func testResumingAfterAStalePauseStartsAFreshCycleAndKeepsTheTimeLeft() {
+    completeThreeFocusSessions()
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    let left = timer.timeRemaining
+    advanceClock(by: 10 * 3600)
+    timer.startTimer()
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.timeRemaining, left)
+    finishSession(timer)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
+  func testStalePauseAcrossARelaunchStartsAFreshCycleOnResume() {
+    completeThreeFocusSessions()
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    let relaunched = relaunch(after: 10 * 3600, focus: 3, autoStart: false)
+    XCTAssertEqual(relaunched.state, .paused)
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 3)
+    relaunched.startTimer()
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 0)
+  }
+
+  func testOldPausedSnapshotWithoutPauseTimeKeepsTheCycleOnResume() throws {
+    completeThreeFocusSessions()
+    timer.startTimer()
+    runTicks(timer, 1)
+    timer.pauseTimer()
+    var saved = try XCTUnwrap(TimerSnapshot.load(from: defaults))
+    XCTAssertNotNil(saved.pausedAt)
+    saved.pausedAt = nil
+    saved.save(to: defaults)
+    let relaunched = relaunch(after: 10 * 3600, focus: 3, autoStart: false)
+    relaunched.startTimer()
+    XCTAssertEqual(relaunched.focusSessionsCompleted, 3)
   }
 
   func testStaleCycleIsResetWhenTheAppOpensIdle() {

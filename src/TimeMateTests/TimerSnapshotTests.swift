@@ -123,22 +123,26 @@ final class TimerSnapshotTests: XCTestCase {
     let made = snapshot()
     XCTAssertNil(made.label)
     XCTAssertNil(made.lastActivity)
+    XCTAssertNil(made.pausedAt)
   }
 
   func testSnapshotSavedBeforeOptionalFieldsExistedLoadsWithNil() throws {
     var full = snapshot(state: .paused)
     full.label = "Report"
     full.lastActivity = end
+    full.pausedAt = end
     var json = try XCTUnwrap(
       JSONSerialization.jsonObject(with: JSONEncoder().encode(full)) as? [String: Any])
     json["label"] = nil
     json["lastActivity"] = nil
+    json["pausedAt"] = nil
     let old = try JSONSerialization.data(withJSONObject: json)
     defaults.set(old, forKey: SettingsKey.timerSnapshot)
 
     let loaded = try XCTUnwrap(TimerSnapshot.load(from: defaults))
     XCTAssertNil(loaded.label)
     XCTAssertNil(loaded.lastActivity)
+    XCTAssertNil(loaded.pausedAt)
     XCTAssertEqual(loaded.state, .paused)
     XCTAssertEqual(loaded.remaining, 5)
   }
