@@ -35,6 +35,19 @@ enum SessionCycle {
     return min(max(stored, validRange.lowerBound), validRange.upperBound)
   }
 
+  /// The interval Settings shows for a stored value: what the timer runs,
+  /// e.g. 8 for a stored 12 and 1 for a stored 0.
+  static func displayInterval(_ stored: Int) -> Int {
+    sanitizedInterval(stored)
+  }
+
+  /// VoiceOver value of the Cycles stepper, e.g. "4 focus sessions".
+  static func settingsAccessibilityValue(_ interval: Int) -> String {
+    String.localizedStringWithFormat(
+      NSLocalizedString("%lld focus sessions", comment: "Cycles stepper in Settings"),
+      interval)
+  }
+
   /// VoiceOver text for the cycle dots, e.g. "2 of 4 focus sessions done", or
   /// "Long break" while the cup icon is shown.
   static func accessibilityLabel(completed: Int, total: Int, isLongBreak: Bool) -> String {

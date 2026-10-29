@@ -73,7 +73,38 @@ final class SessionCycleTests: XCTestCase {
     XCTAssertEqual(focusSessionsBeforeLongBreak(makeTimer(interval: 99)), 8)
   }
 
+  func testSettingsShowsTheIntervalTheTimerRuns() {
+    XCTAssertEqual(SessionCycle.displayInterval(12), 8)
+    XCTAssertEqual(SessionCycle.displayInterval(0), 1)
+    XCTAssertEqual(SessionCycle.displayInterval(-2), 1)
+    XCTAssertEqual(SessionCycle.displayInterval(4), 4)
+  }
+
   // MARK: - VoiceOver
+
+  func testCyclesStepperValueNamesFocusSessions() {
+    XCTAssertEqual(SessionCycle.settingsAccessibilityValue(4), "4 focus sessions")
+  }
+
+  func testCyclesStepperValueUsesPluralsInEnglishAndVietnamese() throws {
+    let bundle = Bundle(for: PomodoroTimer.self)
+    for (localization, one, four, hint) in [
+      ("en", "1 focus session", "4 focus sessions", "Long break after this many focus sessions"),
+      ("vi", "1 phiên tập trung", "4 phiên tập trung", "Nghỉ dài sau số phiên tập trung này"),
+    ] {
+      let path = try XCTUnwrap(bundle.path(forResource: localization, ofType: "lproj"))
+      let localized = try XCTUnwrap(Bundle(path: path))
+      let format = localized.localizedString(
+        forKey: "%lld focus sessions", value: nil, table: nil)
+      let locale = Locale(identifier: localization)
+      XCTAssertEqual(String(format: format, locale: locale, 1), one)
+      XCTAssertEqual(String(format: format, locale: locale, 4), four)
+      XCTAssertEqual(
+        localized.localizedString(
+          forKey: "Long break after this many focus sessions", value: nil, table: nil),
+        hint)
+    }
+  }
 
   func testCycleLabelCountsDoneSessions() {
     XCTAssertEqual(

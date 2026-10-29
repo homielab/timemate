@@ -135,6 +135,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Settings → Durations → **Cycles** shows the number of focus sessions the timer really uses (e.g. 8, not an out-of-range 12 stored in defaults). VoiceOver reads it as "4 focus sessions" with a hint, in English and Vietnamese.
 - **Skip delay on the break screen**: pressing **+5 min** no longer counts as a passing second, so it cannot unlock **Skip Break** before the skip delay is over.
 - **Reset Statistics** now also deletes the backup of an unreadable history file (`session-history.corrupt-<date>.json`), so no old session label is left behind.
 - **Daily goal notification after sleep**: when the session that reaches your daily goal ends while the Mac sleeps or TimeMate is closed, "Daily goal reached" now shows on wake or at the next launch (still once a day) instead of never.

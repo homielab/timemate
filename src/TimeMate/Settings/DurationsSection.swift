@@ -23,16 +23,26 @@ struct DurationsSection: View {
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
-        Text(verbatim: "\(longBreakInterval)")
+        Text(verbatim: "\(SessionCycle.displayInterval(longBreakInterval))")
           .monospacedDigit()
           .foregroundColor(.secondary)
           .frame(width: 52, alignment: .trailing)
-        Stepper("", value: $longBreakInterval, in: SessionCycle.settingsRange)
+        Stepper("", value: cycles, in: SessionCycle.settingsRange)
           .labelsHidden()
           .accessibilityLabel(Text("Cycles"))
-          .accessibilityValue(Text(verbatim: "\(longBreakInterval)"))
+          .accessibilityValue(
+            Text(verbatim: SessionCycle.settingsAccessibilityValue(cycles.wrappedValue))
+          )
+          .accessibilityHint(Text("Long break after this many focus sessions"))
       }
     }
+  }
+
+  /// Shows the stored interval the way the timer runs it, e.g. 8 for a stored 12.
+  private var cycles: Binding<Int> {
+    Binding(
+      get: { SessionCycle.displayInterval(longBreakInterval) },
+      set: { longBreakInterval = $0 })
   }
 
   /// Shows a stored length the way the timer runs it, e.g. 1 for a stored 0.

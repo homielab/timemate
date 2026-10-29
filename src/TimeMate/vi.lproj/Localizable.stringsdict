@@ -225,5 +225,19 @@
 			<string>%lld pomodoro</string>
 		</dict>
 	</dict>
+	<key>%lld focus sessions</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@sessions@</string>
+		<key>sessions</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld phiên tập trung</string>
+		</dict>
+	</dict>
 </dict>
 </plist>
