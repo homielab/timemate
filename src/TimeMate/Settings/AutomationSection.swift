@@ -12,6 +12,7 @@ struct AutomationSection: View {
 
   @AppStorage(SettingsKey.pauseOnSleep) private var pauseOnSleep = false
   @AppStorage(SettingsKey.resumeOnReturn) private var resumeOnReturn = false
+  @AppStorage(SettingsKey.idlePauseMinutes) private var idlePauseMinutes = IdlePausePolicy.off
 
   var body: some View {
     SettingsSection(titleKey: "Automation", systemImage: "play.circle") {
@@ -41,11 +42,30 @@ struct AutomationSection: View {
       .help(
         "Pause a running focus session when the Mac sleeps or the screen locks. Resume it yourself, or turn on Resume when I'm back."
       )
+      HStack {
+        Text("Auto-pause when I'm away")
+        Spacer(minLength: 12)
+        Picker("", selection: $idlePauseMinutes) {
+          ForEach(IdlePausePolicy.choices, id: \.self) { minutes in
+            if minutes == IdlePausePolicy.off {
+              Text("Off").tag(minutes)
+            } else {
+              Text("\(minutes) min").tag(minutes)
+            }
+          }
+        }
+        .labelsHidden()
+        .accessibilityLabel(Text("Auto-pause when I'm away"))
+        .fixedSize()
+      }
+      .help(
+        "Pause a running focus session after this long without keyboard, mouse or trackpad input. The time away doesn't count, so your history only shows time at the desk. Watching a video without touching the Mac counts as away."
+      )
       SettingsToggleRow(titleKey: "Resume when I'm back", isOn: $resumeOnReturn)
         .help(
-          "Continue a session paused by sleep or the lock a moment after you unlock the screen or wake the Mac. A session you paused yourself stays paused."
+          "Continue a session paused by sleep, the lock or being away a moment after you are back: you unlock the screen, wake the Mac or, after Auto-pause, use the keyboard, mouse or trackpad. A session you paused yourself stays paused."
         )
-        .disabled(!pauseOnSleep)
+        .disabled(!pauseOnSleep && idlePauseMinutes == IdlePausePolicy.off)
     }
   }
 }

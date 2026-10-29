@@ -37,6 +37,8 @@ enum SettingsKey {
   static let pauseOnSleep = "pauseOnSleep"
   /// Resume a session paused by sleep or the lock when the user is back (off by default).
   static let resumeOnReturn = "resumeOnReturn"
+  /// Minutes without input that pause a running focus session; 0 = off (the default).
+  static let idlePauseMinutes = "idlePauseMinutes"
   static let overlayEnabled = "overlayEnabled"
   static let overlaySkipFullscreen = "overlaySkipFullscreen"
   static let autoStartOnLaunch = "autoStartOnLaunch"
@@ -86,6 +88,7 @@ enum SettingsKey {
       SettingsKey.autoStartOnLaunch: false,
       SettingsKey.showTimerAtLogin: false,
       SettingsKey.keepBreakScreenOpen: true,
+      SettingsKey.idlePauseMinutes: IdlePausePolicy.off,
       SettingsKey.dailyGoal: DailyGoal.off,
       SettingsKey.statisticsDays: SessionStatistics.weekLength,
     ])

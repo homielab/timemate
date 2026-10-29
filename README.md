@@ -39,6 +39,7 @@ By alternating focused work sprints (e.g., 25 minutes) with short breaks (5 minu
 - **Popover keys**: with the popover open, **Space** starts/pauses (not while typing in a duration or label field), **⌘,** toggles Settings, **⌘→** skips and **⌘R** resets. Restart asks before discarding a running session.
 - **Shortcuts & Siri**: Automate TimeMate with the Shortcuts app — **Start Timer**, **Start Focus** (starts focus even when the timer sits on a break that has not started; a running or paused session just goes on), **Start Focus with Label** (the same, and fills "What are you working on?" before a new session starts), **Add Time** (1–60 minutes to the running or paused session; says "Added 5 minutes", or "No session to extend" when nothing is running), **Pause Timer**, **Skip Session**, **Reset Timer** (Start, Start Focus, Pause, Skip and Reset answer with the timer's state afterwards, e.g. "Short Break, not started, 1 min") and **Get Timer Status** (returns the minutes left and says which session is running, e.g. "Focus, running, 12 min left") and **Get Today's Progress** (returns the pomodoros completed today and says e.g. "Today: 3 of 8 pomodoros, 75 minutes", plus ". Streak: 4 days" when you have one). Use them to turn on a Focus mode when a session starts, or ask Siri "Start TimeMate", "Start a focus session in TimeMate" or "Add time in TimeMate".
 - **Pause on Sleep or Lock**: Turn on Settings → Automation → "Pause when the Mac sleeps or the screen locks" (off by default) and a running **focus session** pauses when the Mac sleeps, the display turns off or the screen locks. It stays paused until you resume it, so closing the lid for lunch doesn't count as a pomodoro. Turn on **Resume when I'm back** under it (off by default) and a session paused this way continues a couple of seconds after you unlock the screen or wake the Mac; a session you paused yourself stays paused, and one paused for over four hours (or since another day) waits for Resume, which starts a new cycle. Focus sessions only: a break keeps running while the Mac sleeps or is locked, so locking in the middle of a break doesn't stop it — it still ends on time, and on unlock the break screen comes back while it runs or the cycle moves on as usual once it's over (a break long past its end waits for you instead of ringing). With the setting off, nothing changes. Reset All Settings keeps a running session.
+- **Auto-pause When Away**: Settings → Automation → "Auto-pause when I'm away" (Off, 3, 5 or 10 minutes; off by default). When you leave the desk without locking, a running **focus session** pauses once the Mac has had no keyboard, mouse or trackpad input for that long, and the minutes away go back on the clock, so History and statistics only count time at the desk. With **Resume when I'm back** on, it continues a couple of seconds after you touch the keyboard, mouse or trackpad (or unlock the screen). Breaks keep running. Watching a video without touching the Mac counts as away. Needs no Accessibility permission.
 - **Survives Quit & Updates**: Quit, update or restart your Mac and the session picks up where it was — a running timer keeps counting from when it should end, a paused one stays paused, and the pomodoro count is kept. A session that ended while TimeMate was closed or the Mac slept still counts in your statistics; if it ended more than 5 minutes ago, the next session waits for you to press Start instead of opening the break screen.
 - **Keep Mac Awake**: Prevents your Mac from going to sleep during active focus sessions.
 - **Customizable Interface**: Control dock icon visibility, notification preferences, and overlay behavior; pick the app language (System Default, English or Vietnamese; takes effect after restarting the app), a background color (popover text and controls switch to dark or light to stay readable on it) and whether the window stays on top ("Keep window on top").
@@ -132,8 +133,9 @@ Sources are in `src/TimeMate/`:
 - `PomodoroTimer.swift` — the timer state machine; `TimerSnapshot.swift` — the session it saves in
   user defaults to restore after a relaunch; `SettingsKey.swift` — all user-defaults keys.
   The rules that need no timer are pure and unit-tested: `SessionSequence.swift` (next session,
-  long-break count, what happens when a session ends, "+5 min" and "Postpone") and
-  `TimerRestorePlan.swift` (what to do with the saved session at launch).
+  long-break count, what happens when a session ends, "+5 min" and "Postpone"),
+  `TimerRestorePlan.swift` (what to do with the saved session at launch), `SleepPausePolicy.swift`
+  (pause on sleep or lock, resume when back) and `IdlePausePolicy.swift` (auto-pause when away).
 - `AppDelegate.swift` — app start-up and the popover; it wires the status item, the global
   shortcuts (`HotKeyManager.swift`), the break screen, keep-awake and notification responses.
   `StatusItemController.swift` owns the status item, its right-click menu
@@ -173,8 +175,9 @@ Sources are in `src/TimeMate/`:
   - System: `SleepPreventer.swift` (keep Mac awake), `AppLanguage.swift` (in-app language, About
     link), `RelaxationTips.swift` (break screen tips), `Color+Hex.swift` and `Extensions.swift`
     (helpers and `SettingsReset`).
-- `PomodoroTimer+Settings.swift`, `+Notifications.swift`, `+ScreenLock.swift` — the parts of
-  `PomodoroTimer` that react to settings changes, send notifications, and pause on sleep or lock.
+- `PomodoroTimer+Settings.swift`, `+Notifications.swift`, `+ScreenLock.swift`, `+Idle.swift` — the
+  parts of `PomodoroTimer` that react to settings changes, send notifications, pause on sleep or
+  lock, and pause when the user is away (system idle time, injected in tests).
 - `TimeMateApp.swift` — the SwiftUI entry point; `TimeMate.entitlements` and
   `TimeMateDebug.entitlements` — Release and Debug entitlements.
 - `Log.swift` — `os.Logger` categories (`app`, `history`); use them instead of `print`.

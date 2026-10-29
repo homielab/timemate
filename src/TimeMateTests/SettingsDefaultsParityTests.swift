@@ -47,6 +47,7 @@ final class SettingsDefaultsParityTests: XCTestCase {
     XCTAssertEqual(unset.dailyGoal, timer.dailyGoal)
     XCTAssertEqual(unset.autoStart.breaks, timer.autoStart.breaks)
     XCTAssertEqual(unset.autoStart.focus, timer.autoStart.focus)
+    XCTAssertEqual(unset.idlePauseMinutes, timer.idlePauseMinutes)
     // Overlay switch and "skip when a full-screen app is in front".
     XCTAssertEqual(unset.breakScreenCanShow, timer.breakScreenCanShow)
     XCTAssertEqual(unsetFullscreen.breakScreenCanShow, fullscreenTimer.breakScreenCanShow)

@@ -11,9 +11,16 @@ class PomodoroTimer: ObservableObject {
   // MARK: - Published Properties for UI
   @Published var timeRemaining: Int = 0
   @Published var state: PomodoroState = .idle {
-    didSet { refreshCanExtend() }
+    didSet {
+      refreshCanExtend()
+      if state != oldValue { updateIdleWatch() }
+    }
   }
-  @Published var currentSessionType: SessionType = .focus
+  @Published var currentSessionType: SessionType = .focus {
+    didSet {
+      if currentSessionType != oldValue { updateIdleWatch() }
+    }
+  }
   @Published var focusSessionsCompleted: Int = 0
   @Published var progress: Double = 1.0
   @Published var isWaitingToContinue: Bool = false {
@@ -82,14 +89,26 @@ class PomodoroTimer: ObservableObject {
   /// When the paused session was paused; `nil` unless paused (or unknown, from
   /// an older snapshot). Resuming after a stale pause starts the cycle over.
   private(set) var pausedAt: Date?
-  /// The paused session was paused by sleep or a locked screen, not by the
-  /// user; with `resumeOnReturn` on it continues when the user is back.
-  var pausedBySleep = false
+  /// The paused session was paused by sleep, a locked screen or the user being
+  /// away, not by the user; with `resumeOnReturn` on it continues when the user is back.
+  var pausedBySleep = false {
+    didSet {
+      if pausedBySleep != oldValue { updateIdleWatch() }
+    }
+  }
   /// Whether the screen is locked, per the system's lock and unlock notifications.
   var isScreenLocked = false
   /// Runs a block after a delay; the resume after unlock waits `resumeDelay`.
   /// Tests collect the blocks and run them.
   let scheduleResume: (TimeInterval, @escaping () -> Void) -> Void
+  /// Seconds since the last keyboard, mouse or trackpad input
+  /// (`systemIdleSeconds`); tests inject a fake.
+  let idleSeconds: () -> TimeInterval
+  /// Runs a block once after a delay (`scheduleOnMainRunLoop`); the idle checks
+  /// of "Auto-pause when I'm away" use it. Tests collect the blocks and run them.
+  let scheduleIdleCheck: (TimeInterval, @escaping () -> Void) -> AnyCancellable
+  /// The next idle check (`updateIdleWatch`); `nil` when none is due.
+  var idleWatch: AnyCancellable?
   /// When the current session began, before any pause; `nil` when none runs or
   /// it came from a snapshot saved before this was kept (the history then
   /// takes the end minus the duration).
@@ -133,10 +152,15 @@ class PomodoroTimer: ObservableObject {
     isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
     scheduleResume: @escaping (TimeInterval, @escaping () -> Void) -> Void = {
       DispatchQueue.main.asyncAfter(deadline: .now() + $0, execute: $1)
-    }
+    },
+    idleSeconds: @escaping () -> TimeInterval = PomodoroTimer.systemIdleSeconds,
+    scheduleIdleCheck: @escaping (TimeInterval, @escaping () -> Void) -> AnyCancellable =
+      PomodoroTimer.scheduleOnMainRunLoop
   ) {
     self.isFullscreenProbe = isFullscreenProbe
     self.scheduleResume = scheduleResume
+    self.idleSeconds = idleSeconds
+    self.scheduleIdleCheck = scheduleIdleCheck
     self.defaults = defaults
     self.postNotification = postNotification
     self.removeSessionNotifications = removeSessionNotifications
@@ -192,6 +216,7 @@ class PomodoroTimer: ObservableObject {
         SettingsKey.autoStartNextSession, SettingsKey.autoStartBreaks, SettingsKey.autoStartFocus,
         SettingsKey.keepBreakScreenOpen, SettingsKey.overlayEnabled,
         SettingsKey.overlaySkipFullscreen, SettingsKey.breakThroughFocus,
+        SettingsKey.idlePauseMinutes, SettingsKey.resumeOnReturn,
       ]
     ) { [weak self] in self?.handleDefaultsChange() }
     notificationCenter.publisher(for: .NSSystemClockDidChange)
@@ -329,6 +354,7 @@ class PomodoroTimer: ObservableObject {
       saveSnapshot()
       return
     }
+    if pauseIfAway(at: tickTime, endDate: endDate) { return }
 
     let remaining = max(0, Int(endDate.timeIntervalSince(tickTime).rounded()))
     if remaining > 0 {
@@ -381,6 +407,31 @@ class PomodoroTimer: ObservableObject {
     }
   }
 
+  /// "Auto-pause when I'm away": a running focus session whose user has been
+  /// away for the chosen minutes pauses, with the time away given back, and
+  /// counts as paused by the system (`pausedBySleep`), so "Resume when I'm back"
+  /// continues it. Returns whether it paused.
+  private func pauseIfAway(at tickTime: Date, endDate: Date) -> Bool {
+    guard let threshold = IdlePausePolicy.threshold(minutes: idlePauseMinutes) else { return false }
+    let idle = idleSeconds()
+    guard
+      IdlePausePolicy.shouldPause(
+        state: state, isBreak: isBreak, idleSeconds: idle, threshold: threshold)
+    else { return false }
+    let left = IdlePausePolicy.remainingAfterAway(
+      secondsLeft: endDate.timeIntervalSince(tickTime), idleSeconds: idle,
+      runningFor: lastActivity.map { tickTime.timeIntervalSince($0) } ?? .infinity,
+      totalDuration: totalDuration)
+    // Away only after the end: the session is over and counts.
+    guard left > 0 else { return false }
+    timeRemaining = left
+    progress = Double(timeRemaining) / Double(max(1, totalDuration))
+    enterPause(at: tickTime)
+    pausedBySleep = true
+    Logger.app.info("Paused the focus session: no input for \(Int(idle)) s")
+    return true
+  }
+
   /// The Mac is about to sleep: stop the ticking loop. A focus session pauses
   /// when `pauseOnSleep` is on; anything else keeps `endDate` counting in
   /// wall-clock time while the Mac sleeps.
@@ -429,6 +480,7 @@ class PomodoroTimer: ObservableObject {
   /// a setting that changes what it says (auto-start, the next session's
   /// length, the long break interval...) schedules it again with the new text.
   func handleDefaultsChange() {
+    updateIdleWatch()
     syncFallbackNotification()
     guard state == .idle, !isWaitingToContinue,
       durationFor(session: currentSessionType) != totalDuration
@@ -443,8 +495,14 @@ class PomodoroTimer: ObservableObject {
     let runningEndDate = endDate
     handleTick()
     guard state == .active, endDate == runningEndDate else { return }
+    enterPause(at: now())
+  }
+
+  /// Stops the countdown at `timeRemaining`; the user resumes it, unless the
+  /// caller marks the pause as the system's (`pausedBySleep`).
+  private func enterPause(at time: Date) {
     state = .paused
-    pausedAt = now()
+    pausedAt = time
     pausedBySleep = false
     endDate = nil
     timer?.cancel()

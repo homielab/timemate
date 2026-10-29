@@ -42,7 +42,9 @@ extension PomodoroTimer {
     }
   }
 
-  private func canResumeAfterSleep() -> Bool {
+  /// Whether a session paused by sleep, the lock or being away would continue
+  /// now that the user is back (`SleepPausePolicy.shouldResume`).
+  func canResumeAfterSleep() -> Bool {
     SleepPausePolicy.shouldResume(
       state: state, pausedBySleep: pausedBySleep,
       resumeOnReturn: defaults.bool(forKey: SettingsKey.resumeOnReturn),

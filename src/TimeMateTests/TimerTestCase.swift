@@ -1,6 +1,7 @@
 //  Created by homielab.com
 
 import AppKit
+import Combine
 import XCTest
 
 @testable import TimeMate
@@ -24,6 +25,12 @@ class TimerTestCase: XCTestCase {
   /// Resumes after unlock the timer scheduled, with their delays; run them
   /// with `runScheduledResumes()`.
   var scheduledResumes: [(delay: TimeInterval, block: () -> Void)] = []
+  /// Seconds since the last keyboard or mouse input, as the timer reads them.
+  var idleTime: TimeInterval = 0
+  /// Pending idle checks of "Auto-pause when I'm away" (at most one is live);
+  /// run the next with `runIdleCheck()`.
+  var idleChecks: [(id: Int, delay: TimeInterval, block: () -> Void)] = []
+  private var nextIdleCheckID = 0
 
   override func setUp() {
     super.setUp()
@@ -36,6 +43,8 @@ class TimerTestCase: XCTestCase {
     currentUptime = 50_000
     notificationRemovals = 0
     scheduledResumes = []
+    idleTime = 0
+    idleChecks = []
     // A fixed calendar: the fake clock starts at 13:46 UTC, so calendar days
     // (and the stale-cycle rule) don't depend on the Mac's time zone.
     var calendar = Calendar(identifier: .gregorian)
@@ -83,7 +92,27 @@ class TimerTestCase: XCTestCase {
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
       removePendingSessionNotification: {},
       isFullscreenProbe: { false },
-      scheduleResume: { [weak self] in self?.scheduledResumes.append((delay: $0, block: $1)) })
+      scheduleResume: { [weak self] in self?.scheduledResumes.append((delay: $0, block: $1)) },
+      idleSeconds: { [weak self] in self?.idleTime ?? 0 },
+      scheduleIdleCheck: { [weak self] delay, block in
+        guard let self else { return AnyCancellable {} }
+        let id = self.nextIdleCheckID
+        self.nextIdleCheckID += 1
+        self.idleChecks.append((id: id, delay: delay, block: block))
+        return AnyCancellable { [weak self] in self?.idleChecks.removeAll { $0.id == id } }
+      })
+  }
+
+  /// Lets the delay of the pending idle check pass on the fake clock (the
+  /// idle time grows with it while `away`), then runs it.
+  func runIdleCheck(away: Bool = true) {
+    guard let check = idleChecks.first else { return XCTFail("No idle check scheduled") }
+    idleChecks.removeFirst()
+    advanceClock(by: check.delay)
+    if away {
+      idleTime += check.delay
+    }
+    check.block()
   }
 
   /// Lets each scheduled resume's delay pass on the fake clock, then runs it.

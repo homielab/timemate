@@ -11,7 +11,7 @@ enum SleepPausePolicy {
   }
 
   /// Whether a paused session continues by itself when the user is back: only
-  /// one paused by sleep or the lock (never by the user), with "Resume when I'm
+  /// one paused by sleep, the lock or being away (never by the user), with "Resume when I'm
   /// back" on, the screen unlocked and the pause not stale (after a stale pause
   /// Resume starts a new cycle, so the user decides).
   static func shouldResume(

@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Automation → **Auto-pause when I'm away** (Off, 3, 5 or 10 minutes; off by default): leave the desk without locking and a running focus session pauses after that long without keyboard, mouse or trackpad input. The minutes away don't count, so History stays honest. With **Resume when I'm back** on (it now works with this setting too), the session continues when you use the Mac again.
 - Settings → Statistics shows your record goal streak under the current one, e.g. "Best: 12 days in the last 90 days", when it is longer than the current streak.
 - The break screen shows today's progress under the tip, as in the menu bar popover: "Today: 3/8 pomodoros · 75 min · Streak: 5 days" (only the pomodoros without a daily goal; hidden before your first pomodoro of the day). VoiceOver reads it as one line.
 - Settings → Automation → **Resume when I'm back** (off by default, needs "Pause when the Mac sleeps or the screen locks"): a focus session paused by sleep or the lock continues a moment after you unlock the screen or wake the Mac. A session you paused yourself, or one paused for over four hours, stays paused.
