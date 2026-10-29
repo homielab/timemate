@@ -161,7 +161,8 @@ Sources are in `src/TimeMate/`:
   - History and statistics: `SessionHistory.swift` (JSON file, completed sessions, 90 days),
     `GoalStreakCarry.swift` (goal streak of the trimmed days),
     `SessionStatistics.swift` (days, periods, streak, CSV), `StatisticsText.swift` (localized
-    texts, plural forms), `DailyGoal.swift` (goal and streak display).
+    texts, plural forms), `DailyGoal.swift` (goal and streak display),
+    `TodaySummary.swift` (the popover's "Today" line).
   - Sessions: `SessionCycle.swift` (cycle dots, stale-cycle rule, VoiceOver clock), `SessionDuration.swift` (typed
     minutes), `SessionLabel.swift` and `Views/SessionLabelField.swift` ("What are you working
     on?" and its Recent labels menu), `SessionNotification.swift` (the "session complete" notification and its actions),

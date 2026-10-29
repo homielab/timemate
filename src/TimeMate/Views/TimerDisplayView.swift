@@ -115,59 +115,44 @@ private struct TodayStatsView: View {
 
   var body: some View {
     let totals = history.todayTotals()
-    let goal = DailyGoal.sanitized(storedGoal)
-    if goal == DailyGoal.off {
-      Text(StatisticsText.today(pomodoros: totals.pomodoros, minutes: totals.focusMinutes))
+    let summary = TodaySummary(
+      pomodoros: totals.pomodoros, minutes: totals.focusMinutes, goal: storedGoal,
+      streak: { history.goalStreak(goal: DailyGoal.sanitized(storedGoal)) })
+    if !summary.hasGoal {
+      Text(summary.visibleText)
         .font(.caption)
         .foregroundColor(.secondary)
         .monospacedDigit()
     } else {
-      let reached = DailyGoal.isReached(completed: totals.pomodoros, goal: goal)
-      let streak = history.goalStreak(goal: goal)
-      let showsStreak = DailyGoal.showsStreak(streak: streak, goal: goal)
-      let streakText = StatisticsText.streak(days: streak)
-      let spoken = StatisticsText.spokenToday(
-        pomodoros: totals.pomodoros, goal: goal, minutes: totals.focusMinutes)
       VStack(spacing: 4) {
         HStack(spacing: 4) {
-          if reached {
+          if summary.reached {
             Image(systemName: "checkmark.circle.fill")
               .foregroundColor(.green)
           }
-          Text(
-            StatisticsText.today(
-              pomodoros: totals.pomodoros, goal: goal, minutes: totals.focusMinutes))
+          Text(summary.visibleText)
         }
         .font(.caption)
         .foregroundColor(.secondary)
         .monospacedDigit()
 
-        ProgressView(value: DailyGoal.progress(completed: totals.pomodoros, goal: goal))
+        ProgressView(value: summary.progress)
           .progressViewStyle(.linear)
-          .tint(reached ? .green : .accentColor)
+          .tint(summary.reached ? .green : .accentColor)
           .controlSize(.small)
           .frame(width: 140)
 
-        if showsStreak {
-          Label(streakText, systemImage: "flame.fill")
+        if summary.showsStreak {
+          Label(summary.streakText, systemImage: "flame.fill")
             .font(.caption)
             .foregroundColor(.secondary)
             .monospacedDigit()
         }
       }
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel(
-        Text(
-          DailyGoal.accessibilityLabel(
-            today: reached
-              ? String(
-                format: NSLocalizedString("%@, goal reached", comment: "Day that met the goal"),
-                spoken)
-              : spoken,
-            streak: showsStreak ? streakText : nil))
-      )
+      .accessibilityLabel(Text(summary.accessibilityLabel))
       // The extra line changes the popover's height; resize it in one step.
-      .onChange(of: showsStreak) { _ in appDelegate.updatePopoverSize() }
+      .onChange(of: summary.showsStreak) { _ in appDelegate.updatePopoverSize() }
     }
   }
 }

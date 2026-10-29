@@ -20,13 +20,14 @@ enum StatisticsText {
   }
 
   /// VoiceOver for the line above: "Today: 3 of 8 pomodoros, 75 minutes"
+  /// With `goalReached`: "Today: 8 of 8 pomodoros, 200 minutes, goal reached"
   static func spokenToday(
-    pomodoros: Int, goal: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current
-  )
-    -> String
-  {
-    format(
+    pomodoros: Int, goal: Int, minutes: Int, goalReached: Bool = false, bundle: Bundle = .main,
+    locale: Locale = .current
+  ) -> String {
+    let text = format(
       "Today: %1$lld of %2$lld pomodoros, %3$lld minutes", bundle, locale, pomodoros, goal, minutes)
+    return goalReached ? format("%@, goal reached", bundle, locale, text) : text
   }
 
   /// Notification text: "Daily goal reached: 8 pomodoros today"
