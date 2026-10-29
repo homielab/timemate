@@ -295,7 +295,9 @@ class PomodoroTimer: ObservableObject {
       // A session that ended long ago (the Mac slept through it) finishes
       // silently, like one restored after quitting the app, and the next
       // session waits for Start: no break screen for a break that is long gone.
+      // Reaching the daily goal is still worth telling.
       if isLongOverdue {
+        sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
         advanceToNextSession(start: false)
         saveSnapshot()
         return
@@ -564,7 +566,9 @@ class PomodoroTimer: ObservableObject {
   /// counting from its end date and a paused one stays paused. A session that
   /// ended while the app was closed is recorded in the history on the day it
   /// ended and the next session follows, without the alarm or a late
-  /// notification (the one scheduled for its end showed on time); it only starts when the session ended within
+  /// notification (the one scheduled for its end showed on time), but with the
+  /// daily goal notification when it took today's pomodoros up to the goal; it
+  /// only starts when the session ended within
   /// `overdueGracePeriod`. A waiting break screen or a postponed break that is due
   /// is not shown at launch: the timer waits on the next session instead. A timer
   /// left idle with a stale cycle (`restartCycleIfStale`) opens on a fresh one.
@@ -603,9 +607,11 @@ class PomodoroTimer: ObservableObject {
       state = .idle
     case .expired(let end, let duration, let startNext):
       lastActivity = end
+      let pomodorosBefore = history.todayTotals().pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(duration), end: end,
         label: sessionLabel(for: currentSessionType))
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
       advanceToNextSession(start: startNext)
     }
   }

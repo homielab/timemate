@@ -183,6 +183,35 @@ final class DailyGoalTests: XCTestCase {
     XCTAssertEqual(goalNotifications.count, 2)
   }
 
+  /// Focus lasts 3 s: this lands past the end by more than the grace period.
+  private var longPastFocusEnd: TimeInterval { 3 + PomodoroTimer.overdueGracePeriod + 1 }
+
+  func testGoalSessionThatEndedWhileTheMacSleptStillNotifies() {
+    let timer = makeTimer(goal: 1)
+    timer.startTimer()
+    currentTime = currentTime.addingTimeInterval(longPastFocusEnd)
+    timer.handleTick()
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(goalNotifications.count, 1)
+    run(timer, until: 2)
+    XCTAssertEqual(goalNotifications.count, 1)
+  }
+
+  func testGoalSessionThatEndedWhileTheAppWasClosedNotifiesOnceAtLaunch() {
+    var timer: PomodoroTimer? = makeTimer(goal: 1)
+    timer?.startTimer()
+    timer = nil
+    currentTime = currentTime.addingTimeInterval(longPastFocusEnd)
+    let relaunched = makeTimer(goal: 1)
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+    XCTAssertEqual(goalNotifications.count, 1)
+    // A second launch the same day and another session do not tell it again.
+    _ = makeTimer(goal: 1)
+    run(relaunched, until: 2)
+    XCTAssertEqual(goalNotifications.count, 1)
+  }
+
   func testStreakLineShowsOnlyWithGoalAndStreak() {
     XCTAssertTrue(DailyGoal.showsStreak(streak: 1, goal: 4))
     XCTAssertTrue(DailyGoal.showsStreak(streak: 12, goal: 1))
