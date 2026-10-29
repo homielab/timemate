@@ -321,17 +321,17 @@ final class PomodoroTimerTests: TimerTestCase {
   }
 
   func testTimeSpentPausedDoesNotCount() {
-    timer = makeTimer(focus: 1500)
+    timer = makeTimer(focus: 1200)
     timer.startTimer()
     runTicks(timer, 100)
     timer.pauseTimer()
     advanceClock(by: 3600)
     timer.handleTick()  // a stray tick while paused changes nothing
-    XCTAssertEqual(timer.timeRemaining, 1400)
+    XCTAssertEqual(timer.timeRemaining, 1100)
     timer.startTimer()
-    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1400))
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1100))
     runTicks(timer, 10)
-    XCTAssertEqual(timer.timeRemaining, 1390)
+    XCTAssertEqual(timer.timeRemaining, 1090)
   }
 
   // MARK: - Restart / skip / stop

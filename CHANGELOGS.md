@@ -133,6 +133,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- **Session lengths stored outside Settings**: a huge length set with `defaults write` or left in a damaged preferences file no longer crashes TimeMate at every launch. Stored lengths now run between 1 minute and 24 hours, and Settings → Durations shows the length the timer actually uses.
 - **Export CSV**: the oldest day, 90 days back, now counts every session of that day instead of only the ones after the current time of day, so its pomodoros, minutes and `goal_reached` match the streak and the sessions collected that day.
 - **Shortcuts: Start Timer, Start Focus, Pause Timer, Skip Session and Reset Timer** now say where the timer is after they run (e.g. "Short Break, not started, 1 min"), instead of only "Done". Pause Timer when nothing runs says so too.
 - **Shortcuts: Start Focus** (new) and **Start Focus with Label**, and Siri "Start a focus session in TimeMate", now start a focus session when the timer waits on a break that has not started (Auto-start breaks off), instead of running the break. The finished pomodoro still counts once. **Start Timer** still starts the break.

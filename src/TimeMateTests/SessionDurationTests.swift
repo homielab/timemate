@@ -32,7 +32,17 @@ final class SessionDurationTests: XCTestCase {
   func testStoredValuesAreAtLeastOneMinute() {
     XCTAssertEqual(SessionDuration.sanitized(0), 1)
     XCTAssertEqual(SessionDuration.sanitized(-3), 1)
+    XCTAssertEqual(SessionDuration.sanitized(-5), 1)
+    XCTAssertEqual(SessionDuration.sanitized(Int.min), 1)
     XCTAssertEqual(SessionDuration.sanitized(90), 90)
+  }
+
+  func testStoredValuesKeepLongLengthsUpToADay() {
+    XCTAssertEqual(SessionDuration.sanitized(600), 600)
+    XCTAssertEqual(SessionDuration.sanitized(1440), 1440)
+    XCTAssertEqual(SessionDuration.sanitized(1441), 1440)
+    XCTAssertEqual(SessionDuration.sanitized(Int.max / 30), 1440)
+    XCTAssertEqual(SessionDuration.sanitized(Int.max), 1440)
   }
 
   func testValidationHint() {

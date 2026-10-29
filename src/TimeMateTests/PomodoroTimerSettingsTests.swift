@@ -73,6 +73,13 @@ final class PomodoroTimerSettingsTests: TimerTestCase {
     XCTAssertEqual(timer.timeRemaining, 1)
   }
 
+  func testHugeStoredDurationRunsForADay() {
+    timer = makeTimer(focus: Int.max / 30, short: 600)
+    XCTAssertEqual(timer.timeRemaining, 1440)
+    XCTAssertEqual(timer.durationFor(session: .focus), PomodoroTimer.seconds(forMinutes: 1440))
+    XCTAssertEqual(timer.durationFor(session: .shortBreak), PomodoroTimer.seconds(forMinutes: 600))
+  }
+
   // MARK: - Session history
 
   func testCompletedSessionsAreRecordedWithTheirKind() {

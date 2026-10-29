@@ -24,13 +24,13 @@ final class PomodoroTimerClockTests: TimerTestCase {
   // MARK: - Wall-clock end date (sleep / App Nap)
 
   func testClockJumpOfTenMinutesDropsRemainingByTenMinutes() {
-    timer = makeTimer(focus: 1500)
+    timer = makeTimer(focus: 1200)
     timer.startTimer()
-    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1500))
+    XCTAssertEqual(timer.endDate, currentTime.addingTimeInterval(1200))
     advanceClock(by: 600)
     timer.handleTick()
-    XCTAssertEqual(timer.timeRemaining, 900)
-    XCTAssertEqual(timer.progress, 0.6, accuracy: 0.0001)
+    XCTAssertEqual(timer.timeRemaining, 600)
+    XCTAssertEqual(timer.progress, 0.5, accuracy: 0.0001)
     XCTAssertEqual(timer.state, .active)
   }
 
@@ -181,7 +181,7 @@ final class PomodoroTimerClockTests: TimerTestCase {
 
   func testPauseOnSleepKeepsSessionPausedAfterLongSleep() {
     defaults.set(true, forKey: SettingsKey.pauseOnSleep)
-    timer = makeTimer(focus: 3000)
+    timer = makeTimer(focus: 1440)
     timer.startTimer()
     runTicks(timer, 20)
     workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
@@ -189,7 +189,7 @@ final class PomodoroTimerClockTests: TimerTestCase {
     advanceClock(by: 40 * 60)
     workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
     XCTAssertEqual(timer.state, .paused)
-    XCTAssertEqual(timer.timeRemaining, 2980)
+    XCTAssertEqual(timer.timeRemaining, 1420)
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertTrue(history.records.isEmpty)
     XCTAssertEqual(timer.focusSessionsCompleted, 0)

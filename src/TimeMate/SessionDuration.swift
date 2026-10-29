@@ -43,11 +43,17 @@ enum SessionDuration {
     return !digits.isEmpty && digits.allSatisfy { $0.isASCII && $0.isNumber }
   }
 
-  /// A stored session length made safe to run: at least one minute, so a zero or
-  /// negative value in the defaults (edited by hand or left by an old version)
-  /// can't end every session the moment it starts. Longer values are kept, the
-  /// upper limit only applies to what can be entered in Settings.
+  /// The range a stored session length is kept in. Wider than `minuteRange`, so a
+  /// longer length set with `defaults write` still runs, but bounded so converting
+  /// it to seconds can't overflow.
+  static let storedMinuteRange = minuteRange.lowerBound...1440
+
+  /// A stored session length made safe to run, clamped to `storedMinuteRange`: a
+  /// zero or negative value in the defaults (edited by hand or left by an old
+  /// version) can't end every session the moment it starts, and a huge one can't
+  /// crash the app at launch. Lengths over 180 minutes up to 24 hours are kept, the
+  /// 180 limit only applies to what can be entered in Settings.
   static func sanitized(_ minutes: Int) -> Int {
-    max(minutes, minuteRange.lowerBound)
+    min(max(minutes, storedMinuteRange.lowerBound), storedMinuteRange.upperBound)
   }
 }

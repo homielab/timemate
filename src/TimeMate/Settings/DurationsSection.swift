@@ -12,13 +12,14 @@ struct DurationsSection: View {
   var body: some View {
     SettingsSection(titleKey: "Durations", systemImage: "timer") {
       DurationRow(
-        titleKey: "Focus", stepperLabelKey: "Focus minutes", minutes: $focusDuration, step: 5)
+        titleKey: "Focus", stepperLabelKey: "Focus minutes",
+        minutes: sanitized($focusDuration), step: 5)
       DurationRow(
         titleKey: "Short Break", stepperLabelKey: "Short break minutes",
-        minutes: $shortBreakDuration, step: 1)
+        minutes: sanitized($shortBreakDuration), step: 1)
       DurationRow(
         titleKey: "Long Break", stepperLabelKey: "Long break minutes",
-        minutes: $longBreakDuration, step: 5)
+        minutes: sanitized($longBreakDuration), step: 5)
       HStack {
         Text("Cycles")
         Spacer(minLength: 12)
@@ -32,6 +33,13 @@ struct DurationsSection: View {
           .accessibilityValue(Text(verbatim: "\(longBreakInterval)"))
       }
     }
+  }
+
+  /// Shows a stored length the way the timer runs it, e.g. 1 for a stored 0.
+  private func sanitized(_ minutes: Binding<Int>) -> Binding<Int> {
+    Binding(
+      get: { SessionDuration.sanitized(minutes.wrappedValue) },
+      set: { minutes.wrappedValue = $0 })
   }
 }
 
