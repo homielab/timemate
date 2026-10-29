@@ -142,4 +142,46 @@ final class StatisticsTextTests: XCTestCase {
       StatisticsText.spokenDay("Thứ Hai", pomodoros: 1, minutes: 1, bundle: vi),
       "Thứ Hai: 1 pomodoro, 1 phút")
   }
+
+  func testEnglishDailyAverageAndBestDay() throws {
+    let en = try bundle("en")
+    let us = Locale(identifier: "en_US")
+    XCTAssertEqual(
+      StatisticsText.dailyAverage(minutes: 1_200, bundle: en, locale: us),
+      "Daily average: 1,200 min")
+    XCTAssertEqual(
+      StatisticsText.spokenDailyAverage(minutes: 1, bundle: en, locale: us),
+      "Daily average: 1 minute")
+    XCTAssertEqual(
+      StatisticsText.spokenDailyAverage(minutes: 35, bundle: en, locale: us),
+      "Daily average: 35 minutes")
+    XCTAssertEqual(
+      StatisticsText.bestDay("Mon 20", pomodoros: 1, minutes: 25, bundle: en, locale: us),
+      "Best day: Mon 20 · 1 pomodoro · 25 min")
+    XCTAssertEqual(
+      StatisticsText.bestDay("Mon 20", pomodoros: 48, minutes: 1_200, bundle: en, locale: us),
+      "Best day: Mon 20 · 48 pomodoros · 1,200 min")
+    XCTAssertEqual(
+      StatisticsText.spokenBestDay(
+        "Monday, October 20", pomodoros: 8, minutes: 200, bundle: en, locale: us),
+      "Best day: Monday, October 20: 8 pomodoros, 200 minutes")
+  }
+
+  func testVietnameseDailyAverageAndBestDay() throws {
+    let vi = try bundle("vi")
+    let vn = Locale(identifier: "vi_VN")
+    XCTAssertEqual(
+      StatisticsText.dailyAverage(minutes: 1_200, bundle: vi, locale: vn),
+      "Trung bình mỗi ngày: 1.200 phút")
+    XCTAssertEqual(
+      StatisticsText.spokenDailyAverage(minutes: 1, bundle: vi, locale: vn),
+      "Trung bình mỗi ngày: 1 phút")
+    XCTAssertEqual(
+      StatisticsText.bestDay("T2, 20", pomodoros: 8, minutes: 1_200, bundle: vi, locale: vn),
+      "Ngày tốt nhất: T2, 20 · 8 pomodoro · 1.200 phút")
+    XCTAssertEqual(
+      StatisticsText.spokenBestDay(
+        "Thứ Hai, 20 tháng 10", pomodoros: 1, minutes: 25, bundle: vi, locale: vn),
+      "Ngày tốt nhất: Thứ Hai, 20 tháng 10: 1 pomodoro, 25 phút")
+  }
 }

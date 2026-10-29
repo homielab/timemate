@@ -278,6 +278,70 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(SessionStatistics.daysReachingGoal(week.days, goal: 0), 0)
   }
 
+  // MARK: - Daily average and best day
+
+  private func day(_ date: Date, pomodoros: Int, minutes: Double) -> SessionStatistics.Day {
+    SessionStatistics.Day(date: date, pomodoros: pomodoros, focusSeconds: minutes * 60)
+  }
+
+  func testDailyAverageCountsEmptyDaysAndRoundsToAMinute() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      focus(end: date(2026, 3, 8, 9, in: utc)),
+      focus(end: date(2026, 3, 9, 9, in: utc)),
+      focus(end: date(2026, 3, 10, 9, in: utc), minutes: 30),
+    ]
+    let week = SessionStatistics.week(from: records, today: today, calendar: utc)
+
+    // 80 minutes over 7 days = 11.43 → 11.
+    XCTAssertEqual(SessionStatistics.dailyAverage(week.days), 11)
+    // 10.5 rounds up, 10.4 down.
+    let start = date(2026, 3, 1, in: utc)
+    XCTAssertEqual(
+      SessionStatistics.dailyAverage([
+        day(start, pomodoros: 1, minutes: 21), day(start + 86_400, pomodoros: 0, minutes: 0),
+      ]), 11)
+    let fiveDays = (0..<5).map {
+      day(start + Double($0) * 86_400, pomodoros: $0 == 0 ? 2 : 0, minutes: $0 == 0 ? 52 : 0)
+    }
+    XCTAssertEqual(SessionStatistics.dailyAverage(fiveDays), 10)
+  }
+
+  func testDailyAverageIsHiddenForAnEmptyPeriod() {
+    let utc = calendar("UTC")
+    let week = SessionStatistics.week(
+      from: [], today: date(2026, 3, 10, 15, in: utc), calendar: utc)
+    XCTAssertNil(SessionStatistics.dailyAverage(week.days))
+    XCTAssertNil(SessionStatistics.dailyAverage([]))
+  }
+
+  func testBestDayHasTheMostPomodorosAndTheNewestOnATie() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let records = [
+      focus(end: date(2026, 3, 5, 9, in: utc)),
+      focus(end: date(2026, 3, 5, 10, in: utc), minutes: 50),
+      focus(end: date(2026, 3, 8, 9, in: utc)),
+      focus(end: date(2026, 3, 8, 10, in: utc)),
+      focus(end: date(2026, 3, 10, 9, in: utc)),
+    ]
+    let week = SessionStatistics.week(from: records, today: today, calendar: utc)
+
+    let best = SessionStatistics.bestDay(week.days)
+    XCTAssertEqual(best?.date, date(2026, 3, 8, in: utc))
+    XCTAssertEqual(best?.pomodoros, 2)
+    XCTAssertEqual(best?.focusMinutes, 50)
+  }
+
+  func testNoBestDayForAnEmptyPeriod() {
+    let utc = calendar("UTC")
+    let week = SessionStatistics.week(
+      from: [], today: date(2026, 3, 10, 15, in: utc), calendar: utc)
+    XCTAssertNil(SessionStatistics.bestDay(week.days))
+    XCTAssertNil(SessionStatistics.bestDay([]))
+  }
+
   func testCSVDatesUseTheLocalDay() {
     let saigon = calendar("Asia/Ho_Chi_Minh")
     let days = SessionStatistics.days(

@@ -69,6 +69,39 @@ enum StatisticsText {
       : week(pomodoros: pomodoros, minutes: minutes, bundle: bundle, locale: locale)
   }
 
+  /// "Daily average: 35 min"
+  static func dailyAverage(minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
+    -> String
+  {
+    format("Daily average: %lld min", bundle, locale, minutes)
+  }
+
+  /// VoiceOver for the line above: "Daily average: 35 minutes"
+  static func spokenDailyAverage(
+    minutes: Int, bundle: Bundle = .main, locale: Locale = .current
+  ) -> String {
+    format("Daily average: %lld minutes", bundle, locale, minutes)
+  }
+
+  /// "Best day: Mon 20 · 8 pomodoros · 200 min"
+  static func bestDay(
+    _ day: String, pomodoros: Int, minutes: Int, bundle: Bundle = .main,
+    locale: Locale = .current
+  ) -> String {
+    format(
+      "Best day: %1$@ · %2$lld pomodoros · %3$lld min", bundle, locale, day, pomodoros, minutes)
+  }
+
+  /// VoiceOver for the line above: "Best day: Monday, October 20: 8 pomodoros, 200 minutes"
+  static func spokenBestDay(
+    _ day: String, pomodoros: Int, minutes: Int, bundle: Bundle = .main,
+    locale: Locale = .current
+  ) -> String {
+    format(
+      "Best day: %@", bundle, locale,
+      spokenDay(day, pomodoros: pomodoros, minutes: minutes, bundle: bundle, locale: locale))
+  }
+
   /// "+3 pomodoros (+25%), −20 min vs the previous 30 days"
   static func change(
     pomodoros: Int, percent: Int, minutes: Int, days: Int, bundle: Bundle = .main,

@@ -182,6 +182,21 @@ enum SessionStatistics {
       unlabeledSeconds: totals.first { $0.label == nil }?.focusSeconds ?? 0)
   }
 
+  /// Focus minutes per day over `days`: the total minutes divided by the number of
+  /// days (empty days count), rounded to a whole minute. Nil when the days hold no
+  /// focus time, so an empty period shows no average.
+  static func dailyAverage(_ days: [Day]) -> Int? {
+    let minutes = Totals(days).focusMinutes
+    guard minutes > 0, !days.isEmpty else { return nil }
+    return Int((Double(minutes) / Double(days.count)).rounded())
+  }
+
+  /// The day of `days` with the most pomodoros; on a tie the newest of them. Nil
+  /// when no day has a pomodoro.
+  static func bestDay(_ days: [Day]) -> Day? {
+    days.filter { $0.pomodoros > 0 }.max { ($0.pomodoros, $0.date) < ($1.pomodoros, $1.date) }
+  }
+
   /// How many of `days` met a daily goal (0 with no goal).
   static func daysReachingGoal(_ days: [Day], goal: Int) -> Int {
     days.filter { DailyGoal.isReached(completed: $0.pomodoros, goal: goal) }.count

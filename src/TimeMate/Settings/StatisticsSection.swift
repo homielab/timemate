@@ -103,9 +103,9 @@ private struct DailyGoalRow: View {
 }
 
 /// The last 7 days as one row per day, or the last 30 as a compact bar strip; then
-/// the totals and the change against the same number of days before. With a daily
-/// goal, days that met it get a check mark (7 days) or a green bar (30 days) and
-/// the period shows on how many days it was met.
+/// the totals, the daily average, the best day and the change against the same
+/// number of days before. With a daily goal, days that met it get a check mark
+/// (7 days) or a green bar (30 days) and the period shows on how many days it was met.
 private struct PeriodStatisticsView: View {
   @ObservedObject var history: SessionHistory
   let days: Int
@@ -141,6 +141,30 @@ private struct PeriodStatisticsView: View {
       )
       .font(.callout.weight(.semibold))
       .monospacedDigit()
+
+      if let average = SessionStatistics.dailyAverage(period.days) {
+        Text(StatisticsText.dailyAverage(minutes: average))
+          .font(.caption)
+          .foregroundColor(.secondary)
+          .monospacedDigit()
+          .accessibilityLabel(Text(StatisticsText.spokenDailyAverage(minutes: average)))
+      }
+
+      if let best = SessionStatistics.bestDay(period.days) {
+        Text(
+          StatisticsText.bestDay(
+            StatisticsFormat.dayLabel(best.date, calendar: history.calendar),
+            pomodoros: best.pomodoros, minutes: best.focusMinutes)
+        )
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .monospacedDigit()
+        .accessibilityLabel(
+          Text(
+            StatisticsText.spokenBestDay(
+              StatisticsFormat.spokenDay(best.date, calendar: history.calendar),
+              pomodoros: best.pomodoros, minutes: best.focusMinutes)))
+      }
 
       if let percent = SessionStatistics.percentChange(
         current: totals.pomodoros, previous: previous.pomodoros)

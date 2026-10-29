@@ -221,6 +221,8 @@
 "Off" = "Off";
 "Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Pomodoros to finish each day. TimeMate tells you once when you reach it.";
 "%@, goal reached" = "%@, goal reached";
+"Daily average: %lld min" = "Daily average: %lld min";
+"Best day: %@" = "Best day: %@";
 "Goal reached" = "Goal reached";
 
 // Sounds, Reset shortcut and key names

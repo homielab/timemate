@@ -221,6 +221,8 @@
 "Off" = "Tắt";
 "Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Số pomodoro cần hoàn thành mỗi ngày. TimeMate báo một lần khi bạn đạt mục tiêu.";
 "%@, goal reached" = "%@, đạt mục tiêu";
+"Daily average: %lld min" = "Trung bình mỗi ngày: %lld phút";
+"Best day: %@" = "Ngày tốt nhất: %@";
 "Goal reached" = "Đạt mục tiêu";
 
 // Sounds, Reset shortcut and key names

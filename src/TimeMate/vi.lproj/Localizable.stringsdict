@@ -62,6 +62,34 @@
 			<string>%lld phút</string>
 		</dict>
 	</dict>
+	<key>Best day: %1$@ · %2$lld pomodoros · %3$lld min</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Ngày tốt nhất: %1$@ · %2$#@pomodoros@ · %3$lld phút</string>
+		<key>pomodoros</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld pomodoro</string>
+		</dict>
+	</dict>
+	<key>Daily average: %lld minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Trung bình mỗi ngày: %#@minutes@</string>
+		<key>minutes</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>%lld phút</string>
+		</dict>
+	</dict>
 	<key>Daily goal reached: %lld pomodoros today</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
