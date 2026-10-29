@@ -461,11 +461,35 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertTrue(vietnamese.contains("9"), vietnamese)
   }
 
-  func testDefaultFileName() {
+  func testDefaultFileNameNamesThePeriod() {
     let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
     XCTAssertEqual(
-      StatisticsExporter.defaultFileName(today: date(2026, 3, 10, 15, in: utc), calendar: utc),
-      "TimeMate-statistics-2026-03-10.csv")
+      StatisticsExporter.defaultFileName(days: 7, today: today, calendar: utc),
+      "TimeMate-statistics-7d-2026-03-10.csv")
+    XCTAssertEqual(
+      StatisticsExporter.defaultFileName(days: 30, today: today, calendar: utc),
+      "TimeMate-statistics-30d-2026-03-10.csv")
+    XCTAssertEqual(
+      StatisticsExporter.defaultFileName(days: nil, today: today, calendar: utc),
+      "TimeMate-statistics-all-2026-03-10.csv")
+  }
+
+  func testExportAllHasMoreRowsThanTheLongestPeriodWithALongHistory() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    let history = SessionHistory(fileURL: nil, now: { today }, calendar: utc)
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2026, 1, 20, 9, in: utc))
+    history.recordCompletedSession(.focus, duration: 1500, end: date(2026, 3, 10, 9, in: utc))
+
+    let month = history.statisticsCSV(days: SessionStatistics.monthLength, goal: 1)
+      .components(separatedBy: "\r\n")
+    let all = history.statisticsCSV(goal: 1).components(separatedBy: "\r\n")
+    XCTAssertEqual(month.count, 1 + 30 + 1)
+    XCTAssertGreaterThan(all.count - 2, 30)
+    XCTAssertEqual(all.first, month.first)
+    XCTAssertTrue(all.contains("2026-01-20,1,25,1"), "\(all.prefix(3))")
+    XCTAssertFalse(month.contains("2026-01-20,1,25,1"))
   }
 
   func testCSVAndFileNamesUseGregorianYearsUnderOtherCalendars() {
@@ -481,8 +505,8 @@ final class SessionStatisticsTests: XCTestCase {
         SessionStatistics.csv(for: days, calendar: other),
         "date,pomodoros,minutes\r\n2026-10-28,0,0\r\n2026-10-29,1,25\r\n", "\(identifier)")
       XCTAssertEqual(
-        StatisticsExporter.defaultFileName(today: today, calendar: other),
-        "TimeMate-statistics-2026-10-29.csv", "\(identifier)")
+        StatisticsExporter.defaultFileName(days: 7, today: today, calendar: other),
+        "TimeMate-statistics-7d-2026-10-29.csv", "\(identifier)")
       XCTAssertEqual(
         StatisticsExporter.sessionsFileName(today: today, calendar: other),
         "TimeMate-sessions-2026-10-29.csv", "\(identifier)")

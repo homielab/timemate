@@ -208,6 +208,8 @@
 "%lld min" = "%lld phút";
 "%lldm" = "%lld ph";
 "Export CSV…" = "Xuất CSV…";
+"Export all (90 days)…" = "Xuất toàn bộ (90 ngày)…";
+"Saves every kept day of the last 90 days, one row each." = "Lưu mọi ngày đã giữ trong 90 ngày qua, mỗi ngày một dòng.";
 "Export sessions CSV…" = "Xuất phiên ra CSV…";
 "Saves every completed session of the last 90 days with its label, one row each." = "Lưu mọi phiên đã hoàn thành trong 90 ngày qua kèm nhãn, mỗi phiên một dòng.";
 "Break through Focus" = "Hiện cả khi đang Tập trung";

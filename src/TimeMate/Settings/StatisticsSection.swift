@@ -35,8 +35,16 @@ struct StatisticsSection: View {
 
       MenuItemButton(title: "Export CSV…", systemImage: "square.and.arrow.up") {
         StatisticsExporter.export(
-          model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)))
+          model.timer.history.statisticsCSV(days: days, goal: DailyGoal.sanitized(dailyGoal)),
+          fileName: StatisticsExporter.defaultFileName(days: days))
       }
+
+      MenuItemButton(title: "Export all (90 days)…", systemImage: "calendar") {
+        StatisticsExporter.export(
+          model.timer.history.statisticsCSV(goal: DailyGoal.sanitized(dailyGoal)),
+          fileName: StatisticsExporter.defaultFileName(days: nil))
+      }
+      .help("Saves every kept day of the last 90 days, one row each.")
 
       MenuItemButton(title: "Export sessions CSV…", systemImage: "list.bullet.rectangle") {
         StatisticsExporter.export(
@@ -390,13 +398,21 @@ enum StatisticsFormat {
 
 /// Saves the CSV where the user picks in a save panel.
 enum StatisticsExporter {
-  static func defaultFileName(today: Date = Date(), calendar: Calendar = .current) -> String {
-    "TimeMate-statistics-\(SessionStatistics.isoDay(today, timeZone: calendar.timeZone)).csv"
+  /// `TimeMate-statistics-<period>-<yyyy-MM-dd>.csv`, the period being `7d`, `30d`… for the
+  /// last `days` days or `all` for every kept day (`days` nil).
+  static func defaultFileName(
+    days: Int?, today: Date = Date(), calendar: Calendar = .current
+  ) -> String {
+    let period = days.map { "\(max(1, $0))d" } ?? "all"
+    return "TimeMate-statistics-\(period)-\(isoDay(today, calendar)).csv"
   }
 
   static func sessionsFileName(today: Date = Date(), calendar: Calendar = .current) -> String {
-    defaultFileName(today: today, calendar: calendar)
-      .replacingOccurrences(of: "statistics", with: "sessions")
+    "TimeMate-sessions-\(isoDay(today, calendar)).csv"
+  }
+
+  private static func isoDay(_ date: Date, _ calendar: Calendar) -> String {
+    SessionStatistics.isoDay(date, timeZone: calendar.timeZone)
   }
 
   /// The file bytes: a UTF-8 BOM first so Excel reads non-ASCII labels as UTF-8.
@@ -404,7 +420,7 @@ enum StatisticsExporter {
     Data([0xEF, 0xBB, 0xBF]) + Data(csv.utf8)
   }
 
-  static func export(_ csv: String, fileName: String = defaultFileName()) {
+  static func export(_ csv: String, fileName: String) {
     let panel = NSSavePanel()
     panel.allowedContentTypes = [.commaSeparatedText]
     panel.nameFieldStringValue = fileName

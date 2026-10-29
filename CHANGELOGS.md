@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Statistics → **Export all (90 days)…** saves one row per day for the whole kept history, not only the 7 or 30 days on screen. Daily CSV file names now say the period: `TimeMate-statistics-7d-<date>.csv`, `-30d-` or `-all-`.
 - Settings → Statistics → **Daily average** and **Best day** under the period total: your focus minutes per day over the chosen 7 or 30 days, and the day with the most pomodoros (the latest one on a tie). Both are hidden while the period has no focus session.
 - **Shortcuts: Start Focus with Label and Add Time**: start a session with what you are working on (it fills "What are you working on?"; a running or paused session keeps its label), or add 1–60 minutes to the running or paused session (default 5, also restarts a finished break). Ask Siri "Start focus with a label in TimeMate" or "Add time in TimeMate".
 - Settings → Statistics → **By label**: focus time per "What are you working on?" label over the chosen 7 or 30 days — your five longest labels (same label in other letter case counts once), then **Other** and **No label**. VoiceOver reads each row as "label, N minutes".

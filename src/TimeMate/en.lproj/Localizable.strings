@@ -208,6 +208,8 @@
 "%lld min" = "%lld min";
 "%lldm" = "%lldm";
 "Export CSV…" = "Export CSV…";
+"Export all (90 days)…" = "Export all (90 days)…";
+"Saves every kept day of the last 90 days, one row each." = "Saves every kept day of the last 90 days, one row each.";
 "Export sessions CSV…" = "Export sessions CSV…";
 "Saves every completed session of the last 90 days with its label, one row each." = "Saves every completed session of the last 90 days with its label, one row each.";
 "Break through Focus" = "Break through Focus";
