@@ -187,8 +187,11 @@ enum SessionStatistics {
 
   /// Focus seconds per hour of the day (24 entries, index = local hour) over the last
   /// `length` days (the window of `period`, by session end). Each completed focus
-  /// session runs from `end - duration` to `end` and is split across the hours it
-  /// touches, so 9:50–10:15 adds 10 minutes to hour 9 and 15 to hour 10. The repeated
+  /// session is spread over its real span, `start` to `end`, in proportion to the time
+  /// in each hour, so pauses don't shift it: 9:50–10:15 adds 10 minutes to hour 9 and
+  /// 15 to hour 10; 9:50–10:25 with 25 minutes of focus adds about 7.1 and 17.9. A
+  /// record whose span is not longer than its duration (older files) runs from
+  /// `end - duration` to `end`. The repeated
   /// hour of a DST fall-back counts into that hour; a skipped hour stays empty.
   static func hourlyFocus(
     from records: [SessionHistory.Record], today: Date, length: Int, calendar: Calendar
@@ -202,11 +205,16 @@ enum SessionStatistics {
     let start = calendar.startOfDay(for: firstDay)
     for record in records
     where record.kind == .focus && record.completed && record.end >= start && record.end < end {
-      var cursor = record.end.addingTimeInterval(-record.duration)
+      let duration = record.duration
+      let span = record.end.timeIntervalSince(record.start)
+      let spread = span > duration
+      let scale = spread ? duration / span : 1
+      var cursor = spread ? record.start : record.end.addingTimeInterval(-duration)
       while cursor < record.end {
         let hourEnd = calendar.dateInterval(of: .hour, for: cursor)?.end ?? record.end
         let chunkEnd = min(max(hourEnd, cursor.addingTimeInterval(1)), record.end)
-        hours[calendar.component(.hour, from: cursor)] += chunkEnd.timeIntervalSince(cursor)
+        hours[calendar.component(.hour, from: cursor)] +=
+          chunkEnd.timeIntervalSince(cursor) * scale
         cursor = chunkEnd
       }
     }

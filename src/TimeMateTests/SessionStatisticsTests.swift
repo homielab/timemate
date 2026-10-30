@@ -887,6 +887,22 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(SessionStatistics.mostFocusedHour(hours), 13)
   }
 
+  func testHourlyFocusSpreadsPausedSessionOverItsRealHours() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    // 9:50–10:25 with a 10-minute pause: 25 minutes of focus over 35 real minutes.
+    let paused = Record(
+      start: date(2026, 3, 10, 9, 50, in: utc), end: date(2026, 3, 10, 10, 25, in: utc),
+      kind: .focus, completed: true, seconds: 1500)
+
+    let hours = SessionStatistics.hourlyFocus(
+      from: [paused], today: today, length: 7, calendar: utc)
+
+    XCTAssertEqual(hours[9], 1500 * 10 / 35, accuracy: 0.001)  // ≈ 7.1 min
+    XCTAssertEqual(hours[10], 1500 * 25 / 35, accuracy: 0.001)  // ≈ 17.9 min
+    XCTAssertEqual(hours.reduce(0, +), 1500, accuracy: 0.001)
+  }
+
   func testHourlyFocusIgnoresBreaksAndEmptyHistory() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 15, in: utc)
