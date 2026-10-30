@@ -234,6 +234,11 @@ class PomodoroTimer: ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.handleSystemClockChange() }
       .store(in: &cancellables)
+    // Midnight passed with the timer idle: show the fresh cycle Start will run.
+    notificationCenter.publisher(for: .NSCalendarDayChanged)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.refreshStaleCycle() }
+      .store(in: &cancellables)
 
     #if DEBUG
       Logger.app.debug("TimeMate running in DEBUG mode (timers are in seconds)")
@@ -277,6 +282,18 @@ class PomodoroTimer: ObservableObject {
     lastActivity = now()
     endDate = now().addingTimeInterval(TimeInterval(timeRemaining))
     startTicking()
+  }
+
+  /// Restarts a stale idle cycle now (`restartCycleIfStale`) and saves it, so
+  /// the popover and menu bar show what Start will run: called on wake, before
+  /// the popover opens and when the day changes.
+  func refreshStaleCycle() {
+    let before = (currentSessionType, focusSessionsCompleted, isWaitingToContinue)
+    restartCycleIfStale()
+    guard before != (currentSessionType, focusSessionsCompleted, isWaitingToContinue) else {
+      return
+    }
+    saveSnapshot()
   }
 
   /// Starts the cycle over on focus, with no sessions counted, when the timer
@@ -469,7 +486,10 @@ class PomodoroTimer: ObservableObject {
   /// A focus session paused by the sleep may resume (`handleUserReturned`).
   func handleDidWake() {
     handleUserReturned()
-    guard state == .active else { return }
+    guard state == .active else {
+      refreshStaleCycle()
+      return
+    }
     handleTick()
     if state == .active {
       startTicking()

@@ -537,6 +537,63 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .longBreak)
   }
 
+  /// Idle on the third short break: the next morning, wake shows a fresh cycle.
+  private func idleOnThirdShortBreak() {
+    timer = makeTimer(autoStart: false)
+    for round in 0..<3 {
+      timer.startTimer()
+      finishSession(timer)
+      if round < 2 {
+        timer.startTimer()
+        finishSession(timer)
+      }
+    }
+    XCTAssertEqual(timer.focusSessionsCompleted, 3)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .idle)
+  }
+
+  func testWakeAfterANightIdleShowsAFreshCycle() {
+    idleOnThirdShortBreak()
+    advanceClock(by: 16 * 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.timeRemaining, 3)  // the focus length
+    XCTAssertEqual(TimerSnapshot.load(from: defaults)?.sessionType, .focus)
+  }
+
+  func testWakeTenMinutesLaterKeepsTheIdleCycle() {
+    idleOnThirdShortBreak()
+    let count = timer.focusSessionsCompleted
+    advanceClock(by: 600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.focusSessionsCompleted, count)
+  }
+
+  func testOpeningThePopoverRefreshesAStaleIdleCycle() {
+    idleOnThirdShortBreak()
+    timer.refreshStaleCycle()
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    advanceClock(by: 16 * 3600)
+    timer.refreshStaleCycle()  // AppDelegate.popoverWillShow
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
+  func testDayChangeRefreshesAStaleIdleCycle() {
+    idleOnThirdShortBreak()
+    advanceClock(by: 16 * 3600)
+    clockCenter.post(name: .NSCalendarDayChanged, object: nil)
+    let expectation = expectation(description: "day change handled on main")
+    DispatchQueue.main.async { expectation.fulfill() }
+    wait(for: [expectation], timeout: 1)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
   func testStaleIdleBreakStartsOverOnFocus() {
     timer = makeTimer(autoStart: false)
     timer.startTimer()

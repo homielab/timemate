@@ -279,6 +279,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
   func popoverWillShow(_ notification: Notification) {
     isPopoverOpen = true
+    timer.refreshStaleCycle()
     installEscapeKeyMonitor()
     updateTickMode()
     popoverModel.setPopoverVisible(true)
