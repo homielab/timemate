@@ -241,6 +241,11 @@ class PomodoroTimer: ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.refreshStaleCycle() }
       .store(in: &cancellables)
+    // Quit, an update, logging out or shutting down: delivered synchronously,
+    // before the app exits, so the paused snapshot is saved.
+    notificationCenter.publisher(for: NSApplication.willTerminateNotification)
+      .sink { [weak self] _ in self?.handleWillTerminate() }
+      .store(in: &cancellables)
 
     #if DEBUG
       Logger.app.debug("TimeMate running in DEBUG mode (timers are in seconds)")
@@ -465,6 +470,15 @@ class PomodoroTimer: ObservableObject {
     pausedBySleep = true
     Logger.app.info("Paused the focus session: no input for \(Int(idle)) s")
     return true
+  }
+
+  /// TimeMate is quitting (Quit, an update, logging out or shutting down): a
+  /// running session or postponed break pauses with the time it has left, as if
+  /// the user paused it, so time the app was not running never counts and
+  /// nothing is recorded. A crash or force quit gets no such call: the session
+  /// then keeps counting in wall-clock time (`TimerRestorePlan`).
+  func handleWillTerminate() {
+    pauseTimer()
   }
 
   /// The Mac is about to sleep: stop the ticking loop. A focus session pauses
@@ -800,8 +814,9 @@ class PomodoroTimer: ObservableObject {
     ).save(to: defaults)
   }
 
-  /// Picks up the session saved before the app quit. A running session keeps
-  /// counting from its end date and a paused one stays paused. A session that
+  /// Picks up the session saved before the app quit. A clean quit paused it
+  /// (`handleWillTerminate`), so it stays paused. A session still running in the
+  /// snapshot (a crash or force quit) keeps counting from its end date. A session that
   /// ended while the app was closed is recorded in the history on the day it
   /// ended and the next session follows, without the alarm or a late
   /// notification (the one scheduled for its end showed on time), but with the

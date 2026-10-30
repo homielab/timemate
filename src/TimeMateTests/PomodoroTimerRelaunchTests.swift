@@ -52,6 +52,48 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     XCTAssertEqual(relaunched.state, .active)
   }
 
+  func testQuitMidFocusPausesWithTheTimeLeftAndRecordsNothing() {
+    timer = makeTimer(focus: 25)
+    timer.startTimer()
+    advanceClock(by: 3)
+    clockCenter.post(name: NSApplication.willTerminateNotification, object: nil)
+    XCTAssertEqual(timer.state, .paused)
+
+    let relaunched = relaunch(after: 2 * 3600, focus: 25)
+    XCTAssertEqual(relaunched.state, .paused)
+    XCTAssertEqual(relaunched.currentSessionType, .focus)
+    XCTAssertNil(relaunched.endDate)
+    XCTAssertEqual(relaunched.timeRemaining, 22)
+    XCTAssertTrue(history.records.isEmpty)
+
+    relaunched.startTimer()
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.timeRemaining, 22)
+  }
+
+  func testQuitDuringABreakPausesIt() {
+    timer = makeTimer(focus: 3, short: 20)
+    timer.startTimer()
+    finishSession(timer)  // focus recorded, short break auto-started
+    advanceClock(by: 5)
+    timer.handleWillTerminate()
+
+    let relaunched = relaunch(after: 3600, focus: 3)
+    XCTAssertEqual(relaunched.state, .paused)
+    XCTAssertEqual(relaunched.currentSessionType, .shortBreak)
+    XCTAssertEqual(relaunched.timeRemaining, 15)
+    XCTAssertEqual(history.records.count, 1)
+  }
+
+  func testQuitWhileIdleChangesNothing() {
+    timer = makeTimer(focus: 25)
+    timer.handleWillTerminate()
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(relaunch(after: 3600, focus: 25).state, .idle)
+  }
+
+  /// A snapshot still running at relaunch: the app crashed or was force quit
+  /// (no `willTerminate`), so the session kept counting in wall-clock time.
   func testSessionThatEndedWhileClosedIsRecordedAndNextSessionWaits() {
     timer = makeTimer(focus: 300, autoStart: false)
     timer.startTimer()

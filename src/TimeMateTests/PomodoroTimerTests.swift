@@ -73,8 +73,10 @@ final class PomodoroTimerTests: TimerTestCase {
   }
 
   func testLongBreakMovesBackToFocusAfterwards() {
-    timer = makeTimer(focus: 2, short: 1, interval: 1)
+    timer = makeTimer(focus: 2, short: 1, interval: 2)
     timer.startTimer()
+    finishSession(timer)  // focus -> short break
+    finishSession(timer)  // short break -> focus
     finishSession(timer)  // focus -> long break
     XCTAssertEqual(timer.currentSessionType, .longBreak)
     finishSession(timer)  // long break -> focus

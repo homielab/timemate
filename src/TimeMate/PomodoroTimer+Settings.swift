@@ -60,6 +60,14 @@ extension PomodoroTimer {
   }
   var streakSkipsWeekends: Bool { defaults.bool(forKey: SettingsKey.streakSkipsWeekends) }
 
+  /// Saves the stored session lengths and cycles that fall outside what
+  /// Settings offers (1–180 minutes, 2–8 cycles) clamped into it, so Settings
+  /// shows what the timer runs. Called at launch and when Settings opens.
+  static func clampStoredSettings(in defaults: UserDefaults) {
+    SessionDuration.clampStored(in: defaults)
+    SessionCycle.clampStored(in: defaults)
+  }
+
   /// Seconds in `minutes` of session time. Debug builds treat minutes as
   /// seconds so sessions can be tried out quickly.
   static func seconds(forMinutes minutes: Int) -> Int {

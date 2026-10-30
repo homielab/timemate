@@ -43,17 +43,38 @@ enum SessionDuration {
     return !digits.isEmpty && digits.allSatisfy { $0.isASCII && $0.isNumber }
   }
 
-  /// The range a stored session length is kept in. Wider than `minuteRange`, so a
-  /// longer length set with `defaults write` still runs, but bounded so converting
-  /// it to seconds can't overflow.
+  /// The bounds the timer keeps a stored length in when it reads it. Stored
+  /// lengths are brought into `minuteRange` at launch and when Settings opens
+  /// (`clampStored(in:)`); this wider bound only guards a value written with
+  /// `defaults write` while the app runs, so converting it to seconds can't overflow.
   static let storedMinuteRange = minuteRange.lowerBound...1440
 
   /// A stored session length made safe to run, clamped to `storedMinuteRange`: a
-  /// zero or negative value in the defaults (edited by hand or left by an old
-  /// version) can't end every session the moment it starts, and a huge one can't
-  /// crash the app at launch. Lengths over 180 minutes up to 24 hours are kept, the
-  /// 180 limit only applies to what can be entered in Settings.
+  /// zero or negative value can't end every session the moment it starts, and a
+  /// huge one can't crash the app.
   static func sanitized(_ minutes: Int) -> Int {
     min(max(minutes, storedMinuteRange.lowerBound), storedMinuteRange.upperBound)
+  }
+
+  /// A stored length as Settings shows it and `clampStored(in:)` saves it: within
+  /// `minuteRange`, e.g. 180 for a stored 240 and 1 for a stored 0.
+  static func clamped(_ minutes: Int) -> Int {
+    min(max(minutes, minuteRange.lowerBound), minuteRange.upperBound)
+  }
+
+  /// The defaults keys of the focus, short break and long break lengths.
+  static let keys = [
+    SettingsKey.focusDuration, SettingsKey.shortBreakDuration, SettingsKey.longBreakDuration,
+  ]
+
+  /// Saves each stored length outside `minuteRange` (left by an older version
+  /// or set with `defaults write`) as `clamped(_:)`, so Settings and the timer
+  /// agree. A missing length stays missing (the default applies).
+  static func clampStored(in defaults: UserDefaults) {
+    for key in keys {
+      guard let stored = defaults.object(forKey: key) as? Int else { continue }
+      let value = clamped(stored)
+      if value != stored { defaults.set(value, forKey: key) }
+    }
   }
 }

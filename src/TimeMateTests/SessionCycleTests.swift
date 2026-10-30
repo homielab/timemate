@@ -23,11 +23,12 @@ final class SessionCycleTests: XCTestCase {
 
   // MARK: - Interval
 
-  func testIntervalIsClampedToOneThroughEight() {
+  func testIntervalIsClampedToTwoThroughEight() {
     XCTAssertEqual(SessionCycle.sanitizedInterval(nil), 4)
-    XCTAssertEqual(SessionCycle.sanitizedInterval(0), 1)
-    XCTAssertEqual(SessionCycle.sanitizedInterval(-3), 1)
-    XCTAssertEqual(SessionCycle.sanitizedInterval(1), 1)
+    XCTAssertEqual(SessionCycle.sanitizedInterval(0), 2)
+    XCTAssertEqual(SessionCycle.sanitizedInterval(-3), 2)
+    XCTAssertEqual(SessionCycle.sanitizedInterval(1), 2)
+    XCTAssertEqual(SessionCycle.sanitizedInterval(2), 2)
     XCTAssertEqual(SessionCycle.sanitizedInterval(5), 5)
     XCTAssertEqual(SessionCycle.sanitizedInterval(8), 8)
     XCTAssertEqual(SessionCycle.sanitizedInterval(1000), 8)
@@ -66,8 +67,9 @@ final class SessionCycleTests: XCTestCase {
     return -1
   }
 
-  func testZeroIntervalInDefaultsGivesALongBreakAfterEveryFocus() {
-    XCTAssertEqual(focusSessionsBeforeLongBreak(makeTimer(interval: 0)), 1)
+  func testIntervalBelowTwoInDefaultsGivesALongBreakAfterTwoFocusSessions() {
+    XCTAssertEqual(focusSessionsBeforeLongBreak(makeTimer(interval: 0)), 2)
+    XCTAssertEqual(focusSessionsBeforeLongBreak(makeTimer(interval: 1)), 2)
   }
 
   func testHugeIntervalInDefaultsIsCappedAtEight() {
@@ -76,9 +78,28 @@ final class SessionCycleTests: XCTestCase {
 
   func testSettingsShowsTheIntervalTheTimerRuns() {
     XCTAssertEqual(SessionCycle.displayInterval(12), 8)
-    XCTAssertEqual(SessionCycle.displayInterval(0), 1)
-    XCTAssertEqual(SessionCycle.displayInterval(-2), 1)
+    XCTAssertEqual(SessionCycle.displayInterval(0), 2)
+    XCTAssertEqual(SessionCycle.displayInterval(1), 2)
+    XCTAssertEqual(SessionCycle.displayInterval(-2), 2)
     XCTAssertEqual(SessionCycle.displayInterval(4), 4)
+  }
+
+  func testStoredIntervalOutsideSettingsRangeIsSavedClamped() {
+    defaults.set(1, forKey: SettingsKey.longBreakInterval)
+    SessionCycle.clampStored(in: defaults)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int, 2)
+
+    defaults.set(12, forKey: SettingsKey.longBreakInterval)
+    SessionCycle.clampStored(in: defaults)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int, 8)
+
+    defaults.set(5, forKey: SettingsKey.longBreakInterval)
+    SessionCycle.clampStored(in: defaults)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int, 5)
+
+    defaults.removeObject(forKey: SettingsKey.longBreakInterval)
+    SessionCycle.clampStored(in: defaults)
+    XCTAssertNil(defaults.object(forKey: SettingsKey.longBreakInterval))
   }
 
   // MARK: - VoiceOver
@@ -122,7 +143,7 @@ final class SessionCycleTests: XCTestCase {
       "4 of 4 focus sessions done")
     XCTAssertEqual(
       SessionCycle.accessibilityLabel(completed: -1, total: 0, isLongBreak: false),
-      "0 of 1 focus sessions done")
+      "0 of 2 focus sessions done")
   }
 
   func testCycleLabelNamesTheLongBreak() {

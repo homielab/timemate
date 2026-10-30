@@ -293,8 +293,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
 extension PomodoroTimer {
   /// The app's one timer, shared by the menu bar, the popover and the Shortcuts actions.
-  static let shared = PomodoroTimer(
-    history: SessionHistory(
-      fileURL: ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        ? nil : SessionHistory.defaultFileURL()))
+  /// Stored lengths and cycles are clamped first, so the first session runs what
+  /// Settings shows.
+  static let shared: PomodoroTimer = {
+    let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    if !isTesting { clampStoredSettings(in: .standard) }
+    return PomodoroTimer(
+      history: SessionHistory(fileURL: isTesting ? nil : SessionHistory.defaultFileURL()))
+  }()
 }

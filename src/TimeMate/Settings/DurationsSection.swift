@@ -36,6 +36,8 @@ struct DurationsSection: View {
           .accessibilityHint(Text("Long break after this many focus sessions"))
       }
     }
+    // A value set with `defaults write` while the app runs is saved in range too.
+    .onAppear { PomodoroTimer.clampStoredSettings(in: .standard) }
   }
 
   /// Shows the stored interval the way the timer runs it, e.g. 8 for a stored 12.
@@ -45,10 +47,10 @@ struct DurationsSection: View {
       set: { longBreakInterval = $0 })
   }
 
-  /// Shows a stored length the way the timer runs it, e.g. 1 for a stored 0.
+  /// Shows a stored length the way the timer runs it, e.g. 180 for a stored 240.
   private func sanitized(_ minutes: Binding<Int>) -> Binding<Int> {
     Binding(
-      get: { SessionDuration.sanitized(minutes.wrappedValue) },
+      get: { SessionDuration.clamped(minutes.wrappedValue) },
       set: { minutes.wrappedValue = $0 })
   }
 }

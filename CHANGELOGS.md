@@ -6,6 +6,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Quitting TimeMate mid-session (Quit, an update, logging out or shutting down) now pauses the session with the time it had left instead of counting it as finished when you open the app hours later, so your history, streak and daily goal only hold time you worked. A crash or force quit still counts the session as before.
+- A session length over 180 minutes or a cycle count of 1, left by an older version or set with `defaults write`, is brought back into Settings' range (1–180 minutes, 2–8 cycles), so Settings shows exactly what the timer runs.
 - Settings → Statistics → **By label**: the "Other" bar no longer runs over the minutes and out of the card when the labels outside the top five add up to more than the longest one.
 - **Export sessions CSV…** keeps labels such as `@Acme`, `-research` or `+5` as typed; only labels a spreadsheet would run as a formula (`=SUM(1)`, `-1+1`, `@A1`) still get a leading `'`.
 - **Weekends don't break the streak** always skips Saturday and Sunday, also where the system region has another weekend (Friday–Saturday in the UAE).

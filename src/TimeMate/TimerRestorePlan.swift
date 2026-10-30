@@ -17,8 +17,9 @@ enum TimerRestorePlan: Equatable {
   /// A postponed break came due while the app was closed; it waits at full
   /// length for Start.
   case postponedBreakDue
-  /// The session ended while the app was closed: record it as ended at
-  /// `endDate`, then move on to the next session (started if `startNext`).
+  /// The session ended while the app was closed without pausing it (a crash or
+  /// force quit; a clean quit pauses it): record it as ended at `endDate`, then
+  /// move on to the next session (started if `startNext`).
   case expired(endDate: Date, duration: Int, startNext: Bool)
 
   /// A session that ended more than `overdueGracePeriod` before `now` never

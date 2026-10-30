@@ -80,6 +80,19 @@ final class PomodoroTimerSettingsTests: TimerTestCase {
     XCTAssertEqual(timer.durationFor(session: .shortBreak), PomodoroTimer.seconds(forMinutes: 600))
   }
 
+  func testStoredValuesOutsideSettingsAreClampedAndTheTimerRunsThem() {
+    timer = makeTimer(focus: 240, interval: 1)
+
+    PomodoroTimer.clampStoredSettings(in: defaults)
+    timer.handleDefaultsChange()
+
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.focusDuration) as? Int, 180)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.longBreakInterval) as? Int, 2)
+    XCTAssertEqual(timer.timeRemaining, PomodoroTimer.seconds(forMinutes: 180))
+    XCTAssertEqual(timer.durationFor(session: .focus), PomodoroTimer.seconds(forMinutes: 180))
+    XCTAssertEqual(timer.longBreakInterval, 2)
+  }
+
   // MARK: - Session history
 
   func testCompletedSessionsAreRecordedWithTheirKind() {

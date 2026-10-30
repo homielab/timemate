@@ -223,7 +223,9 @@ final class SessionFallbackNotificationTests: TimerTestCase {
 
   func testChangingTheLongBreakIntervalUpdatesTheCopy() {
     timer.startTimer()
-    defaults.set(1, forKey: SettingsKey.longBreakInterval)
+    finishSession(timer)  // focus -> short break
+    finishSession(timer)  // short break -> second focus
+    defaults.set(2, forKey: SettingsKey.longBreakInterval)
     timer.handleDefaultsChange()
     XCTAssertEqual(
       center.sessionPending?.content.body,

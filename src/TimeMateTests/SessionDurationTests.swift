@@ -45,6 +45,33 @@ final class SessionDurationTests: XCTestCase {
     XCTAssertEqual(SessionDuration.sanitized(Int.max), 1440)
   }
 
+  func testSettingsShowsStoredLengthsWithinTheSettingsRange() {
+    XCTAssertEqual(SessionDuration.clamped(240), 180)
+    XCTAssertEqual(SessionDuration.clamped(180), 180)
+    XCTAssertEqual(SessionDuration.clamped(25), 25)
+    XCTAssertEqual(SessionDuration.clamped(0), 1)
+    XCTAssertEqual(SessionDuration.clamped(Int.min), 1)
+  }
+
+  func testStoredLengthsOutsideTheSettingsRangeAreSavedClamped() throws {
+    let suiteName = "TimeMateSessionDurationTests"
+    UserDefaults().removePersistentDomain(forName: suiteName)
+    defer { UserDefaults().removePersistentDomain(forName: suiteName) }
+    let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+    defaults.set(240, forKey: SettingsKey.focusDuration)
+    defaults.set(0, forKey: SettingsKey.shortBreakDuration)
+
+    SessionDuration.clampStored(in: defaults)
+
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.focusDuration) as? Int, 180)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.shortBreakDuration) as? Int, 1)
+    XCTAssertNil(defaults.object(forKey: SettingsKey.longBreakDuration))
+
+    defaults.set(50, forKey: SettingsKey.focusDuration)
+    SessionDuration.clampStored(in: defaults)
+    XCTAssertEqual(defaults.object(forKey: SettingsKey.focusDuration) as? Int, 50)
+  }
+
   func testValidationHint() {
     XCTAssertEqual(SessionDuration.validationHint(for: ""), .empty)
     XCTAssertEqual(SessionDuration.validationHint(for: "  "), .empty)

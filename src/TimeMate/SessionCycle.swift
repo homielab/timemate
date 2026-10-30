@@ -5,10 +5,9 @@ import Foundation
 /// The number of focus sessions before a long break ("Cycles" in Settings).
 enum SessionCycle {
   static let defaultInterval = 4
-  /// What Settings offers.
+  /// What Settings offers and the timer runs; a stored value outside it is
+  /// clamped into it.
   static let settingsRange = 2...8
-  /// What the timer accepts from defaults; anything else is clamped into it.
-  static let validRange = 1...8
 
   /// How long the timer may sit idle before the cycle starts over.
   static let staleAfter: TimeInterval = 4 * 60 * 60
@@ -47,16 +46,26 @@ enum SessionCycle {
     return completed - 1
   }
 
-  /// `stored` clamped to `validRange`; a missing value gives the default.
+  /// `stored` clamped to `settingsRange`; a missing value gives the default.
   static func sanitizedInterval(_ stored: Int?) -> Int {
     guard let stored else { return defaultInterval }
-    return min(max(stored, validRange.lowerBound), validRange.upperBound)
+    return min(max(stored, settingsRange.lowerBound), settingsRange.upperBound)
   }
 
   /// The interval Settings shows for a stored value: what the timer runs,
-  /// e.g. 8 for a stored 12 and 1 for a stored 0.
+  /// e.g. 8 for a stored 12 and 2 for a stored 1.
   static func displayInterval(_ stored: Int) -> Int {
     sanitizedInterval(stored)
+  }
+
+  /// Saves a stored interval outside `settingsRange` (left by an older version
+  /// or set with `defaults write`) clamped into it. A missing one stays missing.
+  static func clampStored(in defaults: UserDefaults) {
+    guard let stored = defaults.object(forKey: SettingsKey.longBreakInterval) as? Int else {
+      return
+    }
+    let value = sanitizedInterval(stored)
+    if value != stored { defaults.set(value, forKey: SettingsKey.longBreakInterval) }
   }
 
   /// VoiceOver value of the Cycles stepper, e.g. "4 focus sessions".
