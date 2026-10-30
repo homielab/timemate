@@ -64,7 +64,8 @@ struct StatisticsSection: View {
       }
       .help("Saves every completed session of the last 90 days with its label, one row each.")
 
-      UndoLastSessionButton(history: model.timer.history, isPresented: $showingUndoAlert)
+      UndoLastSessionButton(
+        timer: model.timer, history: model.timer.history, isPresented: $showingUndoAlert)
 
       MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
         showingResetAlert = true
@@ -85,6 +86,7 @@ struct StatisticsSection: View {
 /// "Undo Last Session": removes the focus session recorded last after a
 /// confirmation naming its label, time and minutes; disabled with none.
 private struct UndoLastSessionButton: View {
+  let timer: PomodoroTimer
   @ObservedObject var history: SessionHistory
   @Binding var isPresented: Bool
   /// The session the alert names, captured when it opens, so a session
@@ -100,7 +102,7 @@ private struct UndoLastSessionButton: View {
     .help("Deletes only the focus session recorded last, for one counted by mistake.")
     .alert("Undo Last Session?", isPresented: $isPresented, presenting: shown) { record in
       Button("Delete Session", role: .destructive) {
-        history.removeLastFocusSession(matching: record)
+        timer.undoLastFocusSession(matching: record)
       }
       Button("Cancel", role: .cancel) {
       }

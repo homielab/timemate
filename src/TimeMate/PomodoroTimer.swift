@@ -21,7 +21,13 @@ class PomodoroTimer: ObservableObject {
       if currentSessionType != oldValue { updateIdleWatch() }
     }
   }
-  @Published var focusSessionsCompleted: Int = 0
+  @Published var focusSessionsCompleted: Int = 0 {
+    didSet { if focusSessionsCompleted == 0 { cycleStartedAt = now() } }
+  }
+  /// When the count of focus sessions last went back to 0 (a long break, a
+  /// restarted cycle); `nil` when unknown. Decides whether an undone session
+  /// was counted in the current cycle (`SessionCycle.countAfterUndo`).
+  private(set) var cycleStartedAt: Date?
   @Published var progress: Double = 1.0
   @Published var isWaitingToContinue: Bool = false {
     didSet { refreshCanExtend() }
@@ -586,6 +592,22 @@ class PomodoroTimer: ObservableObject {
     sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
   }
 
+  /// "Undo Last Session": removes `record` from the history if it is still the
+  /// focus session recorded last and, when it counted in the current cycle,
+  /// takes it off the cycle too, so the dots and the long break follow the
+  /// history. Returns the removed record, `nil` if none.
+  @discardableResult
+  func undoLastFocusSession(matching record: SessionHistory.Record) -> SessionHistory.Record? {
+    guard let removed = history.removeLastFocusSession(matching: record) else { return nil }
+    let count = SessionCycle.countAfterUndo(
+      sessionEnd: removed.end, cycleStartedAt: cycleStartedAt, completed: focusSessionsCompleted)
+    if count != focusSessionsCompleted {
+      focusSessionsCompleted = count
+      saveSnapshot()
+    }
+    return removed
+  }
+
   func restartCycle() {
     defer { saveSnapshot() }
     clearSessionNotifications()
@@ -743,7 +765,8 @@ class PomodoroTimer: ObservableObject {
       remaining: timeRemaining, totalDuration: totalDuration,
       focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
       isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity,
-      startedAt: startedAt, pausedAt: state == .paused ? pausedAt : nil
+      startedAt: startedAt, pausedAt: state == .paused ? pausedAt : nil,
+      cycleStartedAt: cycleStartedAt
     ).save(to: defaults)
   }
 
@@ -760,6 +783,7 @@ class PomodoroTimer: ObservableObject {
   private func restore(_ snapshot: TimerSnapshot) {
     currentSessionType = snapshot.sessionType
     focusSessionsCompleted = snapshot.focusSessionsCompleted
+    cycleStartedAt = snapshot.cycleStartedAt
     startedLabel = snapshot.label
     lastActivity = snapshot.lastActivity
     startedAt = snapshot.startedAt

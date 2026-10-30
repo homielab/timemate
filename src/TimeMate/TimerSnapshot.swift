@@ -29,6 +29,9 @@ struct TimerSnapshot: Codable, Equatable {
   /// When the paused session was paused. `nil` unless paused, or in snapshots
   /// saved before this field existed: resuming then keeps the cycle.
   var pausedAt: Date? = nil
+  /// When the cycle's count last went back to 0. `nil` in snapshots saved
+  /// before this field existed: an undone session then counts in the cycle.
+  var cycleStartedAt: Date? = nil
 
   /// Whether the values make sense together; anything else is treated as damaged.
   var isValid: Bool {

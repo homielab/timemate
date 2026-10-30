@@ -229,4 +229,17 @@ final class SessionCycleTests: XCTestCase {
     XCTAssertFalse(
       SessionCycle.isStale(lastActivity: march10(12), now: march10(11), calendar: utc))
   }
+
+  func testCountAfterUndo() {
+    let start = Date(timeIntervalSince1970: 1000)
+    XCTAssertEqual(
+      SessionCycle.countAfterUndo(
+        sessionEnd: start.addingTimeInterval(1), cycleStartedAt: start, completed: 3), 2)
+    XCTAssertEqual(
+      SessionCycle.countAfterUndo(sessionEnd: start, cycleStartedAt: start, completed: 3), 3)
+    XCTAssertEqual(
+      SessionCycle.countAfterUndo(sessionEnd: start, cycleStartedAt: nil, completed: 2), 1)
+    XCTAssertEqual(
+      SessionCycle.countAfterUndo(sessionEnd: start, cycleStartedAt: nil, completed: 0), 0)
+  }
 }

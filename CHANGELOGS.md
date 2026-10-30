@@ -6,7 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
-- **Undo Last Session** in Settings → Statistics removes only the focus session recorded last (after asking, with its label, time and minutes); if another session is recorded while you're asked, nothing is deleted, so one pomodoro counted by mistake no longer means resetting all statistics.
+- **Undo Last Session** in Settings → Statistics removes only the focus session recorded last (after asking, with its label, time and minutes); if another session is recorded while you're asked, nothing is deleted, so one pomodoro counted by mistake no longer means resetting all statistics. A session from the current cycle also comes off the cycle dots, so the long break still comes after the real fourth pomodoro.
 
 ### Fixed
 

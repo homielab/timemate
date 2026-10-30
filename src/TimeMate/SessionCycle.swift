@@ -37,6 +37,16 @@ enum SessionCycle {
     return isStale(lastActivity: pausedAt, now: now, calendar: calendar)
   }
 
+  /// The cycle's count after undoing a focus session that ended at
+  /// `sessionEnd`: one less when it ended after the cycle began at
+  /// `cycleStartedAt` (unknown, `nil`, counts as after); unchanged for a
+  /// session from before the last long break or restart. Never below 0.
+  static func countAfterUndo(sessionEnd: Date, cycleStartedAt: Date?, completed: Int) -> Int {
+    guard completed > 0 else { return 0 }
+    if let cycleStartedAt, sessionEnd <= cycleStartedAt { return completed }
+    return completed - 1
+  }
+
   /// `stored` clamped to `validRange`; a missing value gives the default.
   static func sanitizedInterval(_ stored: Int?) -> Int {
     guard let stored else { return defaultInterval }
