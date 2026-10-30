@@ -853,6 +853,19 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertEqual(SessionStatistics.labelBreakdown([]).otherSeconds, 0)
   }
 
+  func testOtherBarNeverExceedsTheRow() {
+    let totals = (0..<11).map { index in
+      SessionStatistics.LabelTotal(
+        label: "l\(index)", pomodoros: 1, focusSeconds: (index < 5 ? 30 : 29) * 60)
+    }
+    let breakdown = SessionStatistics.labelBreakdown(totals)
+    let longest = totals.map(\.focusSeconds).max() ?? 0
+    XCTAssertEqual(breakdown.otherMinutes, 174)
+    XCTAssertEqual(SessionStatistics.barFraction(breakdown.otherSeconds, longest: longest), 1)
+    XCTAssertEqual(SessionStatistics.barFraction(900, longest: 1800), 0.5)
+    XCTAssertEqual(SessionStatistics.barFraction(60, longest: 0), 0)
+  }
+
   func testHourlyFocusSplitsSessionsAcrossHours() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 15, in: utc)
@@ -964,5 +977,21 @@ final class SessionStatisticsTests: XCTestCase {
       SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 7)
     XCTAssertEqual(
       SessionStatistics.longestStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 7)
+  }
+
+  func testWeekendIsSaturdayAndSundayInEveryRegion() {
+    // ar_AE weekend is Fri–Sat; the setting still skips Sat/Sun and not Friday.
+    var uae = Calendar(identifier: .gregorian)
+    uae.locale = Locale(identifier: "ar_AE")
+    uae.timeZone = TimeZone(identifier: "Asia/Dubai")!
+    // Thu–Mon ending Monday 2026-11-02: Sat/Sun empty are skipped, so 3, not 1.
+    let days = streakDays([4, 4, 0, 0, 4], endingOn: (2026, 11, 2), in: uae)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: uae), 3)
+    let friday = streakDays([4, 4, 4, 0, 4], endingOn: (2026, 11, 2), in: uae)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: friday, goal: 4, skipWeekends: true, calendar: uae), 4)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: friday, goal: 4, skipWeekends: true, calendar: uae), 4)
   }
 }

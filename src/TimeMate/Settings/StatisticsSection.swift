@@ -288,17 +288,20 @@ private struct LabelTotalsView: View {
         ForEach(breakdown.top, id: \.label) { total in
           LabelRow(
             name: Text(verbatim: total.label ?? ""), spokenName: total.label ?? "",
-            minutes: total.focusMinutes, fraction: total.focusSeconds / longest)
+            minutes: total.focusMinutes,
+            fraction: SessionStatistics.barFraction(total.focusSeconds, longest: longest))
         }
         if breakdown.otherSeconds > 0 {
           LabelRow(
             name: Text("Other"), spokenName: StatisticsText.localized("Other"),
-            minutes: breakdown.otherMinutes, fraction: breakdown.otherSeconds / longest)
+            minutes: breakdown.otherMinutes,
+            fraction: SessionStatistics.barFraction(breakdown.otherSeconds, longest: longest))
         }
         if breakdown.unlabeledSeconds > 0 {
           LabelRow(
             name: Text("No label"), spokenName: StatisticsText.localized("No label"),
-            minutes: breakdown.unlabeledMinutes, fraction: breakdown.unlabeledSeconds / longest)
+            minutes: breakdown.unlabeledMinutes,
+            fraction: SessionStatistics.barFraction(breakdown.unlabeledSeconds, longest: longest))
         }
       }
     }

@@ -230,6 +230,13 @@ enum SessionStatistics {
     var unlabeledMinutes: Int { Int((unlabeledSeconds / 60).rounded()) }
   }
 
+  /// Width of a "By label" bar: `seconds` against the longest, kept within 0…1 so the
+  /// "Other" bar (several labels together) never runs past its row.
+  static func barFraction(_ seconds: TimeInterval, longest: TimeInterval) -> Double {
+    guard longest > 0 else { return 0 }
+    return min(1, max(0, seconds / longest))
+  }
+
   static func labelBreakdown(_ totals: [LabelTotal], limit: Int = 5) -> LabelBreakdown {
     let named = totals.filter { $0.label != nil }
     return LabelBreakdown(
@@ -274,11 +281,18 @@ enum SessionStatistics {
     for (offset, day) in days.reversed().enumerated() {
       if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
         streak += 1
-      } else if offset > 0, !(skipWeekends && calendar.isDateInWeekend(day.date)) {
+      } else if offset > 0, !(skipWeekends && isWeekend(day.date, calendar: calendar)) {
         return streak
       }
     }
     return streak + max(0, carried)
+  }
+
+  /// Saturday or Sunday, whatever the system region calls the weekend (Fri–Sat in
+  /// the UAE), so 'Weekends don't break the streak' does what its caption says.
+  static func isWeekend(_ date: Date, calendar: Calendar) -> Bool {
+    let weekday = calendar.component(.weekday, from: date)
+    return weekday == 1 || weekday == 7
   }
 
   /// The longest run of consecutive `days` that met `goal`, anywhere in `days`
@@ -293,7 +307,7 @@ enum SessionStatistics {
     for day in days {
       if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
         run += 1
-      } else if !(skipWeekends && calendar.isDateInWeekend(day.date)) {
+      } else if !(skipWeekends && isWeekend(day.date, calendar: calendar)) {
         run = 0
       }
       best = max(best, run)
@@ -434,11 +448,27 @@ extension SessionHistory {
 
   static func csvField(label: String?) -> String {
     guard var text = label, !text.isEmpty else { return "" }
+    if looksLikeFormula(text) { text = "'" + text }
     // Compared by unicode scalar: "\r\n" is one Character in Swift.
-    let formulaStarts = "=+-@\t\r".unicodeScalars
     let needsQuotes = ",\"\r\n".unicodeScalars
-    if let first = text.unicodeScalars.first, formulaStarts.contains(first) { text = "'" + text }
     guard text.unicodeScalars.contains(where: needsQuotes.contains) else { return text }
     return "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+  }
+
+  /// Whether a spreadsheet would read `text` as a formula: it starts with `=`, tab or
+  /// CR, or with `+ - @` followed by something a formula needs (a digit, `(`, another
+  /// sign, or a cell reference, function or DDE call such as `A1`, `SUM(`, `cmd|`, `Sheet!`). A plain number
+  /// (`+5`, `-1.5`) and words (`@Acme`, `-research`) are left alone.
+  static func looksLikeFormula(_ text: String) -> Bool {
+    let scalars = Array(text.unicodeScalars)
+    guard let first = scalars.first else { return false }
+    if "=\t\r".unicodeScalars.contains(first) { return true }
+    guard "+-@".unicodeScalars.contains(first) else { return false }
+    let rest = String(String.UnicodeScalarView(scalars.dropFirst()))
+    if rest.range(of: #"^[0-9]+([.,][0-9]+)?$"#, options: .regularExpression) != nil {
+      return false
+    }
+    return rest.range(of: #"^([0-9(=+\-@]|[A-Za-z]+[0-9(|!])"#, options: .regularExpression)
+      != nil
   }
 }

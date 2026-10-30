@@ -529,11 +529,23 @@ final class SessionHistoryTests: XCTestCase {
 
   func testSessionsCSVNeutralisesFormulaLabels() {
     XCTAssertEqual(SessionHistory.csvField(label: "=SUM(A1)"), "'=SUM(A1)")
-    XCTAssertEqual(SessionHistory.csvField(label: "+1"), "'+1")
-    XCTAssertEqual(SessionHistory.csvField(label: "-1"), "'-1")
-    XCTAssertEqual(SessionHistory.csvField(label: "@cmd"), "'@cmd")
+    XCTAssertEqual(SessionHistory.csvField(label: "=SUM(1)"), "'=SUM(1)")
+    XCTAssertEqual(SessionHistory.csvField(label: "-1+1"), "'-1+1")
+    XCTAssertEqual(SessionHistory.csvField(label: "@A1"), "'@A1")
+    XCTAssertEqual(SessionHistory.csvField(label: "+SUM(A1)"), "'+SUM(A1)")
+    XCTAssertEqual(SessionHistory.csvField(label: "--1"), "'--1")
+    XCTAssertEqual(SessionHistory.csvField(label: "@SUM(1)"), "'@SUM(1)")
+    XCTAssertEqual(SessionHistory.csvField(label: "-cmd|' /C calc'!A0"), "'-cmd|' /C calc'!A0")
+    XCTAssertEqual(SessionHistory.csvField(label: "+cmd|' /C calc'!A0"), "'+cmd|' /C calc'!A0")
+    XCTAssertEqual(SessionHistory.csvField(label: "@Sheet!A1"), "'@Sheet!A1")
     XCTAssertEqual(SessionHistory.csvField(label: "=a,b"), "\"'=a,b\"")
     XCTAssertEqual(SessionHistory.csvField(label: "plain = ok"), "plain = ok")
+  }
+
+  func testSessionsCSVKeepsLabelsThatAreNoFormula() {
+    for label in ["@Acme", "-research", "+5", "-1.5", "@cmd", "+ notes"] {
+      XCTAssertEqual(SessionHistory.csvField(label: label), label)
+    }
     XCTAssertEqual(SessionHistory.csvField(label: nil), "")
   }
 
