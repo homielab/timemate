@@ -585,6 +585,21 @@ class PomodoroTimer: ObservableObject {
     resetForCurrentSession()
   }
 
+  /// Seconds left before the break screen allows Skip/Postpone; 0 when it is
+  /// not showing or the delay is over. Set by the break screen controller.
+  var breakScreenSkipLock: () -> Int = { 0 }
+
+  /// Seconds the break screen still blocks skipping and pausing from outside
+  /// it (shortcuts, menu, notification, Shortcuts); 0 = allowed.
+  var skipLockSeconds: Int {
+    currentSessionType != .focus && !isWaitingToContinue ? max(0, breakScreenSkipLock()) : 0
+  }
+
+  /// "Skip available in N s", shown when a skip or pause is blocked.
+  var skipLockText: String {
+    String(format: NSLocalizedString("Skip available in %d s", comment: ""), skipLockSeconds)
+  }
+
   func skipSession() {
     defer { saveSnapshot() }
     let elapsed = elapsedSeconds

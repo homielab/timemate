@@ -176,6 +176,25 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertEqual(awakeProbeCalls, calls, "Not probed while the break screen is visible")
   }
 
+  func testSkipDelayBlocksOtherPathsOnlyWhileTheBreakScreenShows() {
+    defaults.set(true, forKey: SettingsKey.overlayWaitDuringCalls)
+    displayKeptAwake = true
+    let workspace = NotificationCenter()
+    let controller = makeCallAwareController(workspace: workspace)
+    timer.startTimer()
+    timer.skipSession()
+    XCTAssertFalse(controller.isShowingOverlay)
+    XCTAssertEqual(timer.skipLockSeconds, 0, "Waiting break screen: nothing blocked")
+
+    displayKeptAwake = false
+    workspace.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertEqual(timer.skipLockSeconds, 5)
+    XCTAssertNotNil(timer.perform(.skip))
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+  }
+
   func testBreakScreenShowsDuringACallWhenTheSettingIsOff() {
     displayKeptAwake = true
     let controller = makeCallAwareController(workspace: NotificationCenter())

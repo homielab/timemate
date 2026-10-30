@@ -89,9 +89,17 @@ extension PomodoroTimer {
   /// reset stops the timer and starts the current session over, like Reset in
   /// the popover and the menu bar item's menu; extend adds 5 minutes to the
   /// running or paused session, like "+5 min" (nothing when idle). Returns a
-  /// message to show when the action could not run because of the 180-minute limit.
+  /// message to show when the action could not run because of the 180-minute
+  /// limit, or because the break screen's skip delay is not over (skip and pause
+  /// then do nothing and beep).
   @discardableResult
   func perform(_ action: HotKeyAction) -> String? {
+    if action == .skip || (action == .startPause && state == .active && !isWaitingToContinue),
+      skipLockSeconds > 0
+    {
+      NSSound.beep()
+      return skipLockText
+    }
     switch action {
     case .startPause:
       if state == .active && !isWaitingToContinue {

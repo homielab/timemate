@@ -81,14 +81,22 @@ enum TimerIntentActions {
       format: NSLocalizedString("Added %d minutes", comment: "Shortcuts Add Time result"), added)
   }
 
-  /// Pauses a running timer; does nothing otherwise.
-  static func pause(_ timer: PomodoroTimer) {
+  /// Pauses a running timer; does nothing otherwise. Throws while the break
+  /// screen's skip delay is not over.
+  static func pause(_ timer: PomodoroTimer) throws {
+    if timer.state == .active { try checkSkipLock(timer) }
     timer.pauseTimer()
   }
 
-  /// Ends the current session and moves to the next one.
-  static func skip(_ timer: PomodoroTimer) {
+  /// Ends the current session and moves to the next one. Throws while the break
+  /// screen's skip delay is not over.
+  static func skip(_ timer: PomodoroTimer) throws {
+    try checkSkipLock(timer)
     timer.skipSession()
+  }
+
+  private static func checkSkipLock(_ timer: PomodoroTimer) throws {
+    if timer.skipLockSeconds > 0 { throw SkipLockedError(message: timer.skipLockText) }
   }
 
   /// Stops the timer and starts the current session over, like Reset in the
@@ -239,13 +247,19 @@ struct ExtendSessionIntent: AppIntent {
   }
 }
 
+/// Skip or pause asked while the break screen's skip delay is not over.
+struct SkipLockedError: Error, CustomLocalizedStringResourceConvertible, Equatable {
+  let message: String
+  var localizedStringResource: LocalizedStringResource { "\(message)" }
+}
+
 struct PauseTimerIntent: AppIntent {
   static var title: LocalizedStringResource = "Pause Timer"
   static var description = IntentDescription("Pauses the running TimeMate session.")
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    TimerIntentActions.pause(.shared)
+    try TimerIntentActions.pause(.shared)
     return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
@@ -257,7 +271,7 @@ struct SkipSessionIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    TimerIntentActions.skip(.shared)
+    try TimerIntentActions.skip(.shared)
     return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }

@@ -148,6 +148,10 @@ class BreakOverlayWindowController: NSObject {
     self.animated = animated
     self.model = BreakOverlayModel(timer: timer, defaults: defaults, tip: tip)
     super.init()
+    timer.breakScreenSkipLock = { [weak self] in
+      guard let self, self.isShowingOverlay, !self.model.countdown.canSkip else { return 0 }
+      return self.model.countdown.skipSecondsRemaining
+    }
     setupSubscriptions()
   }
 

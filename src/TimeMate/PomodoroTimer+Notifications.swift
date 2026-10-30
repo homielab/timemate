@@ -103,12 +103,13 @@ extension PomodoroTimer {
 
   /// Runs a button tapped on the "session complete" notification.
   /// "Start Next" starts the session that follows unless it is already running
-  /// (auto-start); "Skip" skips it.
+  /// (auto-start); "Skip" skips it, unless the break screen's skip delay is not over.
   func handleNotificationAction(_ action: SessionNotificationAction) {
     switch action {
     case .startNext:
       startOrContinue()
     case .skip:
+      guard skipLockSeconds == 0 else { return }
       skipSession()
     }
   }
