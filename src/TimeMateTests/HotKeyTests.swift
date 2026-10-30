@@ -156,11 +156,12 @@ final class HotKeyTests: XCTestCase {
 
   func testShortcutIsSavedAsKeyCodeAndModifiersAndReloaded() {
     let manager = HotKeyManager(defaults: defaults)
-    let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_J), modifiers: UInt32(cmdKey | shiftKey))
+    let shortcut = HotKeyShortcut(
+      keyCode: UInt32(kVK_ANSI_J), modifiers: UInt32(cmdKey | optionKey))
     XCTAssertEqual(manager.setShortcut(shortcut, for: .skip), .ok)
 
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipKeyCode), kVK_ANSI_J)
-    XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipModifiers), cmdKey | shiftKey)
+    XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipModifiers), cmdKey | optionKey)
     XCTAssertEqual(HotKeyManager(defaults: defaults).shortcut(for: .skip), shortcut)
     XCTAssertEqual(
       HotKeyManager(defaults: defaults).shortcut(for: .startPause),
@@ -224,7 +225,8 @@ final class HotKeyTests: XCTestCase {
     let manager = HotKeyManager(defaults: defaults)
     let reserved = [
       kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
-      kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab,
+      kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab, kVK_ANSI_S, kVK_ANSI_M, kVK_ANSI_K,
+      kVK_ANSI_1, kVK_ANSI_N, kVK_ANSI_Slash,
     ]
     for key in reserved {
       let shortcut = HotKeyShortcut(keyCode: UInt32(key), modifiers: UInt32(cmdKey))
@@ -237,16 +239,23 @@ final class HotKeyTests: XCTestCase {
 
   func testOtherCombinationsAreNotReserved() {
     let notReserved = [
-      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(cmdKey | shiftKey)),
       HotKeyShortcut(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(controlKey | optionKey)),
       HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey)),
-      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_K), modifiers: UInt32(cmdKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(controlKey | cmdKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(optionKey | cmdKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_E), modifiers: UInt32(controlKey | optionKey)),
+      HotKeyShortcut(keyCode: UInt32(kVK_F5), modifiers: UInt32(cmdKey)),
     ]
     let manager = HotKeyManager(defaults: defaults)
     for shortcut in notReserved {
       XCTAssertFalse(shortcut.isReserved)
       XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .ok)
     }
+  }
+
+  func testShiftCommandLetterIsReserved() {
+    let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(cmdKey | shiftKey))
+    XCTAssertTrue(shortcut.isReserved)
   }
 
   func testReservedSavedShortcutFallsBackToDefault() {

@@ -10,6 +10,8 @@ All notable changes to TimeMate will be documented in this file.
 - **Export sessions CSV…** keeps labels such as `@Acme`, `-research` or `+5` as typed; only labels a spreadsheet would run as a formula (`=SUM(1)`, `-1+1`, `@A1`) still get a leading `'`.
 - **Weekends don't break the streak** always skips Saturday and Sunday, also where the system region has another weekend (Friday–Saturday in the UAE).
 - Plugging in or unplugging a display, docking or changing the resolution during a break no longer blanks the break screen for a couple of seconds: the tip, countdown and buttons stay in place.
+- Settings → Keyboard Shortcuts no longer records ⌘ alone with a letter, digit or symbol (⌘S, ⌘N, ⌘K, …), which took that command from every app; add ⌃ or ⌥, or use a function key.
+- A shortcut that can't act (such as Add 5 Minutes at the 180-minute limit) shows its banner only when notifications are on, and beeps when they are off or macOS blocks them.
 
 ## 3.7
 

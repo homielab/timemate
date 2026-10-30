@@ -151,10 +151,10 @@
 "Start / Pause" = "Bắt đầu / Tạm dừng";
 "Skip Session" = "Bỏ qua phiên";
 "This shortcut is used by another app. Record a different one." = "Phím tắt này đang được ứng dụng khác dùng. Hãy ghi một tổ hợp khác.";
-"Reserved by macOS. Record a different one." = "Phím tắt này do macOS giữ. Hãy ghi một tổ hợp khác.";
+"Apps use this for their own commands. Add ⌃ or ⌥." = "Các ứng dụng dùng tổ hợp này cho lệnh riêng. Hãy thêm ⌃ hoặc ⌥.";
 "Already used by %@. Record a different one." = "Đã dùng cho %@. Hãy ghi một tổ hợp khác.";
 "Already used by %@. Change or turn off that shortcut first." = "Đã dùng cho %@. Hãy đổi hoặc tắt phím tắt đó trước.";
-"Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘." = "Dùng được trong mọi ứng dụng. Bấm vào phím tắt rồi nhấn tổ hợp mới có ⌃ hoặc ⌘.";
+"Works in any app. Click a shortcut, then press a new combination with ⌃, or ⌘ with ⌥ (⌘ alone works only with F1–F20)." = "Dùng được trong mọi ứng dụng. Bấm vào phím tắt rồi nhấn tổ hợp mới có ⌃, hoặc ⌘ kèm ⌥ (⌘ trần chỉ dùng với F1–F20).";
 "Add ⌃ or ⌘" = "Thêm ⌃ hoặc ⌘";
 "Press keys…" = "Nhấn phím…";
 "Click to record a new shortcut" = "Bấm để ghi phím tắt mới";

@@ -151,10 +151,10 @@
 "Start / Pause" = "Start / Pause";
 "Skip Session" = "Skip Session";
 "This shortcut is used by another app. Record a different one." = "This shortcut is used by another app. Record a different one.";
-"Reserved by macOS. Record a different one." = "Reserved by macOS. Record a different one.";
+"Apps use this for their own commands. Add ⌃ or ⌥." = "Apps use this for their own commands. Add ⌃ or ⌥.";
 "Already used by %@. Record a different one." = "Already used by %@. Record a different one.";
 "Already used by %@. Change or turn off that shortcut first." = "Already used by %@. Change or turn off that shortcut first.";
-"Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘." = "Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘.";
+"Works in any app. Click a shortcut, then press a new combination with ⌃, or ⌘ with ⌥ (⌘ alone works only with F1–F20)." = "Works in any app. Click a shortcut, then press a new combination with ⌃, or ⌘ with ⌥ (⌘ alone works only with F1–F20).";
 "Add ⌃ or ⌘" = "Add ⌃ or ⌘";
 "Press keys…" = "Press keys…";
 "Click to record a new shortcut" = "Click to record a new shortcut";

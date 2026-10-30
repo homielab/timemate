@@ -32,20 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   let openSettingsRequests = PassthroughSubject<Void, Never>()
   private var menuBarStyle = MenuBarTimeStyle.minutesSeconds
 
-  /// Tells the user why a global shortcut did nothing ("Already at the 180-minute
-  /// limit"): a banner, and the same words read by VoiceOver.
+  /// Explains why a global shortcut did nothing (see `HotKeyMessage`).
   private func showHotKeyMessage(_ message: String) {
-    let content = UNMutableNotificationContent()
-    content.title = "TimeMate"
-    content.body = message
-    SessionNotification.post(
-      UNNotificationRequest(identifier: "hotKeyMessage", content: content, trigger: nil))
-    NSAccessibility.post(
-      element: NSApp as Any, notification: .announcementRequested,
-      userInfo: [
-        .announcement: message,
-        .priority: NSAccessibilityPriorityLevel.high.rawValue,
-      ])
+    HotKeyMessage.live().show(message)
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {

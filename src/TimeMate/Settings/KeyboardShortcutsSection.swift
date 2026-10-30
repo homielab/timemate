@@ -33,10 +33,12 @@ struct KeyboardShortcutsSection: View {
           }
         }
       }
-      Text("Works in any app. Click a shortcut, then press a new combination with ⌃ or ⌘.")
-        .font(.caption)
-        .foregroundColor(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
+      Text(
+        "Works in any app. Click a shortcut, then press a new combination with ⌃, or ⌘ with ⌥ (⌘ alone works only with F1–F20)."
+      )
+      .font(.caption)
+      .foregroundColor(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
     }
   }
 
@@ -47,7 +49,7 @@ struct KeyboardShortcutsSection: View {
   private func refusalMessage(for action: HotKeyAction) -> String? {
     switch refusals[action] {
     case .reserved:
-      return NSLocalizedString("Reserved by macOS. Record a different one.", comment: "")
+      return NSLocalizedString("Apps use this for their own commands. Add ⌃ or ⌥.", comment: "")
     case .conflict(let other) where !hotKeys.isEnabled(action):
       // Turning the action on was refused; its own recorder is off.
       return String(

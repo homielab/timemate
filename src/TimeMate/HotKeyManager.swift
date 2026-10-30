@@ -142,16 +142,17 @@ struct HotKeyShortcut: Equatable {
     modifiers & UInt32(cmdKey | controlKey) != 0
   }
 
-  /// Bare ⌘ combinations macOS and every app rely on (copy, paste, quit, …);
-  /// a global hot key would take them from the whole system.
+  /// ⌘ alone (or ⇧⌘) with a letter, digit, symbol, Space or Tab: apps use these for
+  /// their own commands (⌘S, ⌘N, ⌘C, …), and a global hot key would take them from every
+  /// app. Adding ⌃ or ⌥, or using a function key (F1–F20), makes it safe.
   var isReserved: Bool {
-    guard modifiers == UInt32(cmdKey) else { return false }
-    return Self.reservedCommandKeys.contains(Int(keyCode))
+    let commandOnly = modifiers & ~UInt32(shiftKey) == UInt32(cmdKey)
+    return commandOnly && !Self.functionKeys.contains(Int(keyCode))
   }
 
-  private static let reservedCommandKeys: Set<Int> = [
-    kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
-    kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab,
+  private static let functionKeys: Set<Int> = [
+    kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6, kVK_F7, kVK_F8, kVK_F9, kVK_F10,
+    kVK_F11, kVK_F12, kVK_F13, kVK_F14, kVK_F15, kVK_F16, kVK_F17, kVK_F18, kVK_F19, kVK_F20,
   ]
 
   /// "⌃⌥P", in the system's modifier order.
