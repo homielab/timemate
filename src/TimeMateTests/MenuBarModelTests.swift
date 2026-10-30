@@ -137,6 +137,19 @@ final class MenuBarModelTests: XCTestCase {
     XCTAssertEqual(model.tooltipText(), paused)
   }
 
+  func testReopeningBringsBackAStatusItemDraggedOutOfTheMenuBar() {
+    let statusItem = NSStatusBar.system.statusItem(withLength: 90)
+    defer { NSStatusBar.system.removeStatusItem(statusItem) }
+    let controller = StatusItemController(
+      timer: timer, menuBarStyle: .minutesSeconds, statusItem: statusItem)
+    statusItem.isVisible = false
+
+    controller.showStatusItem()
+
+    XCTAssertTrue(statusItem.isVisible)
+    XCTAssertNotNil(controller.statusButton)
+  }
+
   func testStatusItemLabelFollowsTheModelWithVoiceOver() {
     let statusItem = NSStatusBar.system.statusItem(withLength: 90)
     defer { NSStatusBar.system.removeStatusItem(statusItem) }

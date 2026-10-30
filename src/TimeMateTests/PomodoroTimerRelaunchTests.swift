@@ -89,7 +89,7 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     timer = makeTimer(focus: 300)
     timer.startTimer()
     advanceClock(by: 100)
-    timer.isRelaunching = true
+    timer.prepareForRelaunch()
     timer.handleWillTerminate()
     XCTAssertEqual(timer.state, .active)
 
@@ -97,6 +97,45 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     XCTAssertEqual(relaunched.state, .active)
     XCTAssertEqual(relaunched.currentSessionType, .focus)
     XCTAssertEqual(relaunched.timeRemaining, 198, accuracy: 1)
+  }
+
+  func testRelaunchHandsOverBeforeTheNewInstanceOpens() {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    var steps: [String] = []
+    var finish: ((Error?) -> Void)?
+    restartApp(
+      timer: timer,
+      open: { completion in
+        steps.append(self.timer.isRelaunching ? "open after handover" : "open before handover")
+        finish = completion
+      },
+      onFailure: { _ in steps.append("failed") }, terminate: { steps.append("terminate") })
+    XCTAssertEqual(steps, ["open after handover"])
+
+    // The session ends while the new instance starts: this one records nothing.
+    advanceClock(by: 400)
+    timer.handleTick()
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertTrue(history.records.isEmpty)
+
+    finish?(nil)
+    XCTAssertTrue(waitUntil { steps.count == 2 })
+    XCTAssertEqual(steps.last, "terminate")
+  }
+
+  func testFailedRelaunchKeepsThisInstanceRunning() {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    var failed = false
+    restartApp(
+      timer: timer, open: { $0(CocoaError(.fileNoSuchFile)) },
+      onFailure: { _ in failed = true }, terminate: { XCTFail("must not quit") })
+    XCTAssertTrue(waitUntil { failed })
+    XCTAssertFalse(timer.isRelaunching)
+    advanceClock(by: 400)
+    timer.handleTick()
+    XCTAssertEqual(history.records.count, 1)
   }
 
   func testQuitWhileIdleChangesNothing() {

@@ -40,30 +40,41 @@ extension Bundle {
 }
 
 /// Relaunches the app through Launch Services (no shell, so it works in the
-/// sandbox), then quits this instance.
+/// sandbox), then quits this instance. The timer hands over first (last snapshot,
+/// no more ticks), so the two instances never both end or record the session.
 /// `failureMessage`: what the alert says when the new instance can't start.
 func restartApp(
   failureMessage: String = NSLocalizedString(
-    "Quit TimeMate and open it again to apply the change.", comment: "")
+    "Quit TimeMate and open it again to apply the change.", comment: ""),
+  timer: PomodoroTimer = .shared,
+  open: (_ completion: @escaping (Error?) -> Void) -> Void = openNewInstance,
+  onFailure: @escaping (String) -> Void = showRestartFailedAlert,
+  terminate: @escaping () -> Void = { NSApp.terminate(nil) }
 ) {
-  let configuration = NSWorkspace.OpenConfiguration()
-  // Without this, Launch Services would just bring the running instance forward.
-  configuration.createsNewApplicationInstance = true
-  NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) {
-    _, error in
+  timer.prepareForRelaunch()
+  open { error in
     DispatchQueue.main.async {
       if let error {
         Logger.app.error("Could not relaunch the app: \(error.localizedDescription)")
-        showRestartFailedAlert(message: failureMessage)
+        timer.cancelRelaunch()
+        onFailure(failureMessage)
       } else {
-        PomodoroTimer.shared.isRelaunching = true
-        NSApp.terminate(nil)
+        terminate()
       }
     }
   }
 }
 
-private func showRestartFailedAlert(message: String) {
+func openNewInstance(_ completion: @escaping (Error?) -> Void) {
+  let configuration = NSWorkspace.OpenConfiguration()
+  // Without this, Launch Services would just bring the running instance forward.
+  configuration.createsNewApplicationInstance = true
+  NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) {
+    _, error in completion(error)
+  }
+}
+
+func showRestartFailedAlert(message: String) {
   let alert = NSAlert()
   alert.alertStyle = .warning
   alert.messageText = NSLocalizedString("TimeMate couldn't restart", comment: "")

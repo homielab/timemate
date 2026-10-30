@@ -4,6 +4,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Opening TimeMate again brings back its menu bar icon after it was ⌘-dragged out of the menu bar, so Settings stay reachable with the Dock icon hidden.
+- Restarting to change the language or after Reset all settings no longer lets the old and new app both end the session, so it is never recorded twice.
+- The break screen comes back when displays reconnect after all were briefly gone, and a break picked up after a restart or display change keeps its skip delay and isn't announced again.
+
 ## 3.9
 
 ### Added

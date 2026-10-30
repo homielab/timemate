@@ -332,6 +332,7 @@ class PomodoroTimer: ObservableObject {
   /// change of the minutes shown, or once at `endDate` when nothing shows the countdown.
   private func startTicking() {
     timer?.cancel()
+    guard !isRelaunching else { return }
     switch tickMode {
     case .everySecond:
       timer = Timer.publish(every: 1, tolerance: TickMode.tolerance, on: .main, in: .common)
@@ -378,7 +379,7 @@ class PomodoroTimer: ObservableObject {
   func handleTick() {
     let tickTime = now()
     lastTickAt = tickTime
-    guard state == .active, let endDate else { return }
+    guard state == .active, !isRelaunching, let endDate else { return }
 
     let isLongOverdue = tickTime.timeIntervalSince(endDate) > Self.overdueGracePeriod
     if isBreakPostponed, endDate <= tickTime {
@@ -505,16 +506,58 @@ class PomodoroTimer: ObservableObject {
   /// An app restart (language change, Reset all settings) keeps the session
   /// running.
   func handleWillTerminate() {
-    if isRelaunching {
-      saveSnapshot()
-      return
-    }
+    if isRelaunching { return }
     pauseTimer()
   }
 
-  /// Set by `restartApp()` just before quitting: the new instance picks the
-  /// session up from the snapshot as if the app never closed.
-  var isRelaunching = false
+  /// Set by `prepareForRelaunch()` before the new instance opens: the new instance
+  /// picks the session up from the snapshot as if the app never closed, so this one
+  /// no longer ticks, records or saves.
+  private(set) var isRelaunching = false
+
+  /// Saves the snapshot one last time and stops ticking, before `restartApp()`
+  /// opens the new instance, so the two never both end the session.
+  func prepareForRelaunch() {
+    saveSnapshot()
+    isRelaunching = true
+    timer?.cancel()
+    timer = nil
+  }
+
+  /// The new instance could not start: this one carries on.
+  func cancelRelaunch() {
+    guard isRelaunching else { return }
+    isRelaunching = false
+    if state == .active { startTicking() }
+  }
+
+  /// When the break screen of the running break first appeared; kept in the
+  /// snapshot so a relaunch or a display change mid-break neither restarts the
+  /// skip delay nor announces the break again. `nil` when no break screen is up.
+  private(set) var breakScreenShownAt: Date?
+
+  /// Records that the break screen appeared, unless it already did for this break.
+  /// Returns when it first appeared.
+  @discardableResult
+  func markBreakScreenShown() -> Date {
+    if let breakScreenShownAt { return breakScreenShownAt }
+    let date = now()
+    breakScreenShownAt = date
+    saveSnapshot()
+    return date
+  }
+
+  /// Whole seconds since this break's screen first appeared; `nil` when it hasn't.
+  var secondsSinceBreakScreenShown: Int? {
+    breakScreenShownAt.map { max(0, Int(now().timeIntervalSince($0).rounded(.down))) }
+  }
+
+  /// The break screen went away (the break ended, was postponed or paused).
+  func clearBreakScreenShown() {
+    guard breakScreenShownAt != nil else { return }
+    breakScreenShownAt = nil
+    saveSnapshot()
+  }
 
   /// The Mac is about to sleep: stop the ticking loop. A focus session pauses
   /// when `pauseOnSleep` is on; anything else keeps `endDate` counting in
@@ -885,6 +928,8 @@ class PomodoroTimer: ObservableObject {
 
   /// Saves what is needed to pick the session up again after a relaunch.
   private func saveSnapshot() {
+    // The new instance owns the session once a relaunch began.
+    guard !isRelaunching else { return }
     syncFallbackNotification()
     TimerSnapshot(
       state: state, sessionType: currentSessionType, endDate: endDate,
@@ -892,7 +937,7 @@ class PomodoroTimer: ObservableObject {
       focusSessionsCompleted: focusSessionsCompleted, isBreakPostponed: isBreakPostponed,
       isWaitingToContinue: isWaitingToContinue, label: startedLabel, lastActivity: lastActivity,
       startedAt: startedAt, pausedAt: state == .paused ? pausedAt : nil,
-      cycleStartedAt: cycleStartedAt
+      cycleStartedAt: cycleStartedAt, breakScreenShownAt: breakScreenShownAt
     ).save(to: defaults)
   }
 
@@ -940,6 +985,7 @@ class PomodoroTimer: ObservableObject {
       timeRemaining = remaining
       progress = Double(timeRemaining) / Double(max(1, totalDuration))
       state = .active
+      if isBreak, !postponed { breakScreenShownAt = snapshot.breakScreenShownAt }
       startTicking()
     case .postponedBreakDue:
       state = .idle

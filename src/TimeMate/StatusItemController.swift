@@ -61,6 +61,11 @@ final class StatusItemController: NSObject {
     observeVoiceOverForAccessibilityLabel()
   }
 
+  /// Puts the icon back in the menu bar after the user ⌘-dragged it out.
+  func showStatusItem() {
+    if !statusItem.isVisible { statusItem.isVisible = true }
+  }
+
   var statusButton: NSStatusBarButton? {
     statusItem.button
   }

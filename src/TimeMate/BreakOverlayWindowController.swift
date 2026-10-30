@@ -100,6 +100,8 @@ class BreakOverlayWindowController: NSObject {
     -> Void
   private let runFade: FadeRunner
   private var escDetector = DoubleEscDetector()
+  /// The displays to cover; replaced in tests to have none for a while.
+  private let screens: () -> [NSScreen]
   private var visibilityGeneration = OverlayVisibilityGeneration()
 
   var isShowingOverlay: Bool {
@@ -133,8 +135,10 @@ class BreakOverlayWindowController: NSObject {
     scheduleRecheck: @escaping RecheckScheduler = BreakOverlayWindowController.scheduleOnMain,
     runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade,
     screenChangeDelay: TimeInterval? = BreakOverlayWindowController.screenChangeDelay,
-    tip: @escaping () -> String = RelaxationTips.random
+    tip: @escaping () -> String = RelaxationTips.random,
+    screens: @escaping () -> [NSScreen] = { NSScreen.screens }
   ) {
+    self.screens = screens
     self.isFullscreenProbe = isFullscreenProbe
     self.isDisplayKeptAwakeProbe = isDisplayKeptAwakeProbe
     self.workspaceNotificationCenter = workspaceNotificationCenter
@@ -210,7 +214,13 @@ class BreakOverlayWindowController: NSObject {
   }
 
   /// The rebuilt windows show the break as it is, without replaying the entrance.
+  /// With no screen left the windows are gone; once a screen comes back the timer state
+  /// decides again, so the break screen returns where the break is still running.
   private func handleScreenConfigurationChange() {
+    if windows.isEmpty {
+      if timer.breakScreenShownAt != nil { reevaluate() }
+      return
+    }
     guard isShowingOverlay, windows.first?.isVisible == true else { return }
     createWindows(skipsEntrance: true)
     showWindows(animated: false)  // Snap to new layout
@@ -220,7 +230,7 @@ class BreakOverlayWindowController: NSObject {
     closeAllWindows()  // Clear existing
     startObserving()
 
-    let screens = NSScreen.screens
+    let screens = self.screens()
     let primaryIndex = BreakOverlayAccessibility.primaryScreenIndex(
       screens: screens.map(\.frame), main: NSScreen.main?.frame)
 
@@ -362,13 +372,16 @@ class BreakOverlayWindowController: NSObject {
     stopWaitingForWindowedApp()
 
     if presentation == .show {
-      // Not when the overlay only comes back during its fade-out.
-      let isNewlyShown = windows.isEmpty
+      // Not when the overlay only comes back during its fade-out, nor when this break's
+      // screen already appeared (a relaunch, or the screens went away and came back).
+      let elapsed = windows.isEmpty ? timer.secondsSinceBreakScreenShown : nil
+      let isNewlyShown = windows.isEmpty && elapsed == nil
       if windows.isEmpty {
         model.chooseTip()
         model.refreshToday()
-        createWindows()
-        startBreakCountdown()
+        createWindows(skipsEntrance: elapsed != nil)
+        startBreakCountdown(elapsed: elapsed ?? 0)
+        timer.markBreakScreenShown()
       }
       showWindows(animated: animated)
       if isNewlyShown {
@@ -382,6 +395,7 @@ class BreakOverlayWindowController: NSObject {
         postAnnouncement(BreakOverlayAccessibility.endAnnouncement())
       }
     } else {
+      if !shouldShow { timer.clearBreakScreenShown() }
       hideWindows(animated: animated)
     }
   }
@@ -516,10 +530,10 @@ class BreakOverlayWindowController: NSObject {
   /// Starts the skip delay of a break screen that has just appeared. The session type
   /// changes before the timer resets to the break length, so wait for the current change
   /// to finish: that reset must not count as a second of the delay.
-  private func startBreakCountdown() {
+  private func startBreakCountdown(elapsed: Int) {
     DispatchQueue.main.async { [weak self] in
       guard let self, self.isShowingOverlay else { return }
-      self.model.beginBreakScreen()
+      self.model.beginBreakScreen(elapsed: elapsed)
     }
   }
 

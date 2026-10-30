@@ -51,6 +51,9 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     super.tearDown()
   }
 
+  /// The displays the controller sees; `nil` = the real ones.
+  private var fakeScreens: [NSScreen]?
+
   private func makeController(
     animated: Bool, tip: @escaping () -> String = RelaxationTips.random
   ) -> BreakOverlayWindowController {
@@ -61,7 +64,8 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
         // Window animations need an unlocked screen: set the end state, finish later.
         for window in windows { window.alphaValue = alpha }
         if alpha == 0 { self?.fadeOuts.append(done) } else { done() }
-      }, screenChangeDelay: nil, tip: tip)
+      }, screenChangeDelay: nil, tip: tip,
+      screens: { [weak self] in self?.fakeScreens ?? NSScreen.screens })
   }
 
   /// Hands out "tip 1", "tip 2", … one per pick.
@@ -350,6 +354,53 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     XCTAssertTrue(controller.model.countdown.isLive, "the countdown keeps following the timer")
     XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 2)
     runTicks(1)
+    XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 1)
+  }
+
+  func testBreakScreenComesBackAfterAllScreensWentAway() {
+    let controller = makeController(animated: false)
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    runTicks(3)
+    let windowCount = controller.windowTitles.count
+    XCTAssertGreaterThan(windowCount, 0)
+
+    fakeScreens = []
+    postScreenChange()
+    XCTAssertTrue(controller.windowTitles.isEmpty)
+
+    fakeScreens = nil
+    postScreenChange()
+    XCTAssertEqual(controller.windowTitles.count, windowCount)
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertEqual(controller.windowSkipsEntrance, Array(repeating: true, count: windowCount))
+    XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 2)
+  }
+
+  func testRestoredBreakKeepsItsSkipDelay() {
+    var first: BreakOverlayWindowController? = makeController(animated: false)
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    XCTAssertNotNil(timer.breakScreenShownAt)
+    runTicks(3)
+    timer.prepareForRelaunch()
+    _ = first
+    first = nil
+
+    currentTime = currentTime.addingTimeInterval(1)
+    timer = PomodoroTimer(
+      defaults: defaults,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      workspaceNotificationCenter: NotificationCenter(),
+      history: SessionHistory(fileURL: nil),
+      playSound: { _, _ in }, isFullscreenProbe: { false })
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.state, .active)
+    let controller = makeController(animated: false)
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay)
     XCTAssertEqual(controller.model.countdown.skipSecondsRemaining, 1)
   }
 

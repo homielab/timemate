@@ -100,8 +100,10 @@ final class BreakOverlayModel: ObservableObject {
 
   /// Starts the countdown for a break screen that has just appeared: the skip delay
   /// starts over. Rebuilding the windows (a display change) must not call this.
-  func beginBreakScreen() {
-    countdown.resetSkipCountdown()
+  /// `elapsed`: seconds since this break's screen first appeared (a relaunch or a
+  /// display change mid-break); the skip delay counts from then instead of starting over.
+  func beginBreakScreen(elapsed: Int = 0) {
+    countdown.resetSkipCountdown(elapsed: elapsed)
     countdown.setLive(true)
   }
 
@@ -173,14 +175,15 @@ final class BreakOverlayCountdown: ObservableObject {
     self.skipCountdown = BreakSkipCountdown(skipDelay: delay)
   }
 
-  func resetSkipCountdown(skipDelay: Int? = nil) {
-    let delay: Int
+  func resetSkipCountdown(skipDelay: Int? = nil, elapsed: Int = 0) {
+    var delay: Int
     if let skipDelay {
       delay = BreakOverlayAccessibility.skipDelay(stored: skipDelay)
     } else {
       let storedDelay = defaults.object(forKey: SettingsKey.overlaySkipDelay)
       delay = BreakOverlayAccessibility.skipDelay(stored: storedDelay)
     }
+    delay = max(0, delay - elapsed)
     skipCountdown.reset(skipDelay: delay)
   }
 

@@ -299,6 +299,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
     -> Bool
   {
+    // ⌘-dragging the icon out of the menu bar hides it; with the Dock icon off,
+    // opening the app again is the only way back, so bring the icon back first.
+    statusItemController.showStatusItem()
     if !popover.isShown { togglePopover() }
     return true
   }
