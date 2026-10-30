@@ -477,6 +477,8 @@ class BreakOverlayWindowController: NSObject {
       isBreakPostponed: state.3)
   }
 
+  private let focusReturn = FocusReturn()
+
   private func showWindows(animated: Bool) {
     guard !windows.isEmpty else { return }
 
@@ -495,6 +497,7 @@ class BreakOverlayWindowController: NSObject {
 
     // Activate once so the overlay receives key events (Esc), then give focus
     // to the window on the screen the user works on.
+    focusReturn.remember()
     NSApp.activate(ignoringOtherApps: true)
     for window in windows where window !== primaryWindow {
       window.alphaValue = fadeDuration == nil ? 1 : 0
@@ -567,6 +570,7 @@ class BreakOverlayWindowController: NSObject {
           if self.windows.isEmpty {
             self.stopObserving()
             self.model.setLive(false)
+            self.focusReturn.restore()
           }
         }
       }
@@ -577,6 +581,7 @@ class BreakOverlayWindowController: NSObject {
       primaryWindow = nil
       stopObserving()
       model.setLive(false)
+      focusReturn.restore()
     }
   }
 

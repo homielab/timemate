@@ -11,14 +11,23 @@ struct ContentView: View {
   @EnvironmentObject var appDelegate: AppDelegate
   @State private var settingsVisible = false
   @State private var spaceMonitor: Any?
+  @State private var topHeight: CGFloat = 0
+  @State private var visibleHeight = NSScreen.main?.visibleFrame.height
 
   @AppStorage(SettingsKey.backgroundColorHex) private var backgroundColorHex: String = ""
   @AppStorage(SettingsKey.showProgressCircle) private var showProgressCircle = true
 
   var body: some View {
     VStack(spacing: 12) {
-      TimerDisplayView(settingsVisible: $settingsVisible, showProgressCircle: $showProgressCircle)
-      ControlButtonsView()
+      VStack(spacing: 12) {
+        TimerDisplayView(settingsVisible: $settingsVisible, showProgressCircle: $showProgressCircle)
+        ControlButtonsView()
+      }
+      .background(
+        GeometryReader { proxy in
+          Color.clear.onAppear { topHeight = proxy.size.height }
+            .onChange(of: proxy.size.height) { topHeight = $0 }
+        })
 
       if settingsVisible {
         Divider()
@@ -28,7 +37,9 @@ struct ContentView: View {
           )
           .padding(.trailing, 8)
         }
-        .frame(maxHeight: 450)
+        .frame(
+          maxHeight: PopoverLayout.settingsHeight(
+            visibleHeight: visibleHeight, topHeight: topHeight + 32 + 12))
       }
     }
     .padding()
@@ -45,6 +56,14 @@ struct ContentView: View {
     .onChange(of: [settingsVisible, showProgressCircle]) { _ in
       appDelegate.updatePopoverSize()
     }
+    // Fit the settings to the screen the popover opens on, also after a display change.
+    .onReceive(
+      NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+    ) { _ in
+      visibleHeight = NSScreen.main?.visibleFrame.height
+      appDelegate.updatePopoverSize()
+    }
+    .onAppear { visibleHeight = NSScreen.main?.visibleFrame.height }
     // The label field shows only in focus sessions.
     .onChange(of: model.currentSessionType) { _ in
       appDelegate.updatePopoverSize()

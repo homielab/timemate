@@ -227,11 +227,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     }
   }
 
+  private let popoverFocusReturn = FocusReturn()
+
   @objc func togglePopover() {
     guard let button = statusItemController.statusButton else { return }
     if popover.isShown {
       popover.performClose(nil)
     } else {
+      popoverFocusReturn.remember()
       NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
       // Don't start typing in the label field: Space should start the timer.
@@ -281,6 +284,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     popoverModel.setPopoverVisible(false)
     // Closing the popover mid-recording would otherwise leave every shortcut off.
     if hotKeyManager.isRecording { hotKeyManager.endRecording() }
+    // Give the keyboard back to the app the user was in (none when opened over the
+    // break screen, which TimeMate already held).
+    popoverFocusReturn.restore()
   }
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)

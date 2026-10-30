@@ -6,6 +6,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- When the break screen or the popover closes, the app you were working in gets the keyboard back, so you can keep typing without clicking it first.
+- The popover's settings fit small screens (such as a 13-inch 1440×900 display): the list scrolls instead of running off the bottom.
 - The break screen's **Skip button delay** now also holds Reset: the Reset shortcut, the menu bar menu and the Shortcuts action **Reset Timer** no longer end the break before the delay runs out.
 - Changing the language or **Reset All Settings** restarts TimeMate without pausing a running session.
 - When the break screen waits for a full-screen app or a call (**Don't interrupt full-screen apps**, **Wait during calls and video**), the alarm sound waits too and plays once when the break screen shows; a break skipped or reset before then stays silent. The notification still arrives at once.

@@ -151,6 +151,7 @@ Sources are in `src/TimeMate/`:
 - `Settings/` — one file per settings section (`DurationsSection`, `AlertsSection`, …), shared
   building blocks in `SettingsComponents.swift`, the list of sections in `SettingsView.swift`;
   `Settings/LoginItemState.swift` decides what the Start at Login switch shows (pure, unit-tested) and `LoginItemReset` turns it off on Reset All Settings.
+- `FocusReturn.swift` — gives the keyboard back to the previous app when the break screen or popover closes, and fits the popover's settings to the screen (unit-tested).
 - `DefaultsObserver.swift` — the one listener for `UserDefaults` changes; it calls back only when one of the keys it is given changes (unit-tested).
 - `BreakOverlay*.swift` and `BreakSkipCountdown.swift` — the full-screen break screen; `BreakOverlayRules.swift` decides when it
   shows and what a double Esc does, `OverlayPolicy.swift` holds it back while a full-screen app is in front or, as an option, while
