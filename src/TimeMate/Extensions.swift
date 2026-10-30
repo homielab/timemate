@@ -52,6 +52,7 @@ func restartApp() {
         Logger.app.error("Could not relaunch the app: \(error.localizedDescription)")
         showRestartFailedAlert()
       } else {
+        PomodoroTimer.shared.isRelaunching = true
         NSApp.terminate(nil)
       }
     }

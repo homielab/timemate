@@ -73,7 +73,7 @@ final class TimerIntentActionsTests: XCTestCase {
     currentTime += 20
     timer.handleTick()
 
-    TimerIntentActions.reset(timer)
+    _ = try? TimerIntentActions.reset(timer)
 
     XCTAssertEqual(timer.state, .idle)
     XCTAssertEqual(timer.currentSessionType, .focus)
@@ -83,7 +83,7 @@ final class TimerIntentActionsTests: XCTestCase {
   func testResetClearsAWaitingBreakScreen() {
     timer.currentSessionType = .shortBreak
     timer.isWaitingToContinue = true
-    TimerIntentActions.reset(timer)
+    _ = try? TimerIntentActions.reset(timer)
     XCTAssertFalse(timer.isWaitingToContinue)
     XCTAssertEqual(timer.state, .idle)
   }
@@ -102,7 +102,7 @@ final class TimerIntentActionsTests: XCTestCase {
     timer.handleTick()  // break ends, waits on the break screen
     XCTAssertTrue(timer.isWaitingToContinue)
 
-    TimerIntentActions.reset(timer)
+    _ = try? TimerIntentActions.reset(timer)
 
     XCTAssertEqual(timer.currentSessionType, .focus)
     XCTAssertEqual(timer.state, .idle)
@@ -369,7 +369,7 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, running, 3 min left")
     XCTAssertNoThrow(try TimerIntentActions.pause(timer))
     XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, paused, 3 min left")
-    TimerIntentActions.reset(timer)
+    _ = try? TimerIntentActions.reset(timer)
     XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, not started, 3 min")
     TimerIntentActions.start(timer)
     XCTAssertNoThrow(try TimerIntentActions.skip(timer))
@@ -470,6 +470,8 @@ final class TimerIntentActionsTests: XCTestCase {
       XCTAssertEqual(error as? SkipLockedError, SkipLockedError(message: "Skip available in 9 s"))
     }
     XCTAssertThrowsError(try TimerIntentActions.pause(timer))
+    XCTAssertEqual(timer.perform(.reset), "Skip available in 9 s")
+    XCTAssertThrowsError(try TimerIntentActions.reset(timer))
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
     XCTAssertEqual(timer.state, .active)
   }
@@ -490,6 +492,9 @@ final class TimerIntentActionsTests: XCTestCase {
     startLockedBreak(lock: 0)
     XCTAssertNoThrow(try TimerIntentActions.skip(timer))
     XCTAssertEqual(timer.currentSessionType, .focus)
+    startLockedBreak(lock: 0)
+    XCTAssertNil(timer.perform(.reset))
+    XCTAssertEqual(timer.state, .idle)
   }
 
   func testTheLockDoesNotApplyToFocusSessions() {
@@ -500,21 +505,21 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
   }
 
-  func testResetReportsTheFocusMinutesItRecorded() {
+  func testResetReportsTheFocusMinutesItRecorded() throws {
     TimerIntentActions.start(timer)
     currentTime += 100
     timer.handleTick()
-    let text = TimerIntentActions.reset(timer)
+    let text = try TimerIntentActions.reset(timer)
     XCTAssertEqual(text, "Recorded 1 min of focus")
     XCTAssertEqual(
       TimerIntentActions.recordedText(seconds: 12 * 60 + 30), "Recorded 12 min of focus")
   }
 
-  func testResetSaysNothingWhenNothingIsRecorded() {
+  func testResetSaysNothingWhenNothingIsRecorded() throws {
     TimerIntentActions.start(timer)
     currentTime += 20
     timer.handleTick()
-    XCTAssertNil(TimerIntentActions.reset(timer))
+    XCTAssertNil(try TimerIntentActions.reset(timer))
     XCTAssertNil(TimerIntentActions.recordedText(seconds: 59))
   }
 

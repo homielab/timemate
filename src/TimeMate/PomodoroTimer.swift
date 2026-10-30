@@ -491,9 +491,19 @@ class PomodoroTimer: ObservableObject {
   /// the user paused it, so time the app was not running never counts and
   /// nothing is recorded. A crash or force quit gets no such call: the session
   /// then keeps counting in wall-clock time (`TimerRestorePlan`).
+  /// An app restart (language change, Reset all settings) keeps the session
+  /// running.
   func handleWillTerminate() {
+    if isRelaunching {
+      saveSnapshot()
+      return
+    }
     pauseTimer()
   }
+
+  /// Set by `restartApp()` just before quitting: the new instance picks the
+  /// session up from the snapshot as if the app never closed.
+  var isRelaunching = false
 
   /// The Mac is about to sleep: stop the ticking loop. A focus session pauses
   /// when `pauseOnSleep` is on; anything else keeps `endDate` counting in

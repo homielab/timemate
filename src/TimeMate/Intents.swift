@@ -102,9 +102,11 @@ enum TimerIntentActions {
   /// Stops the timer and starts the current session over, like Reset in the
   /// popover and the menu bar item's menu. A focus session past half is recorded
   /// first, without asking; returns "Recorded N min of focus" then, else nil.
+  /// Throws while the break screen's skip delay is not over.
   @discardableResult
-  static func reset(_ timer: PomodoroTimer) -> String? {
-    recordedText(seconds: timer.stopTimer(recording: true))
+  static func reset(_ timer: PomodoroTimer) throws -> String? {
+    try checkSkipLock(timer)
+    return recordedText(seconds: timer.stopTimer(recording: true))
   }
 
   /// "Recorded N min of focus" for a reset that saved at least a whole minute.
@@ -293,7 +295,7 @@ struct ResetTimerIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    let recorded = TimerIntentActions.reset(.shared)
+    let recorded = try TimerIntentActions.reset(.shared)
     let status = TimerIntentActions.statusText(.shared)
     return .result(
       dialog: IntentDialog(stringLiteral: recorded.map { "\($0). \(status)" } ?? status))

@@ -154,6 +154,10 @@ final class StatusItemController: NSObject {
   @objc private func menuStartPause() { timer.perform(.startPause) }
   @objc private func menuSkip() { timer.perform(.skip) }
   @objc private func menuReset() {
+    guard timer.skipLockSeconds == 0 else {
+      NSSound.beep()
+      return
+    }
     guard timer.resetNeedsConfirmation else {
       timer.stopTimer()
       return

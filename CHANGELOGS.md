@@ -6,6 +6,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The break screen's **Skip button delay** now also holds Reset: the Reset shortcut, the menu bar menu and the Shortcuts action **Reset Timer** no longer end the break before the delay runs out.
+- Changing the language or **Reset All Settings** restarts TimeMate without pausing a running session.
 - When the break screen waits for a full-screen app or a call (**Don't interrupt full-screen apps**, **Wait during calls and video**), the alarm sound waits too and plays once when the break screen shows; a break skipped or reset before then stays silent. The notification still arrives at once.
 - Resetting with the keyboard shortcut or the Shortcuts action **Reset Timer** now says "Recorded N min of focus" when the focus time so far was saved to your history.
 - VoiceOver now reads which session the "What are you working on?" label applies to, not only the tooltip.

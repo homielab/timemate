@@ -85,6 +85,20 @@ final class PomodoroTimerRelaunchTests: TimerTestCase {
     XCTAssertEqual(history.records.count, 1)
   }
 
+  func testRestartKeepsTheSessionRunning() {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    advanceClock(by: 100)
+    timer.isRelaunching = true
+    timer.handleWillTerminate()
+    XCTAssertEqual(timer.state, .active)
+
+    let relaunched = relaunch(after: 2, focus: 300)
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.currentSessionType, .focus)
+    XCTAssertEqual(relaunched.timeRemaining, 198, accuracy: 1)
+  }
+
   func testQuitWhileIdleChangesNothing() {
     timer = makeTimer(focus: 25)
     timer.handleWillTerminate()
