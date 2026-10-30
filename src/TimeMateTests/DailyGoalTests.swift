@@ -120,7 +120,8 @@ final class DailyGoalTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: history,
       notificationCenter: NotificationCenter(),
-      postNotification: { [unowned self] in self.posted.append($0) }, isFullscreenProbe: { false })
+      postNotification: { [unowned self] in self.posted.append($0) }, playSound: { _, _ in },
+      isFullscreenProbe: { false })
   }
 
   /// Ticks one second at a time until today's history holds `pomodoros`.

@@ -137,7 +137,8 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertTrue(timer.breakScreenCanShow)
     let fullscreen = PomodoroTimer(
       defaults: defaults, now: { Date(timeIntervalSince1970: 0) },
-      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { true })
+      workspaceNotificationCenter: NotificationCenter(), playSound: { _, _ in },
+      isFullscreenProbe: { true })
     XCTAssertFalse(fullscreen.breakScreenCanShow)
     defaults.set(false, forKey: SettingsKey.overlaySkipFullscreen)
     XCTAssertTrue(fullscreen.breakScreenCanShow)

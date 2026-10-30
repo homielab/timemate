@@ -77,10 +77,55 @@ final class AlarmSoundTests: XCTestCase {
     XCTAssertEqual(loaded, ["Missing"])
   }
 
+  func testALoadedSoundPlaysAtTheGivenVolume() {
+    let sound = FakeSound.make()
+    let started = AlarmSound.play("Glass", volume: 0.4) { _ in sound }
+    XCTAssertTrue(started)
+    XCTAssertEqual(sound.plays, 1)
+    XCTAssertEqual(sound.volume, 0.4, accuracy: 0.001)
+  }
+
+  /// Loads only: `play()` on a real sound can hang a test run without a GUI session.
   func testEverySystemSoundLoads() {
     for name in AlarmSound.systemSounds {
       XCTAssertNotNil(NSSound(named: name), name)
     }
+  }
+
+  // MARK: - No real sound in tests
+
+  /// Every timer built in a test must inject `playSound:`; the default plays a real
+  /// `NSSound`, which hangs `xcodebuild test` without an unlocked GUI session.
+  func testEveryTestTimerInjectsPlaySound() throws {
+    let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+    let files = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+      .filter { $0.hasSuffix(".swift") }
+    XCTAssertFalse(files.isEmpty)
+    let call = "PomodoroTimer" + "("
+    var offenders: [String] = []
+    for file in files {
+      let source = Array(
+        try String(contentsOf: folder.appendingPathComponent(file), encoding: .utf8))
+      var index = 0
+      while index < source.count {
+        guard String(source[index..<min(index + call.count, source.count)]) == call else {
+          index += 1
+          continue
+        }
+        var end = index + call.count
+        var depth = 1
+        while end < source.count, depth > 0 {
+          if source[end] == "(" { depth += 1 } else if source[end] == ")" { depth -= 1 }
+          end += 1
+        }
+        if !String(source[index..<end]).contains("playSound:") {
+          let line = source[..<index].filter { $0 == "\n" }.count + 1
+          offenders.append("\(file):\(line)")
+        }
+        index = end
+      }
+    }
+    XCTAssertEqual(offenders, [], "PomodoroTimer( without playSound:")
   }
 
   // MARK: - Timer
@@ -129,5 +174,19 @@ final class AlarmSoundTests: XCTestCase {
     XCTAssertEqual(played, [AlarmSound.none])
     XCTAssertFalse(AlarmSound.play(played[0], volume: 1))
     timer.stopTimer()
+  }
+}
+
+/// Records `play()` instead of playing.
+private final class FakeSound: NSSound {
+  var plays = 0
+
+  static func make() -> FakeSound {
+    FakeSound(contentsOfFile: "/System/Library/Sounds/Glass.aiff", byReference: true)!
+  }
+
+  override func play() -> Bool {
+    plays += 1
+    return true
   }
 }

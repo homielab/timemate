@@ -94,7 +94,9 @@ defaults, an in-memory `SessionHistory`, and helpers: `makeTimer`, `relaunch(aft
 quit and relaunch), `makeAlertTimer`, `drainMainQueue`, and `waitUntil(timeout:)`, which polls a
 condition instead of sleeping for a fixed time. Move the clock forward and call `handleTick()`
 rather than waiting a second. Put new logic in a pure type with the clock and defaults passed in,
-as `SessionSequence` does, so it needs no timer to test.
+as `SessionSequence` does, so it needs no timer to test. Every `PomodoroTimer(` in a test passes
+`playSound:` (a real `NSSound` hangs the test run without a GUI session); `AlarmSoundTests` checks
+it.
 
 Debug builds run session minutes as seconds (`PomodoroTimer.seconds(forMinutes:)`, `PomodoroTimer+Settings.swift`): a 25 minute focus session lasts 25 seconds, so you can try the whole cycle quickly. Release builds use real minutes.
 

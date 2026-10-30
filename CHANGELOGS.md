@@ -11,6 +11,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Tests no longer play real alarm sounds, so the test suite no longer hangs without a GUI session.
 - Shortcuts **Add Time** now returns the minutes it added (0 when nothing is running or the session is at the 180-minute limit), so a shortcut can check whether it worked.
 - The notification at the end of a break offers only **Start Next** when focus waits to be started; its **Skip** button jumped over the focus session to another break.
 - A label typed after pressing Start is now saved with that focus session when it began without one; once a session has a label, the field's tooltip says edits apply from the next session.

@@ -36,7 +36,7 @@ final class SessionNotificationTests: XCTestCase {
       defaults: defaults,
       now: { [unowned self] in self.currentTime },
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
+      history: SessionHistory(fileURL: nil), playSound: { _, _ in }, isFullscreenProbe: { false })
   }
 
   private func finishSession(_ timer: PomodoroTimer) {
@@ -152,7 +152,8 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { if $0.trigger == nil { posted.append($0) } }, isFullscreenProbe: { false }
+      postNotification: { if $0.trigger == nil { posted.append($0) } }, playSound: { _, _ in },
+      isFullscreenProbe: { false }
     )
     timer.startTimer()
     finishSession(timer)
@@ -175,7 +176,8 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { if $0.trigger == nil { posted.append($0) } }, isFullscreenProbe: { false }
+      postNotification: { if $0.trigger == nil { posted.append($0) } }, playSound: { _, _ in },
+      isFullscreenProbe: { false }
     )
     timer.startTimer()
     finishSession(timer)
@@ -271,7 +273,8 @@ final class SessionNotificationTests: XCTestCase {
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
       notificationCenter: NotificationCenter(),
-      postNotification: { if $0.trigger == nil { posted.append($0) } }, isFullscreenProbe: { false }
+      postNotification: { if $0.trigger == nil { posted.append($0) } }, playSound: { _, _ in },
+      isFullscreenProbe: { false }
     )
     timer.startTimer()
     finishSession(timer)

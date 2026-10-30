@@ -94,7 +94,7 @@ class TimerTestCase: XCTestCase {
       uptime: { [weak self] in self?.currentUptime ?? 0 },
       removeSessionNotifications: { [weak self] in self?.notificationRemovals += 1 },
       removePendingSessionNotification: {},
-      isFullscreenProbe: { false },
+      playSound: { _, _ in }, isFullscreenProbe: { false },
       scheduleResume: { [weak self] in self?.scheduledResumes.append((delay: $0, block: $1)) },
       idleSeconds: { [weak self] in self?.idleTime ?? 0 },
       isDisplayKeptAwake: { [weak self] in self?.displayKeptAwake ?? false },

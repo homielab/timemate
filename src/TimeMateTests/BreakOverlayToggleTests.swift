@@ -24,7 +24,7 @@ final class BreakOverlayToggleTests: XCTestCase {
     timer = PomodoroTimer(
       defaults: defaults,
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
+      history: SessionHistory(fileURL: nil), playSound: { _, _ in }, isFullscreenProbe: { false })
 
     controller = BreakOverlayWindowController(timer: timer, defaults: defaults, animated: false)
   }

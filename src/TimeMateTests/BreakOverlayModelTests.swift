@@ -32,7 +32,7 @@ final class BreakOverlayModelTests: XCTestCase {
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
-      isFullscreenProbe: { false })
+      playSound: { _, _ in }, isFullscreenProbe: { false })
 
     model = BreakOverlayModel(
       timer: timer, defaults: defaults,
@@ -238,7 +238,7 @@ final class BreakOverlayModelTodayTests: XCTestCase {
     history = SessionHistory(fileURL: nil)
     let timer = PomodoroTimer(
       defaults: defaults, workspaceNotificationCenter: NotificationCenter(), history: history,
-      isFullscreenProbe: { false })
+      playSound: { _, _ in }, isFullscreenProbe: { false })
     model = BreakOverlayModel(timer: timer, defaults: defaults, tip: { "tip" })
   }
 

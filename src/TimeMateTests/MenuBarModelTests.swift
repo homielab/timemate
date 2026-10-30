@@ -31,7 +31,7 @@ final class MenuBarModelTests: XCTestCase {
       defaults: defaults,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
       workspaceNotificationCenter: NotificationCenter(),
-      history: SessionHistory(fileURL: nil), isFullscreenProbe: { false })
+      history: SessionHistory(fileURL: nil), playSound: { _, _ in }, isFullscreenProbe: { false })
     model = MenuBarModel(timer: timer)
     model.objectWillChange.sink { [weak self] _ in self?.modelChanges += 1 }
       .store(in: &cancellables)

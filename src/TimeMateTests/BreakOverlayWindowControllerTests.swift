@@ -42,7 +42,7 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
-      isFullscreenProbe: { false })
+      playSound: { _, _ in }, isFullscreenProbe: { false })
   }
 
   override func tearDown() {

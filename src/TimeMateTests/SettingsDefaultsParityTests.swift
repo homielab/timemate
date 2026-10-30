@@ -27,7 +27,7 @@ final class SettingsDefaultsParityTests: XCTestCase {
   ) -> PomodoroTimer {
     PomodoroTimer(
       defaults: defaults, history: SessionHistory(fileURL: nil),
-      isFullscreenProbe: { fullscreen })
+      playSound: { _, _ in }, isFullscreenProbe: { fullscreen })
   }
 
   func testTimerFallbacksMatchRegisteredDefaults() throws {

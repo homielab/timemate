@@ -427,7 +427,8 @@ final class HotKeyTests: XCTestCase {
     defaults.set(0.0, forKey: SettingsKey.alarmVolume)
     return PomodoroTimer(
       defaults: defaults, now: { Date(timeIntervalSince1970: 1_000_000) },
-      workspaceNotificationCenter: NotificationCenter(), isFullscreenProbe: { false })
+      workspaceNotificationCenter: NotificationCenter(), playSound: { _, _ in },
+      isFullscreenProbe: { false })
   }
 
   func testStartPauseTogglesTheTimer() {

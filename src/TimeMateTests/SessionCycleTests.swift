@@ -48,7 +48,8 @@ final class SessionCycleTests: XCTestCase {
       now: { [unowned self] in self.currentTime },
       workspaceNotificationCenter: NotificationCenter(),
       history: SessionHistory(fileURL: nil),
-      notificationCenter: NotificationCenter(), isFullscreenProbe: { false })
+      notificationCenter: NotificationCenter(), playSound: { _, _ in }, isFullscreenProbe: { false }
+    )
   }
 
   /// Runs focus sessions until a long break starts; returns how many it took.
