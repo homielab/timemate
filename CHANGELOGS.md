@@ -2,7 +2,7 @@
 
 All notable changes to TimeMate will be documented in this file.
 
-## Unreleased
+## 3.6
 
 ### Added
 
