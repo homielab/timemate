@@ -37,6 +37,17 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// Auto-pause ignores idle time while another app keeps the display awake, so the
+  /// tooltip must not say a video counts as away.
+  func testAutoPauseTooltipDoesNotSayVideoCountsAsAway() throws {
+    let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+      .deletingLastPathComponent().appendingPathComponent("TimeMate")
+    for path in ["Settings/AutomationSection.swift", "en.lproj/Localizable.strings"] {
+      let text = try String(contentsOf: sources.appendingPathComponent(path), encoding: .utf8)
+      XCTAssertFalse(text.contains("counts as away"), path)
+    }
+  }
+
   /// `NSDictionary` keeps the last of two equal keys, so a duplicate would hide which
   /// translation wins: read the raw file and count every `"key" =` line.
   func testNoKeyIsDeclaredTwice() throws {

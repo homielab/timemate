@@ -59,7 +59,7 @@ struct AutomationSection: View {
         .fixedSize()
       }
       .help(
-        "Pause a running focus session after this long without keyboard, mouse or trackpad input. The time away doesn't count, so your history only shows time at the desk. Watching a video without touching the Mac counts as away."
+        "Pause a running focus session after this long without keyboard, mouse or trackpad input. The time away doesn't count, so your history only shows time at the desk. A call or video that keeps the display awake keeps the session running."
       )
       SettingsToggleRow(titleKey: "Resume when I'm back", isOn: $resumeOnReturn)
         .help(
