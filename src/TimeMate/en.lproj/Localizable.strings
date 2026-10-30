@@ -199,12 +199,31 @@
 "Starts or resumes the current TimeMate session." = "Starts or resumes the current TimeMate session.";
 "Pauses the running TimeMate session." = "Pauses the running TimeMate session.";
 "Ends the current TimeMate session and moves to the next one." = "Ends the current TimeMate session and moves to the next one.";
-"Returns the minutes left in the current TimeMate session and says which session it is." = "Returns the minutes left in the current TimeMate session and says which session it is.";
-"Returns the pomodoros completed today and says how that compares with the daily goal." = "Returns the pomodoros completed today and says how that compares with the daily goal.";
+"Returns the current TimeMate session: its state, type, minutes and seconds left, label and place in the cycle. Says which session it is." = "Returns the current TimeMate session: its state, type, minutes and seconds left, label and place in the cycle. Says which session it is.";
+"Returns today's pomodoros, focus minutes, daily goal, whether the goal is reached and the streak. Says how today compares with the goal." = "Returns today's pomodoros, focus minutes, daily goal, whether the goal is reached and the streak. Says how today compares with the goal.";
 "%@ finished" = "%@ finished";
 "%1$@, running, %2$d min left" = "%1$@, running, %2$d min left";
 "%1$@, paused, %2$d min left" = "%1$@, paused, %2$d min left";
 "%1$@, not started, %2$d min" = "%1$@, not started, %2$d min";
+
+// Shortcuts: what Get Timer Status and Get Today's Progress return
+"Timer Status" = "Timer Status";
+"Timer State" = "Timer State";
+"Session Type" = "Session Type";
+"Today's Progress" = "Today's Progress";
+"Not Started" = "Not Started";
+"Running" = "Running";
+"Paused" = "Paused";
+"State" = "State";
+"Session" = "Session";
+"Minutes Left" = "Minutes Left";
+"Seconds Left" = "Seconds Left";
+"Focus Session in Cycle" = "Focus Session in Cycle";
+"Focus Sessions per Cycle" = "Focus Sessions per Cycle";
+"Pomodoros" = "Pomodoros";
+"Focus Minutes" = "Focus Minutes";
+"Goal Reached" = "Goal Reached";
+"Streak Days" = "Streak Days";
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "Last 7 days";

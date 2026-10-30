@@ -379,6 +379,98 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(TimerIntentActions.statusText(timer), "Focus, running, 3 min left")
   }
 
+  // MARK: - Timer status entity
+
+  func testStatusOfARunningFocusSession() {
+    // Debug builds read minutes as seconds: focus 800 lasts 800 s of the fake clock.
+    defaults.set(800, forKey: SettingsKey.focusDuration)
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    TimerIntentActions.start(timer)
+    currentTime += 46
+    timer.handleTick()
+
+    let status = TimerIntentActions.status(timer)
+
+    XCTAssertEqual(status.id, "current")
+    XCTAssertEqual(status.state, .running)
+    XCTAssertEqual(status.kind, .focus)
+    XCTAssertEqual(status.secondsLeft, 754)  // 12:34
+    XCTAssertEqual(status.minutesLeft, 13)
+    XCTAssertEqual(status.label, "Write report")
+    XCTAssertEqual(status.cycleIndex, 1)
+    XCTAssertEqual(status.cyclesTotal, 4)
+    XCTAssertEqual(status.summary, "Focus, running, 13 min left")
+  }
+
+  func testStatusOfAPausedBreak() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    defaults.set(3, forKey: SettingsKey.longBreakInterval)
+    TimerIntentActions.start(timer)
+    currentTime += 125
+    timer.handleTick()  // focus ends, the short break waits to be started
+    TimerIntentActions.start(timer)
+    currentTime += 15
+    timer.handleTick()
+    XCTAssertNoThrow(try TimerIntentActions.pause(timer))
+
+    let status = TimerIntentActions.status(timer)
+
+    XCTAssertEqual(status.state, .paused)
+    XCTAssertEqual(status.kind, .shortBreak)
+    XCTAssertEqual(status.secondsLeft, 45)
+    XCTAssertEqual(status.minutesLeft, 1)
+    XCTAssertEqual(status.label, "", "a break has no label")
+    XCTAssertEqual(status.cycleIndex, 1, "the break follows the first focus session")
+    XCTAssertEqual(status.cyclesTotal, 3)
+    XCTAssertEqual(status.summary, "Short Break, paused, 1 min left")
+  }
+
+  func testStatusOfAnIdleTimer() {
+    let status = TimerIntentActions.status(timer)
+
+    XCTAssertEqual(status.state, .idle)
+    XCTAssertEqual(status.kind, .focus)
+    XCTAssertEqual(status.secondsLeft, 125)
+    XCTAssertEqual(status.minutesLeft, 3)
+    XCTAssertEqual(status.label, "")
+    XCTAssertEqual(status.cycleIndex, 1)
+    XCTAssertEqual(status.summary, "Focus, not started, 3 min")
+  }
+
+  func testStatusCountsTheCycle() {
+    timer.focusSessionsCompleted = 2
+    XCTAssertEqual(TimerIntentActions.status(timer).cycleIndex, 3)
+    timer.currentSessionType = .shortBreak
+    XCTAssertEqual(TimerIntentActions.status(timer).cycleIndex, 2)
+    timer.focusSessionsCompleted = 0
+    timer.currentSessionType = .longBreak
+    XCTAssertEqual(TimerIntentActions.status(timer).cycleIndex, 4, "the long break ends the cycle")
+    timer.currentSessionType = .focus
+    timer.focusSessionsCompleted = 9  // more than the cycle after Cycles was lowered
+    XCTAssertEqual(TimerIntentActions.status(timer).cycleIndex, 4)
+  }
+
+  func testStatusOfAFinishedBreakWaitingOnTheBreakScreen() {
+    timer.currentSessionType = .shortBreak
+    timer.isWaitingToContinue = true
+
+    let status = TimerIntentActions.status(timer)
+
+    XCTAssertEqual(status.state, .idle)
+    XCTAssertEqual(status.kind, .shortBreak)
+    XCTAssertEqual(status.secondsLeft, 0)
+    XCTAssertEqual(status.minutesLeft, 0)
+    XCTAssertEqual(status.summary, "Short Break finished")
+  }
+
+  func testStatusEnumsNameEveryCase() {
+    XCTAssertEqual(
+      Set(TimerRunState.caseDisplayRepresentations.keys), Set(TimerRunState.allCases))
+    XCTAssertEqual(
+      Set(TimerSessionKind.caseDisplayRepresentations.keys), Set(TimerSessionKind.allCases))
+    XCTAssertEqual(SessionType.allCases.map(TimerSessionKind.init), TimerSessionKind.allCases)
+  }
+
   // MARK: - Today's progress
 
   private func makeHistory() -> SessionHistory {
@@ -447,6 +539,39 @@ final class TimerIntentActionsTests: XCTestCase {
       TimerIntentActions.progressText(progress),
       "Today: 1 of 1 pomodoro, 25 minutes. Streak: 3 days")
     XCTAssertEqual(TimerIntentActions.todayProgress(history: history, goal: 0).streak, 0)
+  }
+
+  func testProgressEntityCarriesTheGoalAndStreak() {
+    let history = makeHistory()
+    for day in 0..<3 {
+      let end = currentTime.addingTimeInterval(-Double(day) * 86_400)
+      history.recordCompletedSession(.focus, duration: 25 * 60, end: end)
+    }
+
+    let reached = TodayProgressEntity(TimerIntentActions.todayProgress(history: history, goal: 1))
+    XCTAssertEqual(reached.id, "today")
+    XCTAssertEqual(reached.pomodoros, 1)
+    XCTAssertEqual(reached.focusMinutes, 25)
+    XCTAssertEqual(reached.goal, 1)
+    XCTAssertTrue(reached.goalReached)
+    XCTAssertEqual(reached.streakDays, 3)
+    XCTAssertEqual(reached.summary, "Today: 1 of 1 pomodoro, 25 minutes. Streak: 3 days")
+
+    let below = TodayProgressEntity(TimerIntentActions.todayProgress(history: history, goal: 2))
+    XCTAssertEqual(below.goal, 2)
+    XCTAssertFalse(below.goalReached)
+    XCTAssertEqual(below.streakDays, 0)
+
+    let noGoal = TodayProgressEntity(
+      TimerIntentActions.todayProgress(history: history, goal: DailyGoal.off))
+    XCTAssertEqual(noGoal.goal, 0)
+    XCTAssertFalse(noGoal.goalReached)
+    XCTAssertEqual(noGoal.streakDays, 0)
+  }
+
+  func testProgressOfATimerUsesItsGoal() {
+    defaults.set(3, forKey: SettingsKey.dailyGoal)
+    XCTAssertEqual(TimerIntentActions.todayProgress(timer).goal, 3)
   }
 
   // MARK: - Break screen skip delay

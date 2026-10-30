@@ -199,12 +199,31 @@
 "Starts or resumes the current TimeMate session." = "Bắt đầu hoặc tiếp tục phiên TimeMate hiện tại.";
 "Pauses the running TimeMate session." = "Tạm dừng phiên TimeMate đang chạy.";
 "Ends the current TimeMate session and moves to the next one." = "Kết thúc phiên TimeMate hiện tại và chuyển sang phiên tiếp theo.";
-"Returns the minutes left in the current TimeMate session and says which session it is." = "Trả về số phút còn lại của phiên TimeMate hiện tại và cho biết đó là phiên gì.";
-"Returns the pomodoros completed today and says how that compares with the daily goal." = "Trả về số pomodoro hoàn thành hôm nay và cho biết so với mục tiêu hằng ngày.";
+"Returns the current TimeMate session: its state, type, minutes and seconds left, label and place in the cycle. Says which session it is." = "Trả về phiên TimeMate hiện tại: trạng thái, loại phiên, số phút và số giây còn lại, nhãn và vị trí trong chu kỳ. Cho biết đó là phiên gì.";
+"Returns today's pomodoros, focus minutes, daily goal, whether the goal is reached and the streak. Says how today compares with the goal." = "Trả về số pomodoro, số phút tập trung, mục tiêu hằng ngày, đã đạt mục tiêu chưa và chuỗi ngày hôm nay. Cho biết hôm nay so với mục tiêu thế nào.";
 "%@ finished" = "%@ đã xong";
 "%1$@, running, %2$d min left" = "%1$@, đang chạy, còn %2$d phút";
 "%1$@, paused, %2$d min left" = "%1$@, tạm dừng, còn %2$d phút";
 "%1$@, not started, %2$d min" = "%1$@, chưa bắt đầu, %2$d phút";
+
+// Shortcuts: what Get Timer Status and Get Today's Progress return
+"Timer Status" = "Trạng thái hẹn giờ";
+"Timer State" = "Tình trạng hẹn giờ";
+"Session Type" = "Loại phiên";
+"Today's Progress" = "Tiến độ hôm nay";
+"Not Started" = "Chưa bắt đầu";
+"Running" = "Đang chạy";
+"Paused" = "Tạm dừng";
+"State" = "Trạng thái";
+"Session" = "Phiên";
+"Minutes Left" = "Số phút còn lại";
+"Seconds Left" = "Số giây còn lại";
+"Focus Session in Cycle" = "Phiên tập trung thứ mấy trong chu kỳ";
+"Focus Sessions per Cycle" = "Số phiên tập trung mỗi chu kỳ";
+"Pomodoros" = "Số pomodoro";
+"Focus Minutes" = "Số phút tập trung";
+"Goal Reached" = "Đã đạt mục tiêu";
+"Streak Days" = "Số ngày liên tiếp";
 
 // Settings → Statistics: last 7 days and CSV export
 "Last 7 days" = "7 ngày qua";

@@ -149,6 +149,12 @@ enum TimerIntentActions {
       streak: history.goalStreak(goal: goal, skipWeekends: skipWeekends))
   }
 
+  /// Today's progress of `timer`'s history against its daily goal and streak setting.
+  static func todayProgress(_ timer: PomodoroTimer) -> TodayProgress {
+    todayProgress(
+      history: timer.history, goal: timer.dailyGoal, skipWeekends: timer.streakSkipsWeekends)
+  }
+
   /// Spoken / shown answer of "Get Today's Progress", e.g. "Today: 3 of 8 pomodoros, 75 minutes. Streak: 4 days".
   static func progressText(_ progress: TodayProgress) -> String {
     var text: String
@@ -177,6 +183,34 @@ enum TimerIntentActions {
     case .idle: format = NSLocalizedString("%1$@, not started, %2$d min", comment: "Shortcuts")
     }
     return String(format: format, session, minutesRemaining(timer))
+  }
+
+  /// What "Get Timer Status" returns: the session, whether it runs, the time
+  /// left, its label and where it stands in the cycle. A finished break
+  /// waiting on the break screen is idle with no time left.
+  static func status(_ timer: PomodoroTimer) -> TimerStatusEntity {
+    let state: TimerRunState
+    switch timer.state {
+    case .active: state = .running
+    case .paused: state = .paused
+    case .idle: state = .idle
+    }
+    let session = timer.currentSessionType
+    let total = timer.longBreakInterval
+    let done = timer.focusSessionsCompleted
+    // Focus: the one under way. Short break: the focus session it follows. The
+    // long break follows the last one (the count is already back to 0).
+    let index: Int
+    switch session {
+    case .focus: index = done + 1
+    case .shortBreak: index = done
+    case .longBreak: index = total
+    }
+    return TimerStatusEntity(
+      state: timer.isWaitingToContinue ? .idle : state, kind: TimerSessionKind(session),
+      secondsLeft: timer.isWaitingToContinue ? 0 : timer.secondsRemaining,
+      label: timer.sessionLabel(for: session), cycleIndex: min(max(index, 1), total),
+      cyclesTotal: total, summary: statusText(timer))
   }
 
   /// `statusText` as the answer of a command (Start, Pause, Skip, Reset), so
@@ -305,30 +339,30 @@ struct ResetTimerIntent: AppIntent {
 struct GetTimerStatusIntent: AppIntent {
   static var title: LocalizedStringResource = "Get Timer Status"
   static var description = IntentDescription(
-    "Returns the minutes left in the current TimeMate session and says which session it is.")
+    "Returns the current TimeMate session: its state, type, minutes and seconds left, label and place in the cycle. Says which session it is."
+  )
 
   @MainActor
-  func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
-    let timer = PomodoroTimer.shared
-    return .result(
-      value: TimerIntentActions.minutesRemaining(timer),
-      dialog: TimerIntentActions.statusDialog(timer))
+  func perform() async throws -> some IntentResult & ReturnsValue<TimerStatusEntity>
+    & ProvidesDialog
+  {
+    let status = TimerIntentActions.status(.shared)
+    return .result(value: status, dialog: IntentDialog(stringLiteral: status.summary))
   }
 }
 
 struct GetTodayProgressIntent: AppIntent {
   static var title: LocalizedStringResource = "Get Today's Progress"
   static var description = IntentDescription(
-    "Returns the pomodoros completed today and says how that compares with the daily goal.")
+    "Returns today's pomodoros, focus minutes, daily goal, whether the goal is reached and the streak. Says how today compares with the goal."
+  )
 
   @MainActor
-  func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
-    let timer = PomodoroTimer.shared
-    let progress = TimerIntentActions.todayProgress(
-      history: timer.history, goal: timer.dailyGoal, skipWeekends: timer.streakSkipsWeekends)
-    return .result(
-      value: progress.completed,
-      dialog: IntentDialog(stringLiteral: TimerIntentActions.progressText(progress)))
+  func perform() async throws -> some IntentResult & ReturnsValue<TodayProgressEntity>
+    & ProvidesDialog
+  {
+    let progress = TodayProgressEntity(TimerIntentActions.todayProgress(.shared))
+    return .result(value: progress, dialog: IntentDialog(stringLiteral: progress.summary))
   }
 }
 

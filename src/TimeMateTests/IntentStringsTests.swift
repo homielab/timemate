@@ -5,8 +5,9 @@ import XCTest
 @testable import TimeMate
 
 /// Shortcuts looks up every title, description, summary and parameter prompt of the App
-/// Intents in `Localizable.strings`. A key missing from both tables passes the en/vi parity
-/// check but shows English in Vietnamese Shortcuts, so read the literals from `Intents.swift`.
+/// Intents, and the names of what they return, in `Localizable.strings`. A key missing from
+/// both tables passes the en/vi parity check but shows English in Vietnamese Shortcuts, so
+/// read the literals from `Intents.swift` and `IntentEntities.swift`.
 final class IntentStringsTests: XCTestCase {
   private var sources: URL {
     URL(fileURLWithPath: #filePath).deletingLastPathComponent()
@@ -23,10 +24,12 @@ final class IntentStringsTests: XCTestCase {
   }
 
   func testEveryIntentStringIsInBothTables() throws {
-    let source = try String(
-      contentsOf: sources.appendingPathComponent("Intents.swift"), encoding: .utf8)
+    let source = try ["Intents.swift", "IntentEntities.swift"].map {
+      try String(contentsOf: sources.appendingPathComponent($0), encoding: .utf8)
+    }.joined(separator: "\n")
     let keys = Self.intentStringKeys(inSwiftSource: source)
     XCTAssertTrue(keys.contains("Start Focus"), "parser found no intent titles")
+    XCTAssertTrue(keys.contains("Minutes Left"), "parser found no entity properties")
     for localization in ["en", "vi"] {
       let table = try strings(localization)
       XCTAssertEqual(
@@ -44,10 +47,17 @@ final class IntentStringsTests: XCTestCase {
       @Parameter(title: "Minutes", default: 5)
       Summary("Start on \(\.$label)")
       // IntentDialog(stringLiteral: text) is built at run time
+      static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Kind")
+      .idle: DisplayRepresentation(title: "Idle"),
+      @Property(title: "Left") var left: Int
+      DisplayRepresentation(title: LocalizedStringResource(stringLiteral: text))
       """#
     XCTAssertEqual(
       Self.intentStringKeys(inSwiftSource: source),
-      ["Does \"it\".", "Go", "Label", "Minutes", "Start on ${label}", "Which one?"])
+      [
+        "Does \"it\".", "Go", "Idle", "Kind", "Label", "Left", "Minutes", "Start on ${label}",
+        "Which one?",
+      ])
   }
 
   /// The literal after each place App Intents localizes a string, with `\(\.$name)`
@@ -57,6 +67,8 @@ final class IntentStringsTests: XCTestCase {
     let prefixes = [
       #"title:\s*LocalizedStringResource\s*=\s*"#, #"IntentDescription\(\s*"#,
       #"Summary\(\s*"#, #"Parameter\(\s*title:\s*"#, #"requestValueDialog:\s*"#,
+      #"Property\(\s*title:\s*"#, #"TypeDisplayRepresentation\(\s*name:\s*"#,
+      #"DisplayRepresentation\(\s*title:\s*"#,
     ]
     var keys = Set<String>()
     for prefix in prefixes {
