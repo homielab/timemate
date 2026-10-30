@@ -105,6 +105,50 @@ final class PomodoroTimerClockTests: TimerTestCase {
     XCTAssertFalse(showsOverlay(timer))
   }
 
+  func testWakeAfterOvernightSleepStartsTheCycleOverOnFocus() {
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 10 * 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    // Still counted, but what the popover shows is what Start runs: a full focus.
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.timeRemaining, 3)
+    timer.startTimer()
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
+  func testWakeAfterHalfHourSleepKeepsTheBreakNext() {
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 1800)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+  }
+
+  func testPostponedBreakDueOvernightWaitsOnFocus() {
+    timer = makeTimer(focus: 3, short: 60)
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    timer.postponeBreak(minutes: 3)
+    XCTAssertTrue(timer.isBreakPostponed)
+    workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+    advanceClock(by: 10 * 3600)
+    workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+    XCTAssertEqual(timer.timeRemaining, 3)
+  }
+
   func testWakeJustWithinGracePeriodStillStartsNextSession() {
     timer = makeTimer(focus: 3)
     timer.startTimer()

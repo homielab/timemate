@@ -2,6 +2,12 @@
 
 All notable changes to TimeMate will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- After the Mac slept through the night in the middle of a focus session (or a postponed break), the menu bar now shows a fresh focus session at full length, so Start runs what you see instead of a leftover break from last night. The session that ended is still counted in History.
+
 ## 3.6
 
 ### Added

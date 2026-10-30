@@ -353,6 +353,9 @@ class PomodoroTimer: ObservableObject {
         self.endDate = nil
         timer?.cancel()
         state = .idle
+        // Slept through the night: start the cycle over now, so what the
+        // popover shows is what Start runs.
+        restartCycleIfStale()
       } else {
         self.endDate = tickTime.addingTimeInterval(TimeInterval(timeRemaining))
       }
@@ -388,6 +391,7 @@ class PomodoroTimer: ObservableObject {
       if isLongOverdue {
         sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
         advanceToNextSession(start: false)
+        restartCycleIfStale()
         saveSnapshot()
         return
       }
