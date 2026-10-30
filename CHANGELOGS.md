@@ -4,6 +4,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+## 3.8
+
 ### Changed
 
 - The Shortcuts actions **Get Timer Status** and **Get Today's Progress** now return an object with fields instead of a single number, so a shortcut can branch on them: the timer's State (Not Started, Running, Paused), Session (Focus, Short Break, Long Break), Minutes Left, Seconds Left, Label and place in the cycle; today's Pomodoros, Focus Minutes, Daily goal, Goal Reached and Streak Days. Used as before, the result still reads as the minutes left or the pomodoros done.
