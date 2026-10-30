@@ -1,13 +1,16 @@
-TimeMate 3.7 cho màn hình nghỉ chờ khi bạn đang gọi video, và giúp bộ hẹn giờ cùng thống kê chính xác hơn.
+TimeMate 3.8 cho Phím tắt lấy được nhiều thông tin hẹn giờ hơn, và giúp giờ nghỉ, thống kê cùng thông báo ổn định hơn.
 
 Mới
-• Chờ khi đang gọi hoặc xem video: bật trong Cài đặt → Thông báo & Âm thanh, màn hình nghỉ sẽ chờ khi cuộc gọi Zoom, Meet, Teams, chia sẻ màn hình hoặc video đang giữ màn hình sáng. Thông báo vẫn đến như thường.
-• Hoàn tác phiên gần nhất trong Cài đặt → Thống kê chỉ xoá phiên tập trung được ghi gần nhất, nên lỡ đếm nhầm một pomodoro không còn phải xoá toàn bộ thống kê.
+• Tác vụ Lấy trạng thái hẹn giờ và Lấy tiến độ hôm nay trong Phím tắt nay trả về chi tiết để rẽ nhánh: trạng thái, phiên, số phút và giây còn lại, nhãn; số pomodoro, phút tập trung, mục tiêu và chuỗi ngày của hôm nay.
+• Thống kê theo vùng và kiểu đồng hồ 12/24 giờ của Mac, bằng ngôn ngữ của ứng dụng.
 
 Sửa lỗi
-• Bộ hẹn giờ để yên qua đêm, hoặc Mac ngủ giữa phiên tập trung, nay hiện một phiên tập trung mới, nên nút Bắt đầu chạy đúng phiên bạn thấy.
-• Phiên tạm dừng buổi tối và kết thúc sáng hôm sau được tính cho ngày nó thực sự chạy.
-• Nhãn gõ sau khi bấm Bắt đầu được lưu cùng phiên tập trung đó.
-• Thông báo "đã đạt mục tiêu ngày" hiện lại sau khi bạn tăng mục tiêu, hoàn tác phiên hoặc đặt lại thống kê.
-• Tác vụ Thêm thời gian trong Phím tắt trả về số phút đã thêm, và thông báo cuối giờ nghỉ không còn bỏ qua phiên tập trung.
-• Bản dịch tiếng Việt và nhãn VoiceOver tốt hơn.
+• Thoát giữa phiên (hoặc cập nhật, đăng xuất, tắt máy) nay tạm dừng phiên thay vì tính là đã xong, nên lịch sử và chuỗi ngày chỉ ghi thời gian bạn thực sự làm.
+• Bỏ qua một phiên chưa bắt đầu chỉ chuyển sang phiên kế tiếp, và Bắt đầu lại sẽ hỏi trước khi bỏ các phiên tập trung đã xong.
+• Thời gian chờ nút Bỏ qua nay áp dụng cho mọi cách kết thúc giờ nghỉ, kể cả Đặt lại, menu trên thanh menu, thông báo và Phím tắt.
+• Khi màn hình nghỉ chờ cuộc gọi hoặc ứng dụng toàn màn hình, âm báo cũng chờ theo.
+• Sau khi màn hình nghỉ hoặc popover đóng, ứng dụng bạn đang dùng nhận lại bàn phím.
+• Cài đặt vừa màn hình nhỏ, màn hình nghỉ không chớp khi đổi màn hình, và không còn gán được ⌘ đi cùng một chữ làm phím tắt.
+• Thông báo "đã đạt mục tiêu ngày" nay cũng đến với phiên kết thúc ngay trước nửa đêm.
+• Xuất CSV giữ nguyên nhãn như bạn gõ, chỉ thêm dấu ' cho nhãn mà bảng tính sẽ chạy như công thức.
+• Nhãn VoiceOver tốt hơn và nhiều sửa lỗi nhỏ khác.
