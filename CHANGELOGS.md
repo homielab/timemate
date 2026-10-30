@@ -142,6 +142,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Reset no longer throws away a focus session that ran past half without asking: the popover and menu bar menu offer **Record and Reset** or **Reset Without Recording**, and the Reset shortcut and Shortcuts action record it, like Skip.
 - Auto-pause when I'm away works again while a keep-awake utility (caffeinate, Amphetamine, KeepingYouAwake, Lungo, Caffeine, Theine) runs; only calls and videos keep the session going.
 - **Auto-pause when I'm away** no longer pauses a focus session during a video call or while a video plays: when another app keeps the display awake, you are watching, not away.
 - Skipping a focus session after half of it ran now records the time you focused in History, Today, the daily goal and Statistics, as it already counted in the cycle. A focus session skipped earlier still records nothing.

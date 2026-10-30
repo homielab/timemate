@@ -517,8 +517,13 @@ class PomodoroTimer: ObservableObject {
 
   /// Resets the current session. On a finished break that waits on the break
   /// screen it moves on to a fresh focus session instead of replaying the break.
-  func stopTimer() {
+  /// `recording: true` (hotkey, Shortcuts, "Record and Reset") first records a
+  /// focus session that ran past half, like Skip does.
+  func stopTimer(recording: Bool = false) {
     defer { saveSnapshot() }
+    if recording, resetNeedsConfirmation {
+      recordFocusSoFar(elapsed: elapsedSeconds)
+    }
     clearSessionNotifications()
     if isWaitingToContinue {
       isWaitingToContinue = false
@@ -536,18 +541,14 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
-    let elapsed = TimeInterval(max(0, totalDuration - secondsRemaining))
+    let elapsed = elapsedSeconds
     let counts =
       state != .idle
       && SessionSequence.skipCounts(elapsed: elapsed, total: TimeInterval(totalDuration))
     // A focus session skipped past half counts in the cycle, so its real
     // focus time (pauses excluded) goes into History, Today and the goal too.
     if counts, currentSessionType == .focus {
-      let pomodorosBefore = history.todayTotals().pomodoros
-      history.recordCompletedSession(
-        .focus, duration: elapsed, start: startedAt, end: now(),
-        label: sessionLabel(for: .focus))
-      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      recordFocusSoFar(elapsed: elapsed)
     }
     clearSessionNotifications()
     isWaitingToContinue = false
@@ -557,6 +558,28 @@ class PomodoroTimer: ObservableObject {
     lastActivity = now()
     // A focus session skipped before half of it ran is not counted.
     advanceToNextSession(counts: counts)
+  }
+
+  /// Focus time run so far in the current session, pauses excluded.
+  private var elapsedSeconds: TimeInterval {
+    TimeInterval(max(0, totalDuration - secondsRemaining))
+  }
+
+  /// Reset would throw away a focus session that ran past half: ask first
+  /// (popover, menu) or record it (hotkey, Shortcuts).
+  var resetNeedsConfirmation: Bool {
+    !isWaitingToContinue
+      && SessionSequence.resetNeedsConfirmation(
+        sessionType: currentSessionType, state: state, elapsed: elapsedSeconds,
+        total: TimeInterval(totalDuration))
+  }
+
+  private func recordFocusSoFar(elapsed: TimeInterval) {
+    let pomodorosBefore = history.todayTotals().pomodoros
+    history.recordCompletedSession(
+      .focus, duration: elapsed, start: startedAt, end: now(),
+      label: sessionLabel(for: .focus))
+    sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
   }
 
   func restartCycle() {

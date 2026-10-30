@@ -408,6 +408,50 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(history.todayTotals().pomodoros, 1)
   }
 
+  func testResetFocusPastHalfAsksAndRecordingAddsOneRecord() {
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    runTicks(timer, 2)
+    XCTAssertTrue(timer.resetNeedsConfirmation)
+    timer.stopTimer(recording: true)
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(history.records.first?.seconds, 2)
+    XCTAssertEqual(history.records.first?.label, "Write report")
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertFalse(timer.resetNeedsConfirmation)
+  }
+
+  func testResetFocusPastHalfWithoutRecordingRecordsNothing() {
+    timer.startTimer()
+    runTicks(timer, 2)
+    timer.stopTimer()
+    XCTAssertTrue(history.records.isEmpty)
+  }
+
+  func testResetFocusBeforeHalfDoesNotAskOrRecord() {
+    timer.startTimer()
+    runTicks(timer, 1)
+    XCTAssertFalse(timer.resetNeedsConfirmation)
+    timer.stopTimer(recording: true)
+    XCTAssertTrue(history.records.isEmpty)
+  }
+
+  func testResetBreakNeverAsks() {
+    timer.startTimer()
+    finishSession(timer)
+    timer.startTimer()
+    runTicks(timer, 1)
+    XCTAssertFalse(timer.resetNeedsConfirmation)
+  }
+
+  func testHotKeyResetRecordsFocusPastHalf() {
+    timer.startTimer()
+    runTicks(timer, 2)
+    _ = timer.perform(.reset)
+    XCTAssertEqual(history.records.count, 1)
+  }
+
   func testSkipFocusBeforeHalfRecordsNothing() {
     timer.startTimer()
     runTicks(timer, 1)

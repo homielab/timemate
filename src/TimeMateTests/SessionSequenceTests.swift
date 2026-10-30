@@ -53,6 +53,19 @@ final class SessionSequenceTests: XCTestCase {
     XCTAssertFalse(SessionSequence.skipCounts(elapsed: 0, total: 0))
   }
 
+  func testResetAsksOnlyForARunningFocusPastHalf() {
+    func asks(_ type: SessionType, _ state: PomodoroState, _ elapsed: TimeInterval) -> Bool {
+      SessionSequence.resetNeedsConfirmation(
+        sessionType: type, state: state, elapsed: elapsed, total: 1500)
+    }
+    XCTAssertTrue(asks(.focus, .active, 750))
+    XCTAssertTrue(asks(.focus, .paused, 1440))
+    XCTAssertFalse(asks(.focus, .active, 735))
+    XCTAssertFalse(asks(.focus, .idle, 1500))
+    XCTAssertFalse(asks(.shortBreak, .active, 1440))
+    XCTAssertFalse(asks(.longBreak, .paused, 1440))
+  }
+
   // MARK: - Completion
 
   func testCompletionWaitsOnlyForBreaksWhenScreenStaysOpen() {

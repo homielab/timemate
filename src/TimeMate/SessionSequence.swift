@@ -39,6 +39,14 @@ enum SessionSequence {
     total > 0 && elapsed >= total / 2
   }
 
+  /// Reset of a focus session that ran past half (the `skipCounts` rule) loses
+  /// real focus time, so it is confirmed or recorded first. Breaks never ask.
+  static func resetNeedsConfirmation(
+    sessionType: SessionType, state: PomodoroState, elapsed: TimeInterval, total: TimeInterval
+  ) -> Bool {
+    sessionType == .focus && state != .idle && skipCounts(elapsed: elapsed, total: total)
+  }
+
   static func isBreak(_ type: SessionType) -> Bool {
     type == .shortBreak || type == .longBreak
   }

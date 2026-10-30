@@ -278,6 +278,10 @@
 "Expanded" = "Đã mở";
 "Collapsed" = "Đã đóng";
 "Restart the cycle?" = "Bắt đầu lại chu kỳ?";
+"Reset the focus session?" = "Đặt lại phiên tập trung?";
+"Record and Reset" = "Ghi phiên rồi đặt lại";
+"Reset Without Recording" = "Đặt lại không ghi";
+"More than half of this focus session has run." = "Phiên tập trung này đã chạy hơn một nửa.";
 "The session in progress will be lost." = "Phiên đang chạy sẽ bị mất.";
 "What are you working on?" = "Bạn đang làm gì?";
 "Saved with each focus session you complete" = "Lưu cùng mỗi phiên tập trung bạn hoàn thành";

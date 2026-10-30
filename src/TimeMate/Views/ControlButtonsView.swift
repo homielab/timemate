@@ -6,6 +6,7 @@ import SwiftUI
 struct ControlButtonsView: View {
   @EnvironmentObject var model: PopoverTimerModel
   @State private var confirmingRestart = false
+  @State private var confirmingReset = false
 
   private var timer: PomodoroTimer { model.timer }
 
@@ -72,7 +73,11 @@ struct ControlButtonsView: View {
       .accessibilityLabel("Restart")
 
       Button {
-        timer.stopTimer()
+        if timer.resetNeedsConfirmation {
+          confirmingReset = true
+        } else {
+          timer.stopTimer()
+        }
       } label: {
         Image(systemName: "arrow.counterclockwise")
       }
@@ -103,6 +108,13 @@ struct ControlButtonsView: View {
       Button("Cancel", role: .cancel) {}
     } message: {
       Text("The session in progress will be lost.")
+    }
+    .alert("Reset the focus session?", isPresented: $confirmingReset) {
+      Button("Record and Reset") { timer.stopTimer(recording: true) }
+      Button("Reset Without Recording", role: .destructive) { timer.stopTimer() }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("More than half of this focus session has run.")
     }
   }
 }

@@ -86,9 +86,9 @@ enum TimerIntentActions {
   }
 
   /// Stops the timer and starts the current session over, like Reset in the
-  /// popover and the menu bar item's menu. Nothing is recorded.
+  /// popover and the menu bar item's menu. A focus session past half is recorded first.
   static func reset(_ timer: PomodoroTimer) {
-    timer.stopTimer()
+    timer.stopTimer(recording: true)
   }
 
   /// Whole minutes left in the current session, rounded up so "0" only means

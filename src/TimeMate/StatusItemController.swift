@@ -153,7 +153,22 @@ final class StatusItemController: NSObject {
 
   @objc private func menuStartPause() { timer.perform(.startPause) }
   @objc private func menuSkip() { timer.perform(.skip) }
-  @objc private func menuReset() { timer.stopTimer() }
+  @objc private func menuReset() {
+    guard timer.resetNeedsConfirmation else { return timer.stopTimer() }
+    let alert = NSAlert()
+    alert.messageText = NSLocalizedString("Reset the focus session?", comment: "")
+    alert.informativeText = NSLocalizedString(
+      "More than half of this focus session has run.", comment: "")
+    alert.addButton(withTitle: NSLocalizedString("Record and Reset", comment: ""))
+    alert.addButton(withTitle: NSLocalizedString("Reset Without Recording", comment: ""))
+    alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
+    NSApp.activate(ignoringOtherApps: true)
+    switch alert.runModal() {
+    case .alertFirstButtonReturn: timer.stopTimer(recording: true)
+    case .alertSecondButtonReturn: timer.stopTimer()
+    default: break
+    }
+  }
 
   @objc private func menuOpenSettings() {
     onOpenSettings?()

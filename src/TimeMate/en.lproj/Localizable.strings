@@ -278,6 +278,10 @@
 "Expanded" = "Expanded";
 "Collapsed" = "Collapsed";
 "Restart the cycle?" = "Restart the cycle?";
+"Reset the focus session?" = "Reset the focus session?";
+"Record and Reset" = "Record and Reset";
+"Reset Without Recording" = "Reset Without Recording";
+"More than half of this focus session has run." = "More than half of this focus session has run.";
 "The session in progress will be lost." = "The session in progress will be lost.";
 "What are you working on?" = "What are you working on?";
 "Saved with each focus session you complete" = "Saved with each focus session you complete";
