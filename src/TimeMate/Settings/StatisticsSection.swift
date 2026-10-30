@@ -87,17 +87,20 @@ struct StatisticsSection: View {
 private struct UndoLastSessionButton: View {
   @ObservedObject var history: SessionHistory
   @Binding var isPresented: Bool
+  /// The session the alert names, captured when it opens, so a session
+  /// recorded while it is open is neither shown nor deleted.
+  @State private var shown: SessionHistory.Record?
 
   var body: some View {
-    let last = history.lastFocusRecord
     MenuItemButton(title: "Undo Last Session", systemImage: "arrow.uturn.backward") {
-      isPresented = true
+      shown = history.lastFocusRecord
+      isPresented = shown != nil
     }
-    .disabled(last == nil)
+    .disabled(history.lastFocusRecord == nil)
     .help("Deletes only the focus session recorded last, for one counted by mistake.")
-    .alert("Undo Last Session?", isPresented: $isPresented, presenting: last) { _ in
+    .alert("Undo Last Session?", isPresented: $isPresented, presenting: shown) { record in
       Button("Delete Session", role: .destructive) {
-        history.removeLastFocusSession()
+        history.removeLastFocusSession(matching: record)
       }
       Button("Cancel", role: .cancel) {
       }

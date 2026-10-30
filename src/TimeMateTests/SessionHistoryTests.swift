@@ -549,7 +549,7 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(history.goalStreak(goal: 2), 1)
     let averageBefore = history.statistics(days: 7).dailyAverage
 
-    let removed = history.removeLastFocusSession()
+    let removed = history.removeLastFocusSession(matching: try XCTUnwrap(history.lastFocusRecord))
 
     XCTAssertEqual(removed?.label, "Oops")
     XCTAssertEqual(history.todayTotals().pomodoros, 1)
@@ -570,7 +570,29 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertNil(history.lastFocusRecord)
     history.recordCompletedSession(.shortBreak, duration: 300, end: hoursAgo(1))
     XCTAssertNil(history.lastFocusRecord)
-    XCTAssertNil(history.removeLastFocusSession())
     XCTAssertEqual(history.records.count, 1)
+  }
+
+  func testRemoveLastFocusSessionKeepsSessionRecordedWhileAlertOpen() throws {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(2), label: "Shown")
+    let shown = try XCTUnwrap(history.lastFocusRecord)
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1), label: "New")
+
+    XCTAssertNil(history.removeLastFocusSession(matching: shown))
+
+    XCTAssertEqual(history.records.map(\.label), ["Shown", "New"])
+    XCTAssertEqual(makeHistory().records.count, 2)
+  }
+
+  func testRemoveLastFocusSessionIgnoresAlreadyRemovedRecord() throws {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(2), label: "A")
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(1), label: "B")
+    let shown = try XCTUnwrap(history.lastFocusRecord)
+    XCTAssertEqual(history.removeLastFocusSession(matching: shown)?.label, "B")
+
+    XCTAssertNil(history.removeLastFocusSession(matching: shown))
+    XCTAssertEqual(history.records.map(\.label), ["A"])
   }
 }

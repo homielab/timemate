@@ -155,19 +155,19 @@ final class SessionHistory: ObservableObject {
     records.filter { $0.kind == .focus }.max { $0.end < $1.end }
   }
 
-  /// Removes the focus session that ended last (a session recorded by mistake)
-  /// and saves the history; every total, streak and chart is computed from
-  /// `records`, so they follow. Returns the removed record, `nil` if none.
+  /// Removes `record` if it is still the focus session that ended last (a
+  /// session recorded by mistake) and saves the history; every total, streak
+  /// and chart is computed from `records`, so they follow. A session recorded
+  /// after `record` was shown makes this a no-op, so the user never loses a
+  /// session they didn't confirm. Returns the removed record, `nil` if none.
   @discardableResult
-  func removeLastFocusSession() -> Record? {
-    guard let last = lastFocusRecord,
-      let index = records.lastIndex(where: {
-        $0.kind == .focus && $0.end == last.end && $0.start == last.start
-      })
+  func removeLastFocusSession(matching record: Record) -> Record? {
+    guard lastFocusRecord == record,
+      let index = records.lastIndex(of: record)
     else { return nil }
     records.remove(at: index)
     save()
-    return last
+    return record
   }
 
   /// Deletes all recorded sessions, and the backups of unreadable history
