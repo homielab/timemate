@@ -6,6 +6,9 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- When the break screen waits for a full-screen app or a call (**Don't interrupt full-screen apps**, **Wait during calls and video**), the alarm sound waits too and plays once when the break screen shows; a break skipped or reset before then stays silent. The notification still arrives at once.
+- Resetting with the keyboard shortcut or the Shortcuts action **Reset Timer** now says "Recorded N min of focus" when the focus time so far was saved to your history.
+- VoiceOver now reads which session the "What are you working on?" label applies to, not only the tooltip.
 - The break screen's **Skip button delay** now holds for every way out: until it runs out, the Skip and Start/Pause shortcuts, the menu bar menu, the notification's Skip button and the Shortcuts actions Skip Session and Pause Timer beep or report "Skip available in N s" instead of ending or pausing the break.
 - Quitting TimeMate mid-session (Quit, an update, logging out or shutting down) now pauses the session with the time it had left instead of counting it as finished when you open the app hours later, so your history, streak and daily goal only hold time you worked. A crash or force quit still counts the session as before.
 - A session length over 180 minutes or a cycle count of 1, left by an older version or set with `defaults write`, is brought back into Settings' range (1–180 minutes, 2–8 cycles), so Settings shows exactly what the timer runs.

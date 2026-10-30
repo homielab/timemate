@@ -56,4 +56,10 @@ final class SessionLabelTests: XCTestCase {
     let captions: [LabelAssignment.Caption] = [.idle, .currentSession, .nextSession]
     XCTAssertEqual(Set(captions.map(\.text)).count, 3)
   }
+
+  func testLabelFieldHintIsTheCaptionSoVoiceOverReadsIt() {
+    for caption in [LabelAssignment.Caption.idle, .currentSession, .nextSession] {
+      XCTAssertEqual(SessionLabelField.hint(for: caption), caption.text)
+    }
+  }
 }

@@ -100,9 +100,18 @@ enum TimerIntentActions {
   }
 
   /// Stops the timer and starts the current session over, like Reset in the
-  /// popover and the menu bar item's menu. A focus session past half is recorded first.
-  static func reset(_ timer: PomodoroTimer) {
-    timer.stopTimer(recording: true)
+  /// popover and the menu bar item's menu. A focus session past half is recorded
+  /// first, without asking; returns "Recorded N min of focus" then, else nil.
+  @discardableResult
+  static func reset(_ timer: PomodoroTimer) -> String? {
+    recordedText(seconds: timer.stopTimer(recording: true))
+  }
+
+  /// "Recorded N min of focus" for a reset that saved at least a whole minute.
+  static func recordedText(seconds: TimeInterval) -> String? {
+    let minutes = Int(seconds / 60)
+    guard minutes >= 1 else { return nil }
+    return String(format: NSLocalizedString("Recorded %d min of focus", comment: ""), minutes)
   }
 
   /// Whole minutes left in the current session, rounded up so "0" only means
@@ -279,12 +288,15 @@ struct SkipSessionIntent: AppIntent {
 struct ResetTimerIntent: AppIntent {
   static var title: LocalizedStringResource = "Reset Timer"
   static var description = IntentDescription(
-    "Stops the TimeMate timer and starts the current session over.")
+    "Stops the TimeMate timer and starts the current session over. Focus time so far is saved."
+  )
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    TimerIntentActions.reset(.shared)
-    return .result(dialog: TimerIntentActions.statusDialog(.shared))
+    let recorded = TimerIntentActions.reset(.shared)
+    let status = TimerIntentActions.statusText(.shared)
+    return .result(
+      dialog: IntentDialog(stringLiteral: recorded.map { "\($0). \(status)" } ?? status))
   }
 }
 

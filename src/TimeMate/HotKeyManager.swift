@@ -110,7 +110,7 @@ extension PomodoroTimer {
     case .skip:
       skipSession()
     case .reset:
-      stopTimer(recording: true)
+      return TimerIntentActions.recordedText(seconds: stopTimer(recording: true))
     case .extend:
       let result = TimerIntentActions.extend(self, minutes: BreakOverlayAccessibility.extendMinutes)
       if case .atLimit = result { return TimerIntentActions.extendText(result) }

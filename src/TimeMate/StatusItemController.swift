@@ -154,7 +154,10 @@ final class StatusItemController: NSObject {
   @objc private func menuStartPause() { timer.perform(.startPause) }
   @objc private func menuSkip() { timer.perform(.skip) }
   @objc private func menuReset() {
-    guard timer.resetNeedsConfirmation else { return timer.stopTimer() }
+    guard timer.resetNeedsConfirmation else {
+      timer.stopTimer()
+      return
+    }
     let alert = NSAlert()
     alert.messageText = NSLocalizedString("Reset the focus session?", comment: "")
     alert.informativeText = NSLocalizedString(

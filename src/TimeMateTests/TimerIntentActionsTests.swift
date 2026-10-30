@@ -499,4 +499,29 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertNil(timer.perform(.skip))
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
   }
+
+  func testResetReportsTheFocusMinutesItRecorded() {
+    TimerIntentActions.start(timer)
+    currentTime += 100
+    timer.handleTick()
+    let text = TimerIntentActions.reset(timer)
+    XCTAssertEqual(text, "Recorded 1 min of focus")
+    XCTAssertEqual(
+      TimerIntentActions.recordedText(seconds: 12 * 60 + 30), "Recorded 12 min of focus")
+  }
+
+  func testResetSaysNothingWhenNothingIsRecorded() {
+    TimerIntentActions.start(timer)
+    currentTime += 20
+    timer.handleTick()
+    XCTAssertNil(TimerIntentActions.reset(timer))
+    XCTAssertNil(TimerIntentActions.recordedText(seconds: 59))
+  }
+
+  func testResetShortcutShowsTheRecordedMinutes() {
+    TimerIntentActions.start(timer)
+    currentTime += 100
+    timer.handleTick()
+    XCTAssertEqual(timer.perform(.reset), "Recorded 1 min of focus")
+  }
 }

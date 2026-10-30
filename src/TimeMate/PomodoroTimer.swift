@@ -425,8 +425,14 @@ class PomodoroTimer: ObservableObject {
         saveSnapshot()
         return
       }
-      playSound(
-        AlarmSound.sound(afterCompleting: currentSessionType, in: defaults), Float(alarmVolume))
+      let alarm = AlarmSound.sound(afterCompleting: currentSessionType, in: defaults)
+      // A break screen held back by a full-screen app or a call holds back the
+      // alarm too; it plays once the screen shows (`playPendingAlarm`).
+      let breakScreenWaits = overlayEnabled && !breakScreenCanShow
+      pendingAlarm = nil
+      if !breakScreenWaits {
+        playSound(alarm, Float(alarmVolume))
+      }
       if !fallbackShown {
         sendNotification()
       }
@@ -441,6 +447,14 @@ class PomodoroTimer: ObservableObject {
         state = .idle
       case .advance:
         advanceToNextSession()
+      }
+      if breakScreenWaits {
+        // Only a break gets a break screen; anything else rings now, as before.
+        if state == .active && currentSessionType != .focus {
+          pendingAlarm = alarm
+        } else {
+          playSound(alarm, Float(alarmVolume))
+        }
       }
       saveSnapshot()
     }
@@ -565,10 +579,15 @@ class PomodoroTimer: ObservableObject {
   /// screen it moves on to a fresh focus session instead of replaying the break.
   /// `recording: true` (hotkey, Shortcuts, "Record and Reset") first records a
   /// focus session that ran past half, like Skip does.
-  func stopTimer(recording: Bool = false) {
+  /// Returns the focus seconds recorded in the history (0 when none).
+  @discardableResult
+  func stopTimer(recording: Bool = false) -> TimeInterval {
     defer { saveSnapshot() }
+    pendingAlarm = nil
+    var recorded: TimeInterval = 0
     if recording, resetNeedsConfirmation {
-      recordFocusSoFar(elapsed: elapsedSeconds)
+      recorded = elapsedSeconds
+      recordFocusSoFar(elapsed: recorded)
     }
     clearSessionNotifications()
     if isWaitingToContinue {
@@ -576,18 +595,31 @@ class PomodoroTimer: ObservableObject {
       timer?.cancel()
       endDate = nil
       advanceToNextSession(start: false)
-      return
+      return recorded
     }
     isWaitingToContinue = false
     state = .idle
     endDate = nil
     timer?.cancel()
     resetForCurrentSession()
+    return recorded
   }
 
   /// Seconds left before the break screen allows Skip/Postpone; 0 when it is
   /// not showing or the delay is over. Set by the break screen controller.
   var breakScreenSkipLock: () -> Int = { 0 }
+
+  /// The alarm of a session whose break screen is waiting (full-screen app or
+  /// call); played once by `playPendingAlarm`, dropped on skip, reset or postpone.
+  private(set) var pendingAlarm: String?
+
+  /// Plays the alarm held back while the break screen waited. Called by the
+  /// break screen controller when the screen shows.
+  func playPendingAlarm() {
+    guard let alarm = pendingAlarm else { return }
+    pendingAlarm = nil
+    playSound(alarm, Float(alarmVolume))
+  }
 
   /// Seconds the break screen still blocks skipping and pausing from outside
   /// it (shortcuts, menu, notification, Shortcuts); 0 = allowed.
@@ -602,6 +634,7 @@ class PomodoroTimer: ObservableObject {
 
   func skipSession() {
     defer { saveSnapshot() }
+    pendingAlarm = nil
     let elapsed = elapsedSeconds
     let counts =
       state != .idle
@@ -770,6 +803,7 @@ class PomodoroTimer: ObservableObject {
   /// Puts off the running break by `minutes`: the break screen goes away and
   /// the break starts again, at its full length, once they have passed.
   func postponeBreak(minutes: Int) {
+    pendingAlarm = nil
     guard
       let adjustment = SessionSequence.postpone(
         countdown, delay: Self.seconds(forMinutes: minutes), now: now())

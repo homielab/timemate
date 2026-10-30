@@ -371,6 +371,9 @@ class BreakOverlayWindowController: NSObject {
         startBreakCountdown()
       }
       showWindows(animated: animated)
+      if isNewlyShown {
+        timer.playPendingAlarm()
+      }
       if isNewlyShown && !isWaitingToContinue {
         announceBreakStart()
       } else if BreakOverlayAccessibility.announcesBreakEnd(

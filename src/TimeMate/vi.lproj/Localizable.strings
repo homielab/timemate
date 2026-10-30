@@ -248,7 +248,7 @@
 "Plays when a break ends. Until you pick one, it is the same as the alarm sound." = "Phát khi hết giờ nghỉ. Khi chưa chọn, dùng giống âm báo.";
 "Reset Timer" = "Đặt lại hẹn giờ";
 "Add 5 Minutes" = "Thêm 5 phút";
-"Stops the TimeMate timer and starts the current session over." = "Dừng hẹn giờ TimeMate và bắt đầu lại phiên hiện tại.";
+"Stops the TimeMate timer and starts the current session over. Focus time so far is saved." = "Dừng hẹn giờ TimeMate và bắt đầu lại phiên hiện tại. Thời gian tập trung đến lúc đó được lưu.";
 "Space" = "Dấu cách";
 "Keypad %@" = "Bàn phím số %@";
 "Clear" = "Xoá";
@@ -268,9 +268,9 @@
 "Page Down" = "Page Down";
 
 "Don't interrupt full-screen apps" = "Không làm gián đoạn ứng dụng toàn màn hình";
-"While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "Khi ứng dụng đang dùng ở toàn màn hình (thuyết trình, video…), màn hình nghỉ ngơi chờ đến khi bạn thoát ra. Thông báo vẫn hiện.";
+"While the app in front is full screen, such as a presentation or video, the break screen and its sound wait until you leave it. The notification still arrives." = "Khi ứng dụng đang dùng ở toàn màn hình (thuyết trình, video…), màn hình nghỉ ngơi và âm báo chờ đến khi bạn thoát ra. Thông báo vẫn hiện.";
 "Wait during calls and video" = "Chờ khi đang gọi hoặc xem video";
-"Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives." = "Cuộc gọi, chia sẻ màn hình và video giữ màn hình sáng. Khi một ứng dụng khác làm vậy, như Zoom, Meet hay Teams trong cửa sổ thường, màn hình nghỉ ngơi chờ đến khi xong. Video đang phát cũng tính. Thông báo vẫn hiện.";
+"Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen and its sound wait until it stops. A video playing also counts. The notification still arrives." = "Cuộc gọi, chia sẻ màn hình và video giữ màn hình sáng. Khi một ứng dụng khác làm vậy, như Zoom, Meet hay Teams trong cửa sổ thường, màn hình nghỉ ngơi và âm báo chờ đến khi xong. Video đang phát cũng tính. Thông báo vẫn hiện.";
 
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate không khởi động lại được";
@@ -307,3 +307,4 @@
 "Most focused: %@" = "Tập trung nhất: %@";
 "Saved with this focus session" = "Lưu cùng phiên tập trung này";
 "Applies from the next session" = "Áp dụng từ phiên sau";
+"Recorded %d min of focus" = "Đã ghi %d phút tập trung";

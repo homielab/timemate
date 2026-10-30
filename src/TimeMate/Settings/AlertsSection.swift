@@ -54,12 +54,12 @@ struct AlertsSection: View {
       SettingsToggleRow(titleKey: "Don't interrupt full-screen apps", isOn: $overlaySkipFullscreen)
         .disabled(!overlayEnabled)
         .help(
-          "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives."
+          "While the app in front is full screen, such as a presentation or video, the break screen and its sound wait until you leave it. The notification still arrives."
         )
       SettingsToggleRow(titleKey: "Wait during calls and video", isOn: $overlayWaitDuringCalls)
         .disabled(!overlayEnabled)
         .help(
-          "Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives."
+          "Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen and its sound wait until it stops. A video playing also counts. The notification still arrives."
         )
       HStack {
         Text("Skip button delay")

@@ -11,6 +11,9 @@ struct SessionLabelField: View {
   @FocusState private var isFocused: Bool
   @EnvironmentObject var model: PopoverTimerModel
 
+  /// Tooltip and VoiceOver hint of the field: which session the label goes with.
+  static func hint(for caption: LabelAssignment.Caption) -> String { caption.text }
+
   var body: some View {
     HStack(spacing: 2) {
       field
@@ -58,7 +61,8 @@ struct SessionLabelField: View {
           label = String(text.prefix(SessionLabel.maxLength))
         }
       }
-      .help(model.timer.labelCaption.text)
+      .help(Self.hint(for: model.timer.labelCaption))
       .accessibilityLabel("What are you working on?")
+      .accessibilityHint(Text(Self.hint(for: model.timer.labelCaption)))
   }
 }

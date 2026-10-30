@@ -23,10 +23,13 @@ extension PomodoroTimer {
   /// Whether a break screen would appear now: it is switched on and no full-screen
   /// app (nor, with "Wait during calls and video", a call or video) holds it back.
   /// Only then does a finished break wait on it.
+  var overlayEnabled: Bool {
+    defaults.object(forKey: SettingsKey.overlayEnabled) as? Bool ?? true
+  }
   var breakScreenCanShow: Bool {
     OverlayPolicy.breakScreenCanShow(
       settings: OverlaySettings(
-        enabled: defaults.object(forKey: SettingsKey.overlayEnabled) as? Bool ?? true,
+        enabled: overlayEnabled,
         skipFullscreen: defaults.object(forKey: SettingsKey.overlaySkipFullscreen) as? Bool ?? true,
         waitDuringCalls: defaults.bool(forKey: SettingsKey.overlayWaitDuringCalls)),
       isFrontmostFullscreen: isFullscreenProbe, otherAppKeepsDisplayAwake: isDisplayKeptAwake)

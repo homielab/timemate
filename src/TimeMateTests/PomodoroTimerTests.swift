@@ -670,4 +670,62 @@ final class PomodoroTimerTests: TimerTestCase {
     SettingsReset.perform(on: defaults, domain: Self.suiteName)
     XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Write report")
   }
+
+  // MARK: - Alarm held back with the break screen
+
+  private func makeSoundTimer(fullscreen: Bool) -> (PomodoroTimer, () -> Int) {
+    var sounds = 0
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(2, forKey: SettingsKey.shortBreakDuration)
+    defaults.set(true, forKey: SettingsKey.autoStartNextSession)
+    defaults.set(false, forKey: SettingsKey.notificationsEnabled)
+    defaults.set(true, forKey: SettingsKey.overlaySkipFullscreen)
+    let soundTimer = PomodoroTimer(
+      defaults: defaults,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      workspaceNotificationCenter: workspaceCenter, history: history,
+      playSound: { _, _ in sounds += 1 }, isFullscreenProbe: { fullscreen })
+    return (soundTimer, { sounds })
+  }
+
+  func testAlarmWaitsForAHeldBackBreakScreenAndPlaysOnce() {
+    let (soundTimer, sounds) = makeSoundTimer(fullscreen: true)
+    timer = soundTimer
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(sounds(), 0)
+    timer.playPendingAlarm()
+    timer.playPendingAlarm()
+    XCTAssertEqual(sounds(), 1)
+  }
+
+  func testHeldBackAlarmIsDroppedWhenTheBreakIsSkipped() {
+    let (soundTimer, sounds) = makeSoundTimer(fullscreen: true)
+    timer = soundTimer
+    timer.startTimer()
+    finishSession(timer)
+    timer.skipSession()
+    timer.playPendingAlarm()
+    XCTAssertEqual(sounds(), 0)
+  }
+
+  func testAlarmPlaysAtOnceWhenTheBreakScreenCanShow() {
+    let (soundTimer, sounds) = makeSoundTimer(fullscreen: false)
+    timer = soundTimer
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(sounds(), 1)
+    timer.playPendingAlarm()
+    XCTAssertEqual(sounds(), 1)
+  }
+
+  func testAlarmPlaysAtOnceWhenTheBreakScreenIsOff() {
+    defaults.set(false, forKey: SettingsKey.overlayEnabled)
+    let (soundTimer, sounds) = makeSoundTimer(fullscreen: true)
+    timer = soundTimer
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(sounds(), 1)
+  }
 }
