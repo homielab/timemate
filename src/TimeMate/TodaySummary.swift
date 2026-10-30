@@ -23,7 +23,7 @@ struct TodaySummary: Equatable {
   /// `streak` is only called when a goal is on, because counting it scans the history.
   init(
     pomodoros: Int, minutes: Int, goal storedGoal: Int?, streak: () -> Int,
-    bundle: Bundle = .main, locale: Locale = .current
+    bundle: Bundle = .main, locale: Locale = AppLocale.current
   ) {
     let goal = DailyGoal.sanitized(storedGoal)
     self.goal = goal

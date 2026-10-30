@@ -12,6 +12,12 @@ struct LoginItemState: Equatable {
     isOn = (status == .enabled || status == .requiresApproval)
     needsApproval = (status == .requiresApproval)
   }
+
+  /// Whether a failed attempt to turn Start at Login on (`target` true) or off is now moot
+  /// because the status already is what the user asked for, e.g. enabled from System Settings.
+  static func resolves(target: Bool, status: SMAppService.Status) -> Bool {
+    target ? status == .enabled : !LoginItemState(from: status).isOn
+  }
 }
 
 /// Resetting settings also turns Start at Login off, since the registration lives

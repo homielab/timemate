@@ -458,13 +458,15 @@ extension SessionHistory {
   /// Whether a spreadsheet would read `text` as a formula: it starts with `=`, tab or
   /// CR, or with `+ - @` followed by something a formula needs (a digit, `(`, another
   /// sign, or a cell reference, function or DDE call such as `A1`, `SUM(`, `cmd|`, `Sheet!`). A plain number
-  /// (`+5`, `-1.5`) and words (`@Acme`, `-research`) are left alone.
+  /// (`+5`, `-1.5`) and words (`@Acme`, `-research`) are left alone. Spaces after the sign
+  /// are skipped, so `+ 1+1` counts as a formula.
   static func looksLikeFormula(_ text: String) -> Bool {
     let scalars = Array(text.unicodeScalars)
     guard let first = scalars.first else { return false }
     if "=\t\r".unicodeScalars.contains(first) { return true }
     guard "+-@".unicodeScalars.contains(first) else { return false }
     let rest = String(String.UnicodeScalarView(scalars.dropFirst()))
+      .replacingOccurrences(of: #"^\s+"#, with: "", options: .regularExpression)
     if rest.range(of: #"^[0-9]+([.,][0-9]+)?$"#, options: .regularExpression) != nil {
       return false
     }

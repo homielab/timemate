@@ -116,6 +116,7 @@ private struct UndoLastSessionButton: View {
       SessionLabel.normalized(record.label)
       ?? Bundle.main.localizedString(forKey: "No label", value: nil, table: nil)
     let formatter = DateIntervalFormatter()
+    formatter.locale = AppLocale.current
     formatter.dateStyle = .none
     formatter.timeStyle = .short
     return StatisticsText.undoLastSession(
@@ -345,6 +346,7 @@ private struct HourlyFocusView: View {
               .help(Text(spoken))
               .accessibilityElement()
               .accessibilityLabel(Text(spoken))
+              .accessibilityHidden(hours[hour] <= 0)
           }
         }
         .frame(height: height, alignment: .bottom)
@@ -491,9 +493,7 @@ private struct DayRow: View {
 
 /// Day names in the app's language (which the user can set apart from the system's).
 enum StatisticsFormat {
-  static var appLocale: Locale {
-    Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
-  }
+  static var appLocale: Locale { AppLocale.current }
 
   /// Short label such as "Mon 20" / "Th 2, 20".
   static func dayLabel(_ date: Date, calendar: Calendar, locale: Locale = appLocale) -> String {
@@ -517,7 +517,9 @@ enum StatisticsFormat {
     formatter.calendar = calendar
     formatter.timeZone = calendar.timeZone
     formatter.locale = locale
-    formatter.dateTemplate = "j"
+    // "j" alone gives "09 – 10" on a 24-hour clock; minutes make it read as a time.
+    let twentyFourHour = [.zeroToTwentyThree, .oneToTwentyFour].contains(locale.hourCycle)
+    formatter.dateTemplate = twentyFourHour ? "jm" : "j"
     return formatter.string(from: start, to: start.addingTimeInterval(3600))
   }
 
@@ -535,6 +537,10 @@ enum StatisticsFormat {
 
 /// Saves the CSV where the user picks in a save panel.
 enum StatisticsExporter {
+  /// True while the save panel runs, so closing the popover does not hand the keyboard
+  /// back to another app and push the panel behind it.
+  private(set) static var isSaving = false
+
   /// `TimeMate-statistics-<period>-<yyyy-MM-dd>.csv`, the period being `7d`, `30d`… for the
   /// last `days` days or `all` for every kept day (`days` nil).
   static func defaultFileName(
@@ -563,6 +569,8 @@ enum StatisticsExporter {
     panel.nameFieldStringValue = fileName
     panel.canCreateDirectories = true
     NSApp.activate(ignoringOtherApps: true)
+    isSaving = true
+    defer { isSaving = false }
     guard panel.runModal() == .OK, let url = panel.url else { return }
     do {
       try data(for: csv).write(to: url, options: .atomic)

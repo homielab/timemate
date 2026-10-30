@@ -12,6 +12,8 @@ struct SystemSection: View {
   @State private var startAtLogin = false
   @State private var startAtLoginNeedsApproval = false
   @State private var startAtLoginError: String?
+  /// What the failed attempt behind `startAtLoginError` asked for (true = turn on).
+  @State private var failedStartAtLoginTarget: Bool?
   @AppStorage(SettingsKey.showTimerAtLogin) private var showTimerAtLogin = false
   @AppStorage(SettingsKey.hideDockIcon) private var hideDockIcon = true
   @AppStorage(SettingsKey.keepAwake) private var keepAwake = false
@@ -73,6 +75,7 @@ struct SystemSection: View {
 
   private func updateStartAtLogin(_ enabled: Bool) {
     startAtLoginError = nil
+    failedStartAtLoginTarget = nil
     do {
       if enabled {
         try SMAppService.mainApp.register()
@@ -87,14 +90,22 @@ struct SystemSection: View {
         ? NSLocalizedString("Could not turn on Start at Login: %@", comment: "")
         : NSLocalizedString("Could not turn off Start at Login: %@", comment: "")
       startAtLoginError = String(format: format, error.localizedDescription)
+      failedStartAtLoginTarget = enabled
     }
     // The registration status, not the click, decides what the toggle shows.
     syncStartAtLoginStatus()
   }
 
   private func syncStartAtLoginStatus() {
-    let state = LoginItemState(from: SMAppService.mainApp.status)
+    let status = SMAppService.mainApp.status
+    let state = LoginItemState(from: status)
     startAtLogin = state.isOn
     startAtLoginNeedsApproval = state.needsApproval
+    if let target = failedStartAtLoginTarget,
+      LoginItemState.resolves(target: target, status: status)
+    {
+      startAtLoginError = nil
+      failedStartAtLoginTarget = nil
+    }
   }
 }

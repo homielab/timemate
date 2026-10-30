@@ -286,7 +286,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     if hotKeyManager.isRecording { hotKeyManager.endRecording() }
     // Give the keyboard back to the app the user was in (none when opened over the
     // break screen, which TimeMate already held).
-    popoverFocusReturn.restore()
+    if !StatisticsExporter.isSaving { popoverFocusReturn.restore() }
   }
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)

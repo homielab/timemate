@@ -6,7 +6,9 @@ import Foundation
 /// come from `Localizable.stringsdict`.
 enum StatisticsText {
   /// "Today: 3 pomodoros · 75 min"
-  static func today(pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
+  static func today(
+    pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
+  )
     -> String
   {
     format("Today: %lld pomodoros · %lld min", bundle, locale, pomodoros, minutes)
@@ -14,7 +16,8 @@ enum StatisticsText {
 
   /// "Today: 3/8 pomodoros · 75 min", shown when a daily goal is set.
   static func today(
-    pomodoros: Int, goal: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current
+    pomodoros: Int, goal: Int, minutes: Int, bundle: Bundle = .main,
+    locale: Locale = AppLocale.current
   ) -> String {
     format("Today: %1$lld/%2$lld pomodoros · %3$lld min", bundle, locale, pomodoros, goal, minutes)
   }
@@ -23,7 +26,7 @@ enum StatisticsText {
   /// With `goalReached`: "Today: 8 of 8 pomodoros, 200 minutes, goal reached"
   static func spokenToday(
     pomodoros: Int, goal: Int, minutes: Int, goalReached: Bool = false, bundle: Bundle = .main,
-    locale: Locale = .current
+    locale: Locale = AppLocale.current
   ) -> String {
     let text = format(
       "Today: %1$lld of %2$lld pomodoros, %3$lld minutes", bundle, locale, pomodoros, goal, minutes)
@@ -31,36 +34,46 @@ enum StatisticsText {
   }
 
   /// Notification text: "Daily goal reached: 8 pomodoros today"
-  static func goalReached(goal: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
+  static func goalReached(goal: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current)
+    -> String
+  {
     format("Daily goal reached: %lld pomodoros today", bundle, locale, goal)
   }
 
   /// "Goal reached on 4 of 7 days"
   static func goalDays(
-    reached: Int, of days: Int, bundle: Bundle = .main, locale: Locale = .current
+    reached: Int, of days: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
   ) -> String {
     format("Goal reached on %1$lld of %2$lld days", bundle, locale, reached, days)
   }
 
   /// "Best: 12 days in the last 90 days": the longest goal streak kept.
-  static func bestStreak(days: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
+  static func bestStreak(days: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current)
+    -> String
+  {
     format("Best: %lld days in the last 90 days", bundle, locale, days)
   }
 
   /// "Streak: 3 days": consecutive days that met the daily goal.
-  static func streak(days: Int, bundle: Bundle = .main, locale: Locale = .current) -> String {
+  static func streak(days: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current)
+    -> String
+  {
     format("Streak: %lld days", bundle, locale, days)
   }
 
   /// "Week: 12 pomodoros · 300 min"
-  static func week(pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
+  static func week(
+    pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
+  )
     -> String
   {
     format("Week: %lld pomodoros · %lld min", bundle, locale, pomodoros, minutes)
   }
 
   /// "Month: 40 pomodoros · 1000 min" (the last 30 days)
-  static func month(pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
+  static func month(
+    pomodoros: Int, minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
+  )
     -> String
   {
     format("Month: %lld pomodoros · %lld min", bundle, locale, pomodoros, minutes)
@@ -68,7 +81,8 @@ enum StatisticsText {
 
   /// The totals line of a period of `days` days: "Week: …" or "Month: …".
   static func total(
-    pomodoros: Int, minutes: Int, days: Int, bundle: Bundle = .main, locale: Locale = .current
+    pomodoros: Int, minutes: Int, days: Int, bundle: Bundle = .main,
+    locale: Locale = AppLocale.current
   ) -> String {
     days == SessionStatistics.monthLength
       ? month(pomodoros: pomodoros, minutes: minutes, bundle: bundle, locale: locale)
@@ -76,7 +90,7 @@ enum StatisticsText {
   }
 
   /// "Daily average: 35 min"
-  static func dailyAverage(minutes: Int, bundle: Bundle = .main, locale: Locale = .current)
+  static func dailyAverage(minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current)
     -> String
   {
     format("Daily average: %lld min", bundle, locale, minutes)
@@ -84,7 +98,7 @@ enum StatisticsText {
 
   /// VoiceOver for the line above: "Daily average: 35 minutes"
   static func spokenDailyAverage(
-    minutes: Int, bundle: Bundle = .main, locale: Locale = .current
+    minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
   ) -> String {
     format("Daily average: %lld minutes", bundle, locale, minutes)
   }
@@ -92,7 +106,7 @@ enum StatisticsText {
   /// "Best day: Mon 20 · 8 pomodoros · 200 min"
   static func bestDay(
     _ day: String, pomodoros: Int, minutes: Int, bundle: Bundle = .main,
-    locale: Locale = .current
+    locale: Locale = AppLocale.current
   ) -> String {
     format(
       "Best day: %1$@ · %2$lld pomodoros · %3$lld min", bundle, locale, day, pomodoros, minutes)
@@ -101,7 +115,7 @@ enum StatisticsText {
   /// VoiceOver for the line above: "Best day: Monday, October 20: 8 pomodoros, 200 minutes"
   static func spokenBestDay(
     _ day: String, pomodoros: Int, minutes: Int, bundle: Bundle = .main,
-    locale: Locale = .current
+    locale: Locale = AppLocale.current
   ) -> String {
     format(
       "Best day: %@", bundle, locale,
@@ -111,7 +125,7 @@ enum StatisticsText {
   /// "+3 pomodoros (+25%), −20 min vs the previous 30 days"
   static func change(
     pomodoros: Int, percent: Int, minutes: Int, days: Int, bundle: Bundle = .main,
-    locale: Locale = .current
+    locale: Locale = AppLocale.current
   ) -> String {
     format(
       "%1$@ pomodoros (%2$@), %3$@ min vs the previous %4$lld days", bundle, locale,
@@ -123,7 +137,7 @@ enum StatisticsText {
   /// With `goalReached`: "Monday, October 20: 8 pomodoros, 200 minutes, goal reached"
   static func spokenDay(
     _ day: String, pomodoros: Int, minutes: Int, goalReached: Bool = false,
-    bundle: Bundle = .main, locale: Locale = .current
+    bundle: Bundle = .main, locale: Locale = AppLocale.current
   ) -> String {
     let text = format(
       "%1$@: %2$lld pomodoros, %3$lld minutes", bundle, locale, day, pomodoros, minutes)
@@ -132,7 +146,7 @@ enum StatisticsText {
 
   /// VoiceOver for one label row: "Writing, 50 minutes"
   static func spokenLabel(
-    _ name: String, minutes: Int, bundle: Bundle = .main, locale: Locale = .current
+    _ name: String, minutes: Int, bundle: Bundle = .main, locale: Locale = AppLocale.current
   ) -> String {
     format("%1$@, %2$lld minutes", bundle, locale, name, minutes)
   }
@@ -141,7 +155,7 @@ enum StatisticsText {
   /// question before "Undo Last Session"; `label` is "No label" when empty.
   static func undoLastSession(
     label: String, timeRange: String, minutes: Int, bundle: Bundle = .main,
-    locale: Locale = .current
+    locale: Locale = AppLocale.current
   ) -> String {
     format(
       "Delete the focus session “%1$@” (%2$@, %3$lld min)? Totals, streak and charts are updated.",
@@ -149,7 +163,9 @@ enum StatisticsText {
   }
 
   /// "Most focused: 9 – 10 AM": the hour range with the most focus time.
-  static func mostFocused(_ hours: String, bundle: Bundle = .main, locale: Locale = .current)
+  static func mostFocused(
+    _ hours: String, bundle: Bundle = .main, locale: Locale = AppLocale.current
+  )
     -> String
   {
     format("Most focused: %@", bundle, locale, hours)

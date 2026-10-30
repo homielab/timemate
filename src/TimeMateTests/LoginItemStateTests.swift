@@ -46,6 +46,14 @@ final class LoginItemResetTests: XCTestCase {
     }
   }
 
+  func testFailedTurnOnIsResolvedOnlyOnceEnabled() {
+    XCTAssertTrue(LoginItemState.resolves(target: true, status: .enabled))
+    XCTAssertFalse(LoginItemState.resolves(target: true, status: .requiresApproval))
+    XCTAssertFalse(LoginItemState.resolves(target: true, status: .notRegistered))
+    XCTAssertTrue(LoginItemState.resolves(target: false, status: .notRegistered))
+    XCTAssertFalse(LoginItemState.resolves(target: false, status: .enabled))
+  }
+
   func testUnregisterFailureDoesNotThrow() {
     XCTAssertFalse(LoginItemReset.perform(status: .enabled, unregister: { throw Failure() }))
   }
