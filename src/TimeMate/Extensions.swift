@@ -71,7 +71,8 @@ private func showRestartFailedAlert() {
 /// Defaults keys that hold app state rather than settings; a reset keeps them.
 enum SettingsReset {
   static let preservedKeys = [
-    SettingsKey.timerSnapshot, SettingsKey.dailyGoalNotifiedAt, SettingsKey.hasLaunchedBefore,
+    SettingsKey.timerSnapshot, SettingsKey.dailyGoalNotifiedAt,
+    SettingsKey.dailyGoalNotifiedGoal, SettingsKey.hasLaunchedBefore,
     SettingsKey.sessionLabel,
   ]
 

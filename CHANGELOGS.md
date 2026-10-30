@@ -10,6 +10,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- The "daily goal reached" notification shows again when you raise the goal and reach it the same day, or reach it again after Reset Statistics.
+
 - A timer left idle overnight now shows the fresh focus cycle on wake, at midnight and when the popover opens, instead of the old break that Start would not run.
 - After undoing the session that reached the daily goal, the next pomodoro that reaches it again shows the "goal reached" notification.
 - A focus session paused in the evening and skipped (or recorded with Record and Reset) the next morning now counts for the day and hour it ran, not for the morning, so Today, the daily goal, the streak, By hour and the CSV export stay right.

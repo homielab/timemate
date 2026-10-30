@@ -625,7 +625,7 @@ class PomodoroTimer: ObservableObject {
     guard let removed = history.removeLastFocusSession(matching: record) else { return nil }
     // Back under the goal: the next pomodoro that reaches it notifies again.
     if history.todayTotals().pomodoros < dailyGoal {
-      defaults.removeObject(forKey: SettingsKey.dailyGoalNotifiedAt)
+      clearDailyGoalNotified()
     }
     let count = SessionCycle.countAfterUndo(
       sessionEnd: removed.end, cycleStartedAt: cycleStartedAt, completed: focusSessionsCompleted)

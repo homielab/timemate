@@ -49,6 +49,14 @@ final class DailyGoalTests: XCTestCase {
     XCTAssertFalse(DailyGoal.wasNotified(on: nil, today: morning, calendar: utc))
     XCTAssertTrue(DailyGoal.wasNotified(on: morning, today: evening, calendar: utc))
     XCTAssertFalse(DailyGoal.wasNotified(on: evening, today: nextDay, calendar: utc))
+    XCTAssertTrue(
+      DailyGoal.wasNotified(on: morning, goal: 8, notifiedGoal: 8, today: evening, calendar: utc))
+    XCTAssertFalse(
+      DailyGoal.wasNotified(on: morning, goal: 10, notifiedGoal: 8, today: evening, calendar: utc))
+    // Saved before the goal was stored: blocks the rest of that day.
+    XCTAssertTrue(
+      DailyGoal.wasNotified(on: morning, goal: 10, notifiedGoal: nil, today: evening, calendar: utc)
+    )
   }
 
   // MARK: - Notification content

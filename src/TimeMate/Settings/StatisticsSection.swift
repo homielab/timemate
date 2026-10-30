@@ -72,7 +72,7 @@ struct StatisticsSection: View {
       }
       .alert("Reset Statistics?", isPresented: $showingResetAlert) {
         Button("Reset", role: .destructive) {
-          model.timer.history.reset()
+          model.timer.resetStatistics()
         }
         Button("Cancel", role: .cancel) {
         }

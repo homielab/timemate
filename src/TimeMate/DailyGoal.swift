@@ -32,10 +32,16 @@ enum DailyGoal {
     !isReached(completed: before, goal: goal) && isReached(completed: after, goal: goal)
   }
 
-  /// Whether the "goal reached" notification already went out on `today`'s day.
-  static func wasNotified(on lastNotified: Date?, today: Date, calendar: Calendar) -> Bool {
-    guard let lastNotified else { return false }
-    return calendar.isDate(lastNotified, inSameDayAs: today)
+  /// Whether the "goal reached" notification already went out on `today`'s day for
+  /// `goal`; a raised goal (or a cleared flag) notifies again.
+  static func wasNotified(
+    on lastNotified: Date?, goal: Int? = nil, notifiedGoal: Int? = nil, today: Date,
+    calendar: Calendar
+  ) -> Bool {
+    guard let lastNotified, calendar.isDate(lastNotified, inSameDayAs: today) else { return false }
+    // A date saved without its goal (older versions) blocks the whole day.
+    guard let goal, let notifiedGoal else { return true }
+    return goal == notifiedGoal
   }
 
   /// Whether the popover shows the streak line: a goal is on and at least one day is in the streak.

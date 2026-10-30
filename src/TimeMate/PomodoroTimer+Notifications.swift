@@ -67,7 +67,7 @@ extension PomodoroTimer {
       && tickTime >= end.addingTimeInterval(SessionNotification.fallbackDelay)
   }
 
-  /// Tells the user once a day when the session that just ended took today's
+  /// Tells the user once a day per goal when the session that just ended took today's
   /// pomodoros up to the daily goal.
   func sendDailyGoalNotificationIfReached(pomodorosBefore: Int) {
     let goal = dailyGoal
@@ -76,11 +76,29 @@ extension PomodoroTimer {
     else { return }
     let today = history.currentDate
     let lastNotified = defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date
-    guard !DailyGoal.wasNotified(on: lastNotified, today: today, calendar: history.calendar)
+    let notifiedGoal = defaults.object(forKey: SettingsKey.dailyGoalNotifiedGoal) as? Int
+    guard
+      !DailyGoal.wasNotified(
+        on: lastNotified, goal: goal, notifiedGoal: notifiedGoal, today: today,
+        calendar: history.calendar)
     else { return }
     guard notificationsEnabled else { return }
     defaults.set(today, forKey: SettingsKey.dailyGoalNotifiedAt)
+    defaults.set(goal, forKey: SettingsKey.dailyGoalNotifiedGoal)
     postNotification(SessionNotification.dailyGoalRequest(goal: goal))
+  }
+
+  /// Forgets that today's goal was notified, so reaching it again notifies.
+  func clearDailyGoalNotified() {
+    defaults.removeObject(forKey: SettingsKey.dailyGoalNotifiedAt)
+    defaults.removeObject(forKey: SettingsKey.dailyGoalNotifiedGoal)
+  }
+
+  /// Settings → Statistics → Reset: deletes the history; the next pomodoro
+  /// that reaches the goal notifies again.
+  func resetStatistics() {
+    history.reset()
+    clearDailyGoalNotified()
   }
 
   /// Runs a button tapped on the "session complete" notification.

@@ -64,6 +64,8 @@ enum SettingsKey {
   static let dailyGoal = "dailyGoal"
   /// When the "daily goal reached" notification last went out, so it shows once a day.
   static let dailyGoalNotifiedAt = "dailyGoalNotifiedAt"
+  /// The goal that notification was for, so a raised goal reached the same day notifies again.
+  static let dailyGoalNotifiedGoal = "dailyGoalNotifiedGoal"
   /// A Saturday or Sunday that missed the daily goal doesn't break the goal streak.
   static let streakSkipsWeekends = "streakSkipsWeekends"
   /// Days shown in Settings → Statistics: 7 or 30 (`SessionStatistics.periodLengths`).

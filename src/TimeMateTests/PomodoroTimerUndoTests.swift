@@ -32,14 +32,17 @@ final class PomodoroTimerUndoTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .longBreak)
   }
 
-  func testUndoTheGoalSessionLetsTheNextOneNotifyAgain() {
-    var goalPosts = 0
+  private var goalPosts = 0
+
+  /// A timer with 3 s focus, manual start, notifications on and a goal of `goal`
+  /// that counts the "goal reached" notifications in `goalPosts`.
+  private func makeGoalTimer(goal: Int) {
     defaults.set(3, forKey: SettingsKey.focusDuration)
     defaults.set(2, forKey: SettingsKey.shortBreakDuration)
     defaults.set(false, forKey: SettingsKey.autoStartNextSession)
     defaults.set(true, forKey: SettingsKey.notificationsEnabled)
     defaults.set(0.0, forKey: SettingsKey.alarmVolume)
-    defaults.set(1, forKey: SettingsKey.dailyGoal)
+    defaults.set(goal, forKey: SettingsKey.dailyGoal)
     timer = PomodoroTimer(
       defaults: defaults,
       now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
@@ -47,18 +50,51 @@ final class PomodoroTimerUndoTests: TimerTestCase {
       distributedNotificationCenter: distributedCenter,
       history: history,
       notificationCenter: clockCenter,
-      postNotification: {
-        if $0.identifier == SessionNotification.dailyGoalIdentifier { goalPosts += 1 }
+      postNotification: { [weak self] in
+        if $0.identifier == SessionNotification.dailyGoalIdentifier { self?.goalPosts += 1 }
       },
       removeSessionNotifications: {},
       removePendingSessionNotification: {},
       playSound: { _, _ in },
       isFullscreenProbe: { false })
+  }
+
+  func testUndoTheGoalSessionLetsTheNextOneNotifyAgain() {
+    makeGoalTimer(goal: 1)
     runFocusAndBreak()
     XCTAssertEqual(goalPosts, 1)
     XCTAssertNotNil(undoLast())
     runFocusAndBreak()
     XCTAssertEqual(goalPosts, 2)
+  }
+
+  func testRaisedGoalReachedSameDayNotifiesAgain() {
+    makeGoalTimer(goal: 2)
+    for _ in 0..<2 { runFocusAndBreak() }
+    XCTAssertEqual(goalPosts, 1)
+    defaults.set(3, forKey: SettingsKey.dailyGoal)
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 2)
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 2)
+  }
+
+  func testResetStatisticsLetsTheGoalNotifyAgain() {
+    makeGoalTimer(goal: 1)
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 1)
+    timer.resetStatistics()
+    XCTAssertNil(defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt))
+    XCTAssertNil(defaults.object(forKey: SettingsKey.dailyGoalNotifiedGoal))
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 2)
+  }
+
+  func testOldDateOnlyFlagStillBlocksThatDay() {
+    makeGoalTimer(goal: 1)
+    defaults.set(currentTime, forKey: SettingsKey.dailyGoalNotifiedAt)
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 0)
   }
 
   func testUndoSessionBeforeLongBreakKeepsCurrentCycle() {
