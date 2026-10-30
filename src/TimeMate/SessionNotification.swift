@@ -44,6 +44,9 @@ enum SessionNotification {
   /// Same notification when the next session has already started: only "Skip".
   static let autoStartedCategoryIdentifier =
     "com.homielab.timemate.category.sessionCompleteAutoStarted"
+  /// Category of a break that ended with focus waiting: only "Start Next",
+  /// because "Skip" would skip the focus session that has not started yet.
+  static let breakEndedCategoryIdentifier = "com.homielab.timemate.category.breakEnded"
   /// Groups all TimeMate session notifications into one stack in Notification Center.
   static let threadIdentifier = "com.homielab.timemate.sessions"
 
@@ -69,9 +72,21 @@ enum SessionNotification {
     category(identifier: autoStartedCategoryIdentifier, actions: [.skip])
   }
 
-  /// Both categories; register them at launch.
+  /// The category for a finished break whose focus session waits to be started.
+  static func breakEndedCategory() -> UNNotificationCategory {
+    category(identifier: breakEndedCategoryIdentifier, actions: [.startNext])
+  }
+
+  /// All categories; register them at launch.
   static func categories() -> Set<UNNotificationCategory> {
-    [category(), autoStartedCategory()]
+    [category(), autoStartedCategory(), breakEndedCategory()]
+  }
+
+  /// Category for the end of `completed`: auto-started → only "Skip"; a break
+  /// ending with focus waiting → only "Start Next"; otherwise both.
+  static func categoryIdentifier(completed: SessionType, autoStarted: Bool) -> String {
+    if autoStarted { return autoStartedCategoryIdentifier }
+    return completed == .focus ? categoryIdentifier : breakEndedCategoryIdentifier
   }
 
   private static func category(
@@ -124,7 +139,8 @@ enum SessionNotification {
       content.body = nextLine
     }
     content.sound = nil
-    content.categoryIdentifier = autoStarted ? autoStartedCategoryIdentifier : categoryIdentifier
+    content.categoryIdentifier = categoryIdentifier(
+      completed: sessionType, autoStarted: autoStarted)
     content.threadIdentifier = threadIdentifier
     content.interruptionLevel = breakThroughFocus ? .timeSensitive : .active
     return content

@@ -72,7 +72,10 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(category.actions.map(\.identifier), [SessionNotificationAction.skip.rawValue])
     XCTAssertEqual(
       Set(SessionNotification.categories().map(\.identifier)),
-      [SessionNotification.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier])
+      [
+        SessionNotification.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier,
+        SessionNotification.breakEndedCategoryIdentifier,
+      ])
   }
 
   // MARK: - What comes next
@@ -99,7 +102,20 @@ final class SessionNotificationTests: XCTestCase {
   func testBreakIntoFocusWaiting() {
     let c = content(.shortBreak, next: .focus, minutes: 25, autoStarted: false)
     XCTAssertEqual(c.body, "Next: Focus · 25 min")
-    XCTAssertEqual(c.categoryIdentifier, SessionNotification.categoryIdentifier)
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.breakEndedCategoryIdentifier)
+  }
+
+  func testLongBreakIntoFocusWaitingOffersOnlyStartNext() {
+    let c = content(.longBreak, next: .focus, minutes: 25, autoStarted: false)
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.breakEndedCategoryIdentifier)
+    XCTAssertEqual(
+      SessionNotification.breakEndedCategory().actions.map(\.identifier),
+      [SessionNotificationAction.startNext.rawValue])
+  }
+
+  func testBreakIntoAutoStartedFocusKeepsSkip() {
+    let c = content(.shortBreak, next: .focus, minutes: 25, autoStarted: true)
+    XCTAssertEqual(c.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
   }
 
   func testAutoStartedSaysSoAndDropsStartNext() {
@@ -171,8 +187,9 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(posted.count, 2)
     XCTAssertEqual(
       posted[0].content.categoryIdentifier, SessionNotification.autoStartedCategoryIdentifier)
-    // The focus session waits, so the end-of-break notification keeps "Start Next".
-    XCTAssertEqual(posted[1].content.categoryIdentifier, SessionNotification.categoryIdentifier)
+    // The focus session waits, so the end-of-break notification offers only "Start Next".
+    XCTAssertEqual(
+      posted[1].content.categoryIdentifier, SessionNotification.breakEndedCategoryIdentifier)
   }
 
   func testUnknownActionIdentifierMapsToNothing() {
@@ -221,7 +238,8 @@ final class SessionNotificationTests: XCTestCase {
       breakThroughFocus: true, identifier: "id")
     XCTAssertEqual(request.identifier, "id")
     XCTAssertNil(request.trigger)
-    XCTAssertEqual(request.content.categoryIdentifier, SessionNotification.categoryIdentifier)
+    XCTAssertEqual(
+      request.content.categoryIdentifier, SessionNotification.breakEndedCategoryIdentifier)
   }
 
   func testSessionCompleteRequestsShareOneIdentifier() {

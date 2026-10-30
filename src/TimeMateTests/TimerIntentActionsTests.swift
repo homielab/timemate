@@ -270,6 +270,18 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(timer.endDate, endDate)
   }
 
+  func testExtendReturnsTheMinutesAddedToShortcuts() {
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5).minutesAdded, 0, "idle")
+    TimerIntentActions.start(timer)
+    XCTAssertEqual(TimerIntentActions.extend(timer, minutes: 5).minutesAdded, 5)
+    TimerIntentActions.extend(timer, minutes: 60)
+    TimerIntentActions.extend(timer, minutes: 60)
+    let atLimit = TimerIntentActions.extend(timer, minutes: 5)
+    XCTAssertEqual(atLimit, .atLimit)
+    XCTAssertEqual(atLimit.minutesAdded, 0)
+    XCTAssertEqual(TimerIntentActions.extendText(atLimit), "Already at the 180-minute limit")
+  }
+
   func testExtendTextSaysWhatChanged() {
     XCTAssertEqual(TimerIntentActions.extendText(.added(1)), "Added 1 minute")
     XCTAssertEqual(TimerIntentActions.extendText(.added(5)), "Added 5 minutes")

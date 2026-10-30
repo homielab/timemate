@@ -35,6 +35,12 @@ enum TimerIntentActions {
     case added(Int)
     case atLimit
     case noSession
+
+    /// The value "Add Time" returns to Shortcuts: minutes added, 0 when none.
+    var minutesAdded: Int {
+      if case .added(let minutes) = self { return minutes }
+      return 0
+    }
   }
 
   /// Adds `minutes` (kept within `extendRange`) to a running or paused session,
@@ -225,9 +231,10 @@ struct ExtendSessionIntent: AppIntent {
   }
 
   @MainActor
-  func perform() async throws -> some IntentResult & ProvidesDialog {
+  func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
     let added = TimerIntentActions.extend(.shared, minutes: minutes)
     return .result(
+      value: added.minutesAdded,
       dialog: IntentDialog(stringLiteral: TimerIntentActions.extendText(added)))
   }
 }
