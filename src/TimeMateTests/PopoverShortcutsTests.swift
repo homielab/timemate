@@ -45,9 +45,38 @@ final class PopoverShortcutsTests: XCTestCase {
         keyCode: space, modifiers: [.command], firstResponder: nil))
   }
 
-  func testRestartAsksOnlyWhenASessionIsInProgress() {
-    XCTAssertFalse(PopoverShortcuts.restartNeedsConfirmation(state: .idle))
-    XCTAssertTrue(PopoverShortcuts.restartNeedsConfirmation(state: .active))
-    XCTAssertTrue(PopoverShortcuts.restartNeedsConfirmation(state: .paused))
+  private func asks(_ state: PomodoroState, done: Int = 0, waiting: Bool = false) -> Bool {
+    PopoverShortcuts.restartNeedsConfirmation(
+      state: state, focusSessionsCompleted: done, isWaitingToContinue: waiting)
+  }
+
+  func testRestartAsksWhenASessionIsInProgress() {
+    XCTAssertTrue(asks(.active))
+    XCTAssertTrue(asks(.paused))
+  }
+
+  func testRestartDoesNotAskOnAFreshCycle() {
+    XCTAssertFalse(asks(.idle))
+  }
+
+  func testRestartAsksWhenIdleWithFocusSessionsDone() {
+    XCTAssertTrue(asks(.idle, done: 3))
+  }
+
+  func testRestartAsksWhileTheBreakScreenWaits() {
+    XCTAssertTrue(asks(.idle, waiting: true))
+  }
+
+  func testRestartWarningNamesWhatIsLost() {
+    XCTAssertEqual(
+      PopoverShortcuts.restartWarning(state: .idle), "Your progress in this cycle will be lost.")
+    XCTAssertEqual(
+      PopoverShortcuts.restartWarning(state: .active), "The session in progress will be lost.")
+    let vi = Bundle(for: PomodoroTimer.self).path(forResource: "vi", ofType: "lproj")
+      .flatMap(Bundle.init(path:))
+    XCTAssertEqual(
+      vi?.localizedString(
+        forKey: "Your progress in this cycle will be lost.", value: nil, table: nil),
+      "Tiến độ của chu kỳ này sẽ bị mất.")
   }
 }

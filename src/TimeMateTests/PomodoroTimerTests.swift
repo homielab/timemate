@@ -401,6 +401,24 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.focusSessionsCompleted, 0)
   }
 
+  func testSkipIdleFocusDoesNotStartTheBreakOrShowTheBreakScreen() {
+    timer.skipSession()
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertFalse(timer.isWaitingToContinue)
+    XCTAssertFalse(
+      BreakOverlayRules.shouldShowOverlay(
+        state: timer.state, sessionType: timer.currentSessionType,
+        isWaiting: timer.isWaitingToContinue, isPostponed: timer.isBreakPostponed, enabled: true))
+  }
+
+  func testSkipIdleBreakMovesToFocusWithoutStartingIt() {
+    timer.skipSession()
+    timer.skipSession()
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .idle)
+    XCTAssertEqual(timer.focusSessionsCompleted, 0)
+  }
+
   func testSkipPausedFocusPastHalfCountsIt() {
     timer.startTimer()
     runTicks(timer, 2)

@@ -311,6 +311,7 @@
 "Reset Without Recording" = "Reset Without Recording";
 "More than half of this focus session has run." = "More than half of this focus session has run.";
 "The session in progress will be lost." = "The session in progress will be lost.";
+"Your progress in this cycle will be lost." = "Your progress in this cycle will be lost.";
 "What are you working on?" = "What are you working on?";
 "Saved with each focus session you complete" = "Saved with each focus session you complete";
 "Recent labels" = "Recent labels";

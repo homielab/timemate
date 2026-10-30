@@ -654,4 +654,22 @@ final class TimerIntentActionsTests: XCTestCase {
     timer.handleTick()
     XCTAssertEqual(timer.perform(.reset), "Recorded 1 min of focus")
   }
+
+  func testTimerStatusQueryFindsTheCurrentStatus() {
+    timer.startTimer()
+    let found = TimerStatusQuery.entities(for: ["current"], timer: timer)
+    XCTAssertEqual(found.count, 1)
+    XCTAssertEqual(found.first?.id, "current")
+    XCTAssertEqual(found.first?.state, .running)
+    XCTAssertEqual(found.first?.kind, .focus)
+    XCTAssertTrue(TimerStatusQuery.entities(for: ["other"], timer: timer).isEmpty)
+  }
+
+  func testTodayProgressQueryFindsTodaysProgress() {
+    let found = TodayProgressQuery.entities(for: ["today"], timer: timer)
+    XCTAssertEqual(found.count, 1)
+    XCTAssertEqual(found.first?.id, "today")
+    XCTAssertEqual(found.first?.pomodoros, 0)
+    XCTAssertTrue(TodayProgressQuery.entities(for: ["yesterday"], timer: timer).isEmpty)
+  }
 }

@@ -10,6 +10,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Skip on a session that hasn't started (⌘→, ⌃⌥S, the menu bar menu) now only moves to the next session: it no longer starts the break and its full-screen break screen. Restart (⏮) now also asks before throwing away focus sessions already done in the cycle, or a break screen waiting to continue.
 - Statistics follow your Mac's region and 12/24-hour setting in the app's language: "By hour", Undo Last Session, numbers and dates now match (for example "09:00 – 10:00" on a 24-hour clock), and VoiceOver skips hours without focus.
 - The "Could not turn on Start at Login" message goes away once Start at Login is on (for example after turning it on in System Settings), and the Export CSV save panel no longer slips behind another app when opened from the popover.
 - A session label such as `+ 1+1` (a space after the sign) is now exported to CSV with a leading `'` so spreadsheets don't run it as a formula.

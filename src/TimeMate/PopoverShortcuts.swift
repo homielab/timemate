@@ -20,9 +20,18 @@ enum PopoverShortcuts {
     responder is NSText || responder is NSTextField || responder is NSControl
   }
 
-  /// Restart throws away the cycle in progress, so it asks first unless nothing is running.
-  static func restartNeedsConfirmation(state: PomodoroState) -> Bool {
-    state != .idle
+  /// Restart throws away the cycle in progress, so it asks first unless there is nothing
+  /// to lose: no session running and no focus session done in this cycle.
+  static func restartNeedsConfirmation(
+    state: PomodoroState, focusSessionsCompleted: Int, isWaitingToContinue: Bool
+  ) -> Bool {
+    state != .idle || focusSessionsCompleted > 0 || isWaitingToContinue
+  }
+
+  /// The Restart alert's message: a running session, or only the cycle's progress.
+  static func restartWarning(state: PomodoroState) -> String {
+    state == .idle
+      ? "Your progress in this cycle will be lost." : "The session in progress will be lost."
   }
 
   static let spaceKeyCode: UInt16 = 49

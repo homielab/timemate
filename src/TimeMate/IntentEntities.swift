@@ -84,7 +84,12 @@ struct TimerStatusEntity: AppEntity {
 /// Looks up the one current timer status.
 struct TimerStatusQuery: EntityQuery {
   func entities(for identifiers: [String]) async throws -> [TimerStatusEntity] {
-    let status = await MainActor.run { TimerIntentActions.status(.shared) }
+    await MainActor.run { Self.entities(for: identifiers, timer: .shared) }
+  }
+
+  @MainActor
+  static func entities(for identifiers: [String], timer: PomodoroTimer) -> [TimerStatusEntity] {
+    let status = TimerIntentActions.status(timer)
     return identifiers.contains(status.id) ? [status] : []
   }
 
@@ -131,9 +136,12 @@ struct TodayProgressEntity: AppEntity {
 /// Looks up today's progress.
 struct TodayProgressQuery: EntityQuery {
   func entities(for identifiers: [String]) async throws -> [TodayProgressEntity] {
-    let progress = await MainActor.run {
-      TodayProgressEntity(TimerIntentActions.todayProgress(.shared))
-    }
+    await MainActor.run { Self.entities(for: identifiers, timer: .shared) }
+  }
+
+  @MainActor
+  static func entities(for identifiers: [String], timer: PomodoroTimer) -> [TodayProgressEntity] {
+    let progress = TodayProgressEntity(TimerIntentActions.todayProgress(timer))
     return identifiers.contains(progress.id) ? [progress] : []
   }
 

@@ -60,7 +60,10 @@ struct ControlButtonsView: View {
   private var controls: some View {
     HStack(spacing: 16) {
       Button {
-        if PopoverShortcuts.restartNeedsConfirmation(state: model.state) {
+        if PopoverShortcuts.restartNeedsConfirmation(
+          state: model.state, focusSessionsCompleted: model.focusSessionsCompleted,
+          isWaitingToContinue: model.isWaitingToContinue)
+        {
           confirmingRestart = true
         } else {
           timer.restartCycle()
@@ -107,7 +110,7 @@ struct ControlButtonsView: View {
       Button("Restart", role: .destructive) { timer.restartCycle() }
       Button("Cancel", role: .cancel) {}
     } message: {
-      Text("The session in progress will be lost.")
+      Text(LocalizedStringKey(PopoverShortcuts.restartWarning(state: model.state)))
     }
     .alert("Reset the focus session?", isPresented: $confirmingReset) {
       Button("Record and Reset") { timer.stopTimer(recording: true) }

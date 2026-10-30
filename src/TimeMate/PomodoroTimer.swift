@@ -646,6 +646,9 @@ class PomodoroTimer: ObservableObject {
     defer { saveSnapshot() }
     pendingAlarm = nil
     let elapsed = elapsedSeconds
+    // Skipping a session that never started only picks the next one: it must
+    // not start it (auto-start is for sessions that ran) or show the break screen.
+    let wasIdle = state == .idle && !isWaitingToContinue
     let counts =
       state != .idle
       && SessionSequence.skipCounts(elapsed: elapsed, total: TimeInterval(totalDuration))
@@ -661,7 +664,7 @@ class PomodoroTimer: ObservableObject {
     // Skipping picks the next session on purpose: Start must not undo it.
     lastActivity = now()
     // A focus session skipped before half of it ran is not counted.
-    advanceToNextSession(counts: counts)
+    advanceToNextSession(start: wasIdle ? false : nil, counts: counts)
   }
 
   /// Focus time run so far in the current session, pauses excluded.
