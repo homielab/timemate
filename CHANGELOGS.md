@@ -4,6 +4,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+## 3.7
+
 ### Added
 
 - Settings → Alerts & Sound → **Wait during calls and video** (off by default): while another app keeps the display awake, such as a Zoom, Meet or Teams call or screen sharing in a normal window, the break screen waits until it stops instead of covering the call; the notification still arrives. A video playing also counts.
@@ -11,14 +13,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
-- Tests no longer play real alarm sounds, so the test suite no longer hangs without a GUI session.
 - Shortcuts **Add Time** now returns the minutes it added (0 when nothing is running or the session is at the 180-minute limit), so a shortcut can check whether it worked.
 - The notification at the end of a break offers only **Start Next** when focus waits to be started; its **Skip** button jumped over the focus session to another break.
 - A label typed after pressing Start is now saved with that focus session when it began without one; once a session has a label, the field's tooltip says edits apply from the next session.
 - In Vietnamese, the "Last 7 days / Last 30 days" caption, the shortcut recorder hint and the VoiceOver value of the Settings button are now translated.
 - README and the Daily goal tooltip now say a session that runs past midnight counts for the day it ends.
 - The "daily goal reached" notification shows again when you raise the goal and reach it the same day, or reach it again after Reset Statistics.
-
 - A timer left idle overnight now shows the fresh focus cycle on wake, at midnight and when the popover opens, instead of the old break that Start would not run.
 - After undoing the session that reached the daily goal, the next pomodoro that reaches it again shows the "goal reached" notification.
 - A focus session paused in the evening and skipped (or recorded with Record and Reset) the next morning now counts for the day and hour it ran, not for the morning, so Today, the daily goal, the streak, By hour and the CSV export stay right.
