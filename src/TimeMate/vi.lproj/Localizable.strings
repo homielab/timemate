@@ -139,6 +139,11 @@
 "Statistics" = "Thống kê";
 "Reset Statistics" = "Đặt lại Thống kê";
 "Reset Statistics?" = "Đặt lại Thống kê?";
+"Undo Last Session" = "Hoàn tác phiên gần nhất";
+"Undo Last Session?" = "Hoàn tác phiên gần nhất?";
+"Delete Session" = "Xoá phiên";
+"Delete the focus session “%1$@” (%2$@, %3$lld min)? Totals, streak and charts are updated." = "Xoá phiên tập trung “%1$@” (%2$@, %3$lld phút)? Tổng, chuỗi và biểu đồ sẽ được cập nhật.";
+"Deletes only the focus session recorded last, for one counted by mistake." = "Chỉ xoá phiên tập trung được ghi gần nhất, khi một phiên bị tính nhầm.";
 "This will delete the history of completed sessions. Are you sure?" = "Thao tác này sẽ xoá lịch sử các phiên đã hoàn tất. Bạn có chắc không?";
 
 // Global keyboard shortcuts

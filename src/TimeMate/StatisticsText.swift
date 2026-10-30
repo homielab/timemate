@@ -137,6 +137,17 @@ enum StatisticsText {
     format("%1$@, %2$lld minutes", bundle, locale, name, minutes)
   }
 
+  /// "Delete the focus session “Email” (2:05 PM – 2:30 PM, 25 min)?": the
+  /// question before "Undo Last Session"; `label` is "No label" when empty.
+  static func undoLastSession(
+    label: String, timeRange: String, minutes: Int, bundle: Bundle = .main,
+    locale: Locale = .current
+  ) -> String {
+    format(
+      "Delete the focus session “%1$@” (%2$@, %3$lld min)? Totals, streak and charts are updated.",
+      bundle, locale, label, timeRange, minutes)
+  }
+
   /// "Most focused: 9 – 10 AM": the hour range with the most focus time.
   static func mostFocused(_ hours: String, bundle: Bundle = .main, locale: Locale = .current)
     -> String

@@ -202,4 +202,17 @@ final class StatisticsTextTests: XCTestCase {
       StatisticsText.mostFocused("09:00 – 10:00", bundle: try bundle("vi")),
       "Tập trung nhất: 09:00 – 10:00")
   }
+
+  func testUndoLastSessionQuestion() throws {
+    XCTAssertEqual(
+      StatisticsText.undoLastSession(
+        label: "Email", timeRange: "2:05 – 2:30 PM", minutes: 25, bundle: try bundle("en")),
+      "Delete the focus session “Email” (2:05 – 2:30 PM, 25 min)? Totals, streak and charts are updated."
+    )
+    XCTAssertEqual(
+      StatisticsText.undoLastSession(
+        label: "Email", timeRange: "14:05 – 14:30", minutes: 25, bundle: try bundle("vi")),
+      "Xoá phiên tập trung “Email” (14:05 – 14:30, 25 phút)? Tổng, chuỗi và biểu đồ sẽ được cập nhật."
+    )
+  }
 }

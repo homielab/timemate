@@ -4,6 +4,10 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Undo Last Session** in Settings → Statistics removes only the focus session recorded last (after asking, with its label, time and minutes), so one pomodoro counted by mistake no longer means resetting all statistics.
+
 ### Fixed
 
 - After the Mac slept through the night in the middle of a focus session (or a postponed break), the menu bar now shows a fresh focus session at full length, so Start runs what you see instead of a leftover break from last night. The session that ended is still counted in History.

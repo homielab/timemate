@@ -139,6 +139,11 @@
 "Statistics" = "Statistics";
 "Reset Statistics" = "Reset Statistics";
 "Reset Statistics?" = "Reset Statistics?";
+"Undo Last Session" = "Undo Last Session";
+"Undo Last Session?" = "Undo Last Session?";
+"Delete Session" = "Delete Session";
+"Delete the focus session “%1$@” (%2$@, %3$lld min)? Totals, streak and charts are updated." = "Delete the focus session “%1$@” (%2$@, %3$lld min)? Totals, streak and charts are updated.";
+"Deletes only the focus session recorded last, for one counted by mistake." = "Deletes only the focus session recorded last, for one counted by mistake.";
 "This will delete the history of completed sessions. Are you sure?" = "This will delete the history of completed sessions. Are you sure?";
 
 // Global keyboard shortcuts

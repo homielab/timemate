@@ -536,4 +536,41 @@ final class SessionHistoryTests: XCTestCase {
     XCTAssertEqual(SessionHistory.csvField(label: "plain = ok"), "plain = ok")
     XCTAssertEqual(SessionHistory.csvField(label: nil), "")
   }
+
+  // MARK: - Undo last session
+
+  func testRemoveLastFocusSessionUpdatesTotalsStreakAndFile() throws {
+    let history = makeHistory()
+    history.recordCompletedSession(.focus, duration: 1500, end: daysAgo(1))
+    history.recordCompletedSession(.focus, duration: 1500, end: hoursAgo(2), label: "A")
+    history.recordCompletedSession(.shortBreak, duration: 300, end: hoursAgo(1.5))
+    history.recordCompletedSession(.focus, duration: 780, end: hoursAgo(1), label: "Oops")
+    XCTAssertEqual(history.todayTotals().pomodoros, 2)
+    XCTAssertEqual(history.goalStreak(goal: 2), 1)
+    let averageBefore = history.statistics(days: 7).dailyAverage
+
+    let removed = history.removeLastFocusSession()
+
+    XCTAssertEqual(removed?.label, "Oops")
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+    XCTAssertEqual(history.todayTotals().focusMinutes, 25)
+    XCTAssertEqual(history.goalStreak(goal: 2), 0)
+    XCTAssertEqual(history.goalStreak(goal: 1), 2)
+    XCTAssertEqual(history.hourlyFocus(days: 7).reduce(0, +), 3000, accuracy: 1)
+    XCTAssertEqual(history.lastFocusRecord?.label, "A")
+    XCTAssertLessThan(history.statistics(days: 7).dailyAverage ?? 0, averageBefore ?? 0)
+    let reloaded = makeHistory()
+    XCTAssertEqual(reloaded.records.filter { $0.kind == .focus }.count, 2)
+    XCTAssertFalse(reloaded.records.contains { $0.label == "Oops" })
+    XCTAssertEqual(reloaded.records.count, 3)
+  }
+
+  func testRemoveLastFocusSessionWithNoFocusSessionDoesNothing() {
+    let history = makeHistory()
+    XCTAssertNil(history.lastFocusRecord)
+    history.recordCompletedSession(.shortBreak, duration: 300, end: hoursAgo(1))
+    XCTAssertNil(history.lastFocusRecord)
+    XCTAssertNil(history.removeLastFocusSession())
+    XCTAssertEqual(history.records.count, 1)
+  }
 }

@@ -150,6 +150,26 @@ final class SessionHistory: ObservableObject {
     return labels
   }
 
+  /// The focus session that ended last, the one "Undo Last Session" removes.
+  var lastFocusRecord: Record? {
+    records.filter { $0.kind == .focus }.max { $0.end < $1.end }
+  }
+
+  /// Removes the focus session that ended last (a session recorded by mistake)
+  /// and saves the history; every total, streak and chart is computed from
+  /// `records`, so they follow. Returns the removed record, `nil` if none.
+  @discardableResult
+  func removeLastFocusSession() -> Record? {
+    guard let last = lastFocusRecord,
+      let index = records.lastIndex(where: {
+        $0.kind == .focus && $0.end == last.end && $0.start == last.start
+      })
+    else { return nil }
+    records.remove(at: index)
+    save()
+    return last
+  }
+
   /// Deletes all recorded sessions, and the backups of unreadable history
   /// files, which may still hold session labels. A backup that can't be
   /// deleted is logged and doesn't stop the reset.

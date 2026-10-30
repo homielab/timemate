@@ -10,6 +10,7 @@ struct StatisticsSection: View {
   @AppStorage(SettingsKey.streakSkipsWeekends) private var streakSkipsWeekends = false
   @AppStorage(SettingsKey.statisticsDays) private var storedDays = SessionStatistics.weekLength
   @State private var showingResetAlert = false
+  @State private var showingUndoAlert = false
 
   private var days: Int { SessionStatistics.sanitizedLength(storedDays) }
 
@@ -63,6 +64,8 @@ struct StatisticsSection: View {
       }
       .help("Saves every completed session of the last 90 days with its label, one row each.")
 
+      UndoLastSessionButton(history: model.timer.history, isPresented: $showingUndoAlert)
+
       MenuItemButton(title: "Reset Statistics", systemImage: "trash") {
         showingResetAlert = true
       }
@@ -76,6 +79,43 @@ struct StatisticsSection: View {
         Text("This will delete the history of completed sessions. Are you sure?")
       }
     }
+  }
+}
+
+/// "Undo Last Session": removes the focus session recorded last after a
+/// confirmation naming its label, time and minutes; disabled with none.
+private struct UndoLastSessionButton: View {
+  @ObservedObject var history: SessionHistory
+  @Binding var isPresented: Bool
+
+  var body: some View {
+    let last = history.lastFocusRecord
+    MenuItemButton(title: "Undo Last Session", systemImage: "arrow.uturn.backward") {
+      isPresented = true
+    }
+    .disabled(last == nil)
+    .help("Deletes only the focus session recorded last, for one counted by mistake.")
+    .alert("Undo Last Session?", isPresented: $isPresented, presenting: last) { _ in
+      Button("Delete Session", role: .destructive) {
+        history.removeLastFocusSession()
+      }
+      Button("Cancel", role: .cancel) {
+      }
+    } message: { record in
+      Text(Self.message(for: record))
+    }
+  }
+
+  static func message(for record: SessionHistory.Record) -> String {
+    let label =
+      SessionLabel.normalized(record.label)
+      ?? Bundle.main.localizedString(forKey: "No label", value: nil, table: nil)
+    let formatter = DateIntervalFormatter()
+    formatter.dateStyle = .none
+    formatter.timeStyle = .short
+    return StatisticsText.undoLastSession(
+      label: label, timeRange: formatter.string(from: record.start, to: record.end),
+      minutes: Int((record.duration / 60).rounded()))
   }
 }
 
