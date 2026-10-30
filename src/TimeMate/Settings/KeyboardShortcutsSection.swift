@@ -92,7 +92,7 @@ private struct HotKeyRecorder: View {
       isRecording ? stopRecording() : startRecording()
     } label: {
       if isRecording {
-        Text(refusal == .invalid ? "Add ⌃ or ⌘" : "Press keys…")
+        (refusal == .invalid ? Text("Add ⌃ or ⌘") : Text("Press keys…"))
           .frame(minWidth: 70)
       } else {
         Text(verbatim: hotKeys.shortcut(for: action).displayString)

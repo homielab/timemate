@@ -48,6 +48,27 @@ final class LocalizationParityTests: XCTestCase {
     }
   }
 
+  /// `Text(c ? "a" : "b")` and `.accessibilityValue(c ? "a" : "b")` infer `String` and skip
+  /// `Localizable.strings`: write `c ? Text("a") : Text("b")` instead.
+  func testNoStringLiteralInsideATernaryPassedToText() throws {
+    let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+      .deletingLastPathComponent().appendingPathComponent("TimeMate")
+    let pattern = try NSRegularExpression(
+      pattern: #"(\bText|\.accessibility\w+|\.help)\((?!verbatim:)[^()]*\?\s*"[^"]+""#)
+    let files = try XCTUnwrap(FileManager.default.enumerator(atPath: sources.path))
+    var offenders: [String] = []
+    for case let path as String in files where path.hasSuffix(".swift") {
+      let text = try String(contentsOf: sources.appendingPathComponent(path), encoding: .utf8)
+      for (number, line) in text.components(separatedBy: .newlines).enumerated() {
+        let range = NSRange(line.startIndex..., in: line)
+        if pattern.firstMatch(in: line, range: range) != nil {
+          offenders.append("\(path):\(number + 1)")
+        }
+      }
+    }
+    XCTAssertEqual(offenders, [], "use cond ? Text(\"a\") : Text(\"b\")")
+  }
+
   /// `NSDictionary` keeps the last of two equal keys, so a duplicate would hide which
   /// translation wins: read the raw file and count every `"key" =` line.
   func testNoKeyIsDeclaredTwice() throws {

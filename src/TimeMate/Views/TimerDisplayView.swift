@@ -186,7 +186,7 @@ private struct SettingsButton: View {
     .keyboardShortcut(",", modifiers: .command)
     .help("Settings (⌘,)")
     .accessibilityLabel("Settings")
-    .accessibilityValue(settingsVisible ? "Expanded" : "Collapsed")
+    .accessibilityValue(settingsVisible ? Text("Expanded") : Text("Collapsed"))
   }
 }
 

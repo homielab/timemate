@@ -235,7 +235,7 @@
 "Weekends don't break the streak" = "Weekends don't break the streak";
 "A Saturday or Sunday that misses the goal is skipped instead of ending the streak." = "A Saturday or Sunday that misses the goal is skipped instead of ending the streak.";
 "Off" = "Off";
-"Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Pomodoros to finish each day. TimeMate tells you once when you reach it.";
+"Pomodoros to finish each day. TimeMate tells you once when you reach it. A session that runs past midnight counts for the day it ends." = "Pomodoros to finish each day. TimeMate tells you once when you reach it. A session that runs past midnight counts for the day it ends.";
 "%@, goal reached" = "%@, goal reached";
 "Daily average: %lld min" = "Daily average: %lld min";
 "Best day: %@" = "Best day: %@";

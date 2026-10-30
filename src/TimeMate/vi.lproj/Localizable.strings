@@ -235,7 +235,7 @@
 "Weekends don't break the streak" = "Cuối tuần không làm đứt chuỗi";
 "A Saturday or Sunday that misses the goal is skipped instead of ending the streak." = "Thứ Bảy hoặc Chủ Nhật chưa đạt mục tiêu được bỏ qua thay vì làm đứt chuỗi.";
 "Off" = "Tắt";
-"Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Số pomodoro cần hoàn thành mỗi ngày. TimeMate báo một lần khi bạn đạt mục tiêu.";
+"Pomodoros to finish each day. TimeMate tells you once when you reach it. A session that runs past midnight counts for the day it ends." = "Số pomodoro cần hoàn thành mỗi ngày. TimeMate báo một lần khi bạn đạt mục tiêu. Phiên kéo qua nửa đêm được tính cho ngày nó kết thúc.";
 "%@, goal reached" = "%@, đạt mục tiêu";
 "Daily average: %lld min" = "Trung bình mỗi ngày: %lld phút";
 "Best day: %@" = "Ngày tốt nhất: %@";

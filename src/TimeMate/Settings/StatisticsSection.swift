@@ -171,7 +171,9 @@ private struct DailyGoalRow: View {
         .accessibilityLabel(Text("Daily goal"))
         .accessibilityValue(valueText)
     }
-    .help("Pomodoros to finish each day. TimeMate tells you once when you reach it.")
+    .help(
+      "Pomodoros to finish each day. TimeMate tells you once when you reach it. A session that runs past midnight counts for the day it ends."
+    )
   }
 }
 
@@ -191,7 +193,7 @@ private struct PeriodStatisticsView: View {
     let previous = period.previousTotals
 
     VStack(alignment: .leading, spacing: 4) {
-      Text(days == SessionStatistics.monthLength ? "Last 30 days" : "Last 7 days")
+      (days == SessionStatistics.monthLength ? Text("Last 30 days") : Text("Last 7 days"))
         .font(.caption)
         .foregroundColor(.secondary)
 
