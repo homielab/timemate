@@ -58,7 +58,7 @@ final class SettingsDefaultsParityTests: XCTestCase {
     SettingsKey.registerDefaults(in: defaults)
     for key in [
       SettingsKey.keepAwake, SettingsKey.alwaysVisible, SettingsKey.autoStartOnLaunch,
-      SettingsKey.showTimerAtLogin,
+      SettingsKey.showTimerAtLogin, SettingsKey.overlayWaitDuringCalls,
     ] {
       XCTAssertEqual(defaults.object(forKey: key) as? Bool, false, key)
     }

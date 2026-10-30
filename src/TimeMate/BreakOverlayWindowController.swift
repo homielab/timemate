@@ -73,13 +73,17 @@ class BreakOverlayWindowController: NSObject {
   var hasFallbackPoll: Bool { fullscreenPoll != nil }
   /// Whether clicks in other apps are watched (only while waiting).
   var isMonitoringClicks: Bool { clickMonitor != nil }
-  /// Whether the break screen is waiting for the frontmost app to leave full screen.
+  /// Whether the break screen is waiting for the frontmost app to leave full screen, or
+  /// for a call or video to end.
   var isWaitingForWindowedApp: Bool { !frontmostAppObservers.isEmpty }
   private var lastState: (PomodoroState, SessionType, Bool, Bool)?
-  /// The two settings the break screen depends on, as of the last evaluation.
+  /// The settings the break screen depends on, as of the last evaluation.
   private var lastSettings: OverlaySettings?
   /// Whether the app in front is full screen; replaced in tests to count the (costly) lookups.
   let isFullscreenProbe: () -> Bool
+  /// Whether another app keeps the display awake (a call, screen sharing, a video); read
+  /// only with "Wait during calls and video" on. Replaced in tests.
+  let isDisplayKeptAwakeProbe: () -> Bool
   /// How many times the break screen's visibility was evaluated (for tests).
   private(set) var evaluationCount = 0
   /// Fades windows to an opacity over a duration, then calls back. Replaced in tests:
@@ -111,6 +115,7 @@ class BreakOverlayWindowController: NSObject {
     defaults: UserDefaults = .standard,
     animated: Bool = true,
     isFullscreenProbe: @escaping () -> Bool = OverlayPolicy.isFrontmostAppFullscreen,
+    isDisplayKeptAwakeProbe: @escaping () -> Bool = DisplayAwakeProbe.isKeptAwakeByOtherApp,
     workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
     fallbackPollInterval: TimeInterval? = OverlayPolicy.fallbackPollInterval,
     settleDelay: TimeInterval? = OverlayPolicy.settleRecheckDelay,
@@ -119,6 +124,7 @@ class BreakOverlayWindowController: NSObject {
     tip: @escaping () -> String = RelaxationTips.random
   ) {
     self.isFullscreenProbe = isFullscreenProbe
+    self.isDisplayKeptAwakeProbe = isDisplayKeptAwakeProbe
     self.workspaceNotificationCenter = workspaceNotificationCenter
     self.fallbackPollInterval = fallbackPollInterval
     self.settleDelay = settleDelay
@@ -236,7 +242,11 @@ class BreakOverlayWindowController: NSObject {
     .store(in: &cancellables)
 
     defaultsObserver = DefaultsObserver(
-      defaults: defaults, keys: [SettingsKey.overlayEnabled, SettingsKey.overlaySkipFullscreen]
+      defaults: defaults,
+      keys: [
+        SettingsKey.overlayEnabled, SettingsKey.overlaySkipFullscreen,
+        SettingsKey.overlayWaitDuringCalls,
+      ]
     ) { [weak self] in self?.handleDefaultsChange() }
   }
 
@@ -297,12 +307,17 @@ class BreakOverlayWindowController: NSObject {
       isPostponed: isBreakPostponed, enabled: settings.enabled)
 
     let isVisible = windows.contains { $0.isVisible }
+    let isFrontmostFullscreen =
+      // The window list is only read when the answer can matter.
+      shouldShow && settings.skipFullscreen && !isVisible && isFullscreenProbe()
     let presentation = OverlayPolicy.presentation(
       shouldShow: shouldShow,
       skipFullscreen: settings.skipFullscreen,
-      // The window list is only read when the answer can matter.
-      isFrontmostFullscreen: shouldShow && settings.skipFullscreen && !isVisible
-        && isFullscreenProbe(),
+      isFrontmostFullscreen: isFrontmostFullscreen,
+      waitDuringCalls: settings.waitDuringCalls,
+      // Nor the power assertions when the full-screen check already decided.
+      otherAppKeepsDisplayAwake: shouldShow && settings.waitDuringCalls && !isVisible
+        && !isFrontmostFullscreen && isDisplayKeptAwakeProbe(),
       isVisible: isVisible)
 
     if presentation == .waitForWindowedApp {
@@ -334,7 +349,8 @@ class BreakOverlayWindowController: NSObject {
   }
 
   /// The notification already told the user the session ended; the break screen comes
-  /// once the app in front leaves full screen, until the break is over. Looks again when
+  /// once the app in front leaves full screen (or the call or video ends), until the
+  /// break is over. Looks again when
   /// the active Space or the app in front changes, again `settleDelay` later (the
   /// Space change comes before the full-screen animation ends) and after a click, and
   /// every `fallbackPollInterval` for what those miss, instead of reading the window

@@ -111,7 +111,8 @@ class PomodoroTimer: ObservableObject {
   /// (`systemIdleSeconds`); tests inject a fake.
   let idleSeconds: () -> TimeInterval
   /// Whether another app keeps the display awake (`DisplayAwakeProbe`); a
-  /// session then doesn't pause as away. Tests inject a fake.
+  /// session then doesn't pause as away, and with "Wait during calls and video"
+  /// the break screen doesn't appear. Tests inject a fake.
   let isDisplayKeptAwake: () -> Bool
   /// Runs a block once after a delay (`scheduleOnMainRunLoop`); the idle checks
   /// of "Auto-pause when I'm away" use it. Tests collect the blocks and run them.
@@ -226,7 +227,8 @@ class PomodoroTimer: ObservableObject {
         SettingsKey.notificationsEnabled, SettingsKey.longBreakInterval,
         SettingsKey.autoStartNextSession, SettingsKey.autoStartBreaks, SettingsKey.autoStartFocus,
         SettingsKey.keepBreakScreenOpen, SettingsKey.overlayEnabled,
-        SettingsKey.overlaySkipFullscreen, SettingsKey.breakThroughFocus,
+        SettingsKey.overlaySkipFullscreen, SettingsKey.overlayWaitDuringCalls,
+        SettingsKey.breakThroughFocus,
         SettingsKey.idlePauseMinutes, SettingsKey.resumeOnReturn,
       ]
     ) { [weak self] in self?.handleDefaultsChange() }

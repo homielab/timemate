@@ -269,6 +269,8 @@
 
 "Don't interrupt full-screen apps" = "Không làm gián đoạn ứng dụng toàn màn hình";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "Khi ứng dụng đang dùng ở toàn màn hình (thuyết trình, video…), màn hình nghỉ ngơi chờ đến khi bạn thoát ra. Thông báo vẫn hiện.";
+"Wait during calls and video" = "Chờ khi đang gọi hoặc xem video";
+"Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives." = "Cuộc gọi, chia sẻ màn hình và video giữ màn hình sáng. Khi một ứng dụng khác làm vậy, như Zoom, Meet hay Teams trong cửa sổ thường, màn hình nghỉ ngơi chờ đến khi xong. Video đang phát cũng tính. Thông báo vẫn hiện.";
 
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate không khởi động lại được";

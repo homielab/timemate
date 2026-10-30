@@ -34,6 +34,43 @@ final class OverlayPolicyTests: XCTestCase {
     XCTAssertEqual(presentation(fullscreen: true, visible: true), .show)
   }
 
+  func testCallsAreIgnoredWhileWaitDuringCallsIsOff() {
+    XCTAssertEqual(
+      OverlayPolicy.presentation(
+        shouldShow: true, skipFullscreen: true, isFrontmostFullscreen: false,
+        waitDuringCalls: false, otherAppKeepsDisplayAwake: true),
+      .show)
+  }
+
+  func testWaitsDuringACallWhenWaitDuringCallsIsOn() {
+    XCTAssertEqual(
+      OverlayPolicy.presentation(
+        shouldShow: true, skipFullscreen: false, isFrontmostFullscreen: false,
+        waitDuringCalls: true, otherAppKeepsDisplayAwake: true),
+      .waitForWindowedApp)
+  }
+
+  func testShowsWithoutACallWhenWaitDuringCallsIsOn() {
+    XCTAssertEqual(
+      OverlayPolicy.presentation(
+        shouldShow: true, skipFullscreen: true, isFrontmostFullscreen: false,
+        waitDuringCalls: true, otherAppKeepsDisplayAwake: false),
+      .show)
+  }
+
+  func testCallNeitherShowsADueBreakScreenNorHidesAVisibleOne() {
+    XCTAssertEqual(
+      OverlayPolicy.presentation(
+        shouldShow: false, skipFullscreen: false, isFrontmostFullscreen: false,
+        waitDuringCalls: true, otherAppKeepsDisplayAwake: true),
+      .hide)
+    XCTAssertEqual(
+      OverlayPolicy.presentation(
+        shouldShow: true, skipFullscreen: false, isFrontmostFullscreen: false,
+        waitDuringCalls: true, otherAppKeepsDisplayAwake: true, isVisible: true),
+      .show)
+  }
+
   func testFullscreenDetection() {
     let screen = CGSize(width: 1440, height: 900)
     XCTAssertTrue(
@@ -65,11 +102,28 @@ final class OverlayPolicyTests: XCTestCase {
     func canShow(enabled: Bool, skip: Bool, fullscreen: Bool) -> Bool {
       OverlayPolicy.breakScreenCanShow(
         settings: OverlaySettings(enabled: enabled, skipFullscreen: skip),
-        isFrontmostFullscreen: { fullscreen })
+        isFrontmostFullscreen: { fullscreen }, otherAppKeepsDisplayAwake: { true })
     }
     XCTAssertTrue(canShow(enabled: true, skip: true, fullscreen: false))
     XCTAssertTrue(canShow(enabled: true, skip: false, fullscreen: true))
     XCTAssertFalse(canShow(enabled: true, skip: true, fullscreen: true))
     XCTAssertFalse(canShow(enabled: false, skip: false, fullscreen: false))
+  }
+
+  func testBreakScreenCanShowWaitsForACallOnlyWithTheSetting() {
+    var probed = false
+    func canShow(wait: Bool, awake: Bool) -> Bool {
+      OverlayPolicy.breakScreenCanShow(
+        settings: OverlaySettings(enabled: true, skipFullscreen: false, waitDuringCalls: wait),
+        isFrontmostFullscreen: { false },
+        otherAppKeepsDisplayAwake: {
+          probed = true
+          return awake
+        })
+    }
+    XCTAssertTrue(canShow(wait: false, awake: true))
+    XCTAssertFalse(probed, "Setting off: the assertions are not read")
+    XCTAssertFalse(canShow(wait: true, awake: true))
+    XCTAssertTrue(canShow(wait: true, awake: false))
   }
 }

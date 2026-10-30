@@ -41,6 +41,9 @@ enum SettingsKey {
   static let idlePauseMinutes = "idlePauseMinutes"
   static let overlayEnabled = "overlayEnabled"
   static let overlaySkipFullscreen = "overlaySkipFullscreen"
+  /// The break screen waits while another app keeps the display awake (a call, screen
+  /// sharing, a video); off by default, since a video alone also does it.
+  static let overlayWaitDuringCalls = "overlayWaitDuringCalls"
   static let autoStartOnLaunch = "autoStartOnLaunch"
   /// Open the popover also when the app starts at login (off by default).
   static let showTimerAtLogin = "showTimerAtLogin"
@@ -80,6 +83,7 @@ enum SettingsKey {
     defaults.register(defaults: [
       SettingsKey.overlayEnabled: true,
       SettingsKey.overlaySkipFullscreen: true,
+      SettingsKey.overlayWaitDuringCalls: false,
       SettingsKey.notificationsEnabled: true,
       SettingsKey.breakThroughFocus: true,
       SettingsKey.keepAwake: false,

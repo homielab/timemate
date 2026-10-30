@@ -9,6 +9,7 @@ struct AlertsSection: View {
   @AppStorage(SettingsKey.breakThroughFocus) private var breakThroughFocus = true
   @AppStorage(SettingsKey.overlayEnabled) private var overlayEnabled = true
   @AppStorage(SettingsKey.overlaySkipFullscreen) private var overlaySkipFullscreen = true
+  @AppStorage(SettingsKey.overlayWaitDuringCalls) private var overlayWaitDuringCalls = false
   @AppStorage(SettingsKey.overlaySkipDelay) private var skipDelay =
     BreakOverlayAccessibility.defaultSkipDelay
   @AppStorage(SettingsKey.alarmSound) private var alarmSound = AlarmSound.defaultName
@@ -54,6 +55,11 @@ struct AlertsSection: View {
         .disabled(!overlayEnabled)
         .help(
           "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives."
+        )
+      SettingsToggleRow(titleKey: "Wait during calls and video", isOn: $overlayWaitDuringCalls)
+        .disabled(!overlayEnabled)
+        .help(
+          "Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives."
         )
       HStack {
         Text("Skip button delay")

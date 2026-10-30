@@ -269,6 +269,8 @@
 
 "Don't interrupt full-screen apps" = "Don't interrupt full-screen apps";
 "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives." = "While the app in front is full screen, such as a presentation or video, the break screen waits until you leave it. The notification still arrives.";
+"Wait during calls and video" = "Wait during calls and video";
+"Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives." = "Calls, screen sharing and video keep the display awake. While another app does, such as Zoom, Meet or Teams in a normal window, the break screen waits until it stops. A video playing also counts. The notification still arrives.";
 
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate couldn't restart";

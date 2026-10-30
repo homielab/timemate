@@ -6,6 +6,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Added
 
+- Settings → Alerts & Sound → **Wait during calls and video** (off by default): while another app keeps the display awake, such as a Zoom, Meet or Teams call or screen sharing in a normal window, the break screen waits until it stops instead of covering the call; the notification still arrives. A video playing also counts.
 - **Undo Last Session** in Settings → Statistics removes only the focus session recorded last (after asking, with its label, time and minutes); if another session is recorded while you're asked, nothing is deleted, so one pomodoro counted by mistake no longer means resetting all statistics. A session from the current cycle also comes off the cycle dots, so the long break still comes after the real fourth pomodoro.
 
 ### Fixed

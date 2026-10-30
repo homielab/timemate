@@ -14,6 +14,9 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
   /// Fade-outs the controller started; the test ends them (`done`) when it wants.
   private var fadeOuts: [() -> Void] = []
   private var frontmostIsFullscreen = false
+  /// Fake "another app keeps the display awake" and how often the controller read it.
+  private var displayKeptAwake = false
+  private var awakeProbeCalls = 0
   /// Settle re-checks the controller scheduled; `runScheduledRechecks()` runs them.
   private var scheduledRechecks: [DispatchWorkItem] = []
 
@@ -21,6 +24,8 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     super.setUp()
     fadeOuts = []
     scheduledRechecks = []
+    displayKeptAwake = false
+    awakeProbeCalls = 0
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     defaults = UserDefaults(suiteName: Self.suiteName)
     defaults.set(30, forKey: SettingsKey.focusDuration)
@@ -130,6 +135,65 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     workspace.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
     drainMainQueue()
     XCTAssertEqual(controller.evaluationCount, evaluations, "Observers removed once shown")
+  }
+
+  /// A controller whose "another app keeps the display awake" probe reads
+  /// `displayKeptAwake` and counts its calls in `awakeProbeCalls`.
+  private func makeCallAwareController(workspace: NotificationCenter)
+    -> BreakOverlayWindowController
+  {
+    BreakOverlayWindowController(
+      timer: timer, defaults: defaults, animated: false, isFullscreenProbe: { false },
+      isDisplayKeptAwakeProbe: { [weak self] in
+        self?.awakeProbeCalls += 1
+        return self?.displayKeptAwake ?? false
+      },
+      workspaceNotificationCenter: workspace, fallbackPollInterval: nil)
+  }
+
+  func testBreakScreenWaitsDuringACallUntilItEnds() {
+    defaults.set(true, forKey: SettingsKey.overlayWaitDuringCalls)
+    displayKeptAwake = true
+    let workspace = NotificationCenter()
+    let controller = makeCallAwareController(workspace: workspace)
+    timer.startTimer()
+    timer.skipSession()
+    XCTAssertFalse(controller.isShowingOverlay, "A call keeps the display awake: wait")
+    XCTAssertTrue(controller.isWaitingForWindowedApp)
+
+    displayKeptAwake = false
+    workspace.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
+    drainMainQueue()
+    XCTAssertTrue(controller.isShowingOverlay, "The call ended: the break screen shows")
+    XCTAssertFalse(controller.isWaitingForWindowedApp)
+
+    // Once on screen it stays, even when a call starts again.
+    displayKeptAwake = true
+    let calls = awakeProbeCalls
+    defaults.set(false, forKey: SettingsKey.overlayWaitDuringCalls)
+    defaults.set(true, forKey: SettingsKey.overlayWaitDuringCalls)
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertEqual(awakeProbeCalls, calls, "Not probed while the break screen is visible")
+  }
+
+  func testBreakScreenShowsDuringACallWhenTheSettingIsOff() {
+    displayKeptAwake = true
+    let controller = makeCallAwareController(workspace: NotificationCenter())
+    timer.startTimer()
+    timer.skipSession()
+    XCTAssertTrue(controller.isShowingOverlay)
+    XCTAssertEqual(awakeProbeCalls, 0, "Off by default: the assertions are not read")
+  }
+
+  func testTurningOnWaitDuringCallsReevaluatesAWaitingBreak() {
+    displayKeptAwake = true
+    defaults.set(true, forKey: SettingsKey.overlayWaitDuringCalls)
+    let controller = makeCallAwareController(workspace: NotificationCenter())
+    timer.startTimer()
+    timer.skipSession()
+    XCTAssertTrue(controller.isWaitingForWindowedApp)
+    defaults.set(false, forKey: SettingsKey.overlayWaitDuringCalls)
+    XCTAssertTrue(controller.isShowingOverlay, "Setting off: shown right away")
   }
 
   func testSpaceChangeDuringFullscreenAnimationIsCheckedAgainOnceSettled() {

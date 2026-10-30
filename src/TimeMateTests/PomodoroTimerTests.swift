@@ -143,6 +143,17 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertTrue(fullscreen.breakScreenCanShow)
   }
 
+  func testBreakScreenCannotShowDuringACallWithWaitDuringCalls() {
+    defaults.set(false, forKey: SettingsKey.overlaySkipFullscreen)
+    displayKeptAwake = true
+    timer = makeTimer(keepBreakOpen: true)
+    XCTAssertTrue(timer.breakScreenCanShow, "Off by default")
+    defaults.set(true, forKey: SettingsKey.overlayWaitDuringCalls)
+    XCTAssertFalse(timer.breakScreenCanShow)
+    displayKeptAwake = false
+    XCTAssertTrue(timer.breakScreenCanShow)
+  }
+
   func testKeepBreakScreenOpenOffAdvancesImmediately() {
     timer = makeTimer(keepBreakOpen: false)
     timer.startTimer()

@@ -21,13 +21,15 @@ extension PomodoroTimer {
     defaults.object(forKey: SettingsKey.keepBreakScreenOpen) as? Bool ?? true
   }
   /// Whether a break screen would appear now: it is switched on and no full-screen
-  /// app holds it back. Only then does a finished break wait on it.
+  /// app (nor, with "Wait during calls and video", a call or video) holds it back.
+  /// Only then does a finished break wait on it.
   var breakScreenCanShow: Bool {
     OverlayPolicy.breakScreenCanShow(
       settings: OverlaySettings(
         enabled: defaults.object(forKey: SettingsKey.overlayEnabled) as? Bool ?? true,
-        skipFullscreen: defaults.object(forKey: SettingsKey.overlaySkipFullscreen) as? Bool ?? true),
-      isFrontmostFullscreen: isFullscreenProbe)
+        skipFullscreen: defaults.object(forKey: SettingsKey.overlaySkipFullscreen) as? Bool ?? true,
+        waitDuringCalls: defaults.bool(forKey: SettingsKey.overlayWaitDuringCalls)),
+      isFrontmostFullscreen: isFullscreenProbe, otherAppKeepsDisplayAwake: isDisplayKeptAwake)
   }
   var alarmVolume: Double {
     defaults.object(forKey: SettingsKey.alarmVolume) as? Double ?? 1.0
