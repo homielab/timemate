@@ -160,7 +160,7 @@ private struct PeriodStatisticsView: View {
       .font(.callout.weight(.semibold))
       .monospacedDigit()
 
-      if let average = SessionStatistics.dailyAverage(period.days) {
+      if let average = period.dailyAverage {
         Text(StatisticsText.dailyAverage(minutes: average))
           .font(.caption)
           .foregroundColor(.secondary)
@@ -184,8 +184,9 @@ private struct PeriodStatisticsView: View {
               pomodoros: best.pomodoros, minutes: best.focusMinutes)))
       }
 
-      if let percent = SessionStatistics.percentChange(
-        current: totals.pomodoros, previous: previous.pomodoros)
+      if period.hasFullPreviousPeriod,
+        let percent = SessionStatistics.percentChange(
+          current: totals.pomodoros, previous: previous.pomodoros)
       {
         Text(
           StatisticsText.change(

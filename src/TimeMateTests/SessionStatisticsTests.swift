@@ -316,6 +316,55 @@ final class SessionStatisticsTests: XCTestCase {
     XCTAssertNil(SessionStatistics.dailyAverage([]))
   }
 
+  func testPeriodAverageStartsAtTheFirstDayWithData() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 10, 15, in: utc)
+    // 4 days × 100 min in a 7-day window → 100, not 400 / 7.
+    let fourDays = (0..<4).map { focus(end: date(2026, 3, 7 + $0, 9, in: utc), minutes: 100) }
+    let week = SessionStatistics.week(from: fourDays, today: today, calendar: utc)
+    XCTAssertEqual(week.firstDay, date(2026, 3, 7, in: utc))
+    XCTAssertEqual(week.dailyAverage, 100)
+    // First record today → today's minutes.
+    let todayOnly = SessionStatistics.week(
+      from: [focus(end: date(2026, 3, 10, 9, in: utc), minutes: 40)], today: today,
+      calendar: utc)
+    XCTAssertEqual(todayOnly.dailyAverage, 40)
+    // No records → nothing.
+    let empty = SessionStatistics.week(from: [], today: today, calendar: utc)
+    XCTAssertNil(empty.firstDay)
+    XCTAssertNil(empty.dailyAverage)
+    XCTAssertFalse(empty.hasFullPreviousPeriod)
+    // Data older than the window → every day of the window counts (80 / 7 = 11).
+    let older = [
+      focus(end: date(2026, 2, 1, 9, in: utc)), focus(end: date(2026, 3, 8, 9, in: utc)),
+      focus(end: date(2026, 3, 9, 9, in: utc)),
+      focus(end: date(2026, 3, 10, 9, in: utc), minutes: 30),
+    ]
+    XCTAssertEqual(
+      SessionStatistics.week(from: older, today: today, calendar: utc).dailyAverage, 11)
+  }
+
+  func testComparisonNeedsTheWholePreviousPeriod() {
+    let utc = calendar("UTC")
+    let today = date(2026, 3, 31, 15, in: utc)
+    func days(_ count: Int) -> [Record] {
+      (0..<count).map { focus(end: today - Double($0) * 86_400) }
+    }
+    // 30 days of data in a 30-day window → same as before: average over 30 days.
+    let thirty = SessionStatistics.period(
+      from: days(30), today: today, length: 30, calendar: utc)
+    XCTAssertEqual(thirty.dailyAverage, 25)
+    XCTAssertFalse(thirty.hasFullPreviousPeriod)
+    // 40 days: the previous 30 only hold 10 real days → no comparison.
+    let forty = SessionStatistics.period(
+      from: days(40), today: today, length: 30, calendar: utc)
+    XCTAssertFalse(forty.hasFullPreviousPeriod)
+    // 60 days cover both periods.
+    let sixty = SessionStatistics.period(
+      from: days(60), today: today, length: 30, calendar: utc)
+    XCTAssertTrue(sixty.hasFullPreviousPeriod)
+  }
+
   func testBestDayHasTheMostPomodorosAndTheNewestOnATie() {
     let utc = calendar("UTC")
     let today = date(2026, 3, 10, 15, in: utc)

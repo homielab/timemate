@@ -37,8 +37,23 @@ enum SessionStatistics {
   struct Period: Equatable {
     let days: [Day]
     let previousDays: [Day]
+    /// Start of the day of the oldest record; nil without records.
+    var firstDay: Date? = nil
 
     var length: Int { days.count }
+    /// Days of the period from the first day with data, so a new user's average
+    /// isn't diluted by the days before they started.
+    var activeDays: [Day] {
+      guard let firstDay else { return days }
+      return days.filter { $0.date >= firstDay }
+    }
+    /// Minutes per day since the first day with data; nil when the period is empty.
+    var dailyAverage: Int? { SessionStatistics.dailyAverage(activeDays) }
+    /// The previous period is only comparable when the history covers all of it.
+    var hasFullPreviousPeriod: Bool {
+      guard let firstDay, let start = previousDays.first?.date else { return false }
+      return firstDay <= start
+    }
     var totals: Totals { Totals(days) }
     var previousTotals: Totals { Totals(previousDays) }
   }
@@ -86,7 +101,14 @@ enum SessionStatistics {
   ) -> Period {
     let length = max(1, length)
     let both = days(from: records, endingOn: today, count: length * 2, calendar: calendar)
-    return Period(days: Array(both.suffix(length)), previousDays: Array(both.prefix(length)))
+    return Period(
+      days: Array(both.suffix(length)), previousDays: Array(both.prefix(length)),
+      firstDay: firstDay(of: records, calendar: calendar))
+  }
+
+  /// Start of the day of the oldest record, or nil without records.
+  static func firstDay(of records: [SessionHistory.Record], calendar: Calendar) -> Date? {
+    records.map(\.end).min().map { calendar.startOfDay(for: $0) }
   }
 
   static func week(

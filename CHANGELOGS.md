@@ -142,6 +142,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- Settings → Statistics: the daily average now counts from your first day with data, so four days of 100 minutes show 100 min, not 57; the change against the previous period is hidden until your history covers that whole period.
 - Reset no longer throws away a focus session that ran past half without asking: the popover and menu bar menu offer **Record and Reset** or **Reset Without Recording**, and the Reset shortcut and Shortcuts action record it, like Skip.
 - Auto-pause when I'm away works again while a keep-awake utility (caffeinate, Amphetamine, KeepingYouAwake, Lungo, Caffeine, Theine) runs; only calls and videos keep the session going.
 - **Auto-pause when I'm away** no longer pauses a focus session during a video call or while a video plays: when another app keeps the display awake, you are watching, not away.
