@@ -303,3 +303,5 @@
 "Long break after this many focus sessions" = "Long break after this many focus sessions";
 "By hour" = "By hour";
 "Most focused: %@" = "Most focused: %@";
+"Saved with this focus session" = "Saved with this focus session";
+"Applies from the next session" = "Applies from the next session";

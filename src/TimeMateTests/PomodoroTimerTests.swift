@@ -558,12 +558,40 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(history.records.map(\.label), ["Write report"])
   }
 
-  func testLabelClearedBeforeStartStaysEmptyWhenTypedLater() {
+  func testLabelTypedAfterStartingWithoutOneLabelsTheRunningSession() {
     defaults.set("   ", forKey: SettingsKey.sessionLabel)
     timer.startTimer()
-    defaults.set("Next task", forKey: SettingsKey.sessionLabel)
+    XCTAssertEqual(timer.labelCaption, .currentSession)
+    defaults.set("Viết báo cáo", forKey: SettingsKey.sessionLabel)
     finishSession(timer)
-    XCTAssertNil(history.records.first?.label)
+    XCTAssertEqual(history.records.first?.label, "Viết báo cáo")
+  }
+
+  func testLabelEditedInLabelledSessionAppliesFromTheNextSession() {
+    defaults.set("A", forKey: SettingsKey.sessionLabel)
+    timer.startTimer()
+    XCTAssertEqual(timer.labelCaption, .nextSession)
+    defaults.set("B", forKey: SettingsKey.sessionLabel)
+    finishSession(timer)
+    XCTAssertEqual(history.records.last?.label, "A")
+    timer.skipSession()
+    timer.startTimer()
+    finishSession(timer)
+    XCTAssertEqual(history.records.last?.label, "B")
+  }
+
+  func testRelaunchOfUnlabelledSessionTakesTheLabelTypedLater() {
+    timer = makeTimer(focus: 300)
+    timer.startTimer()
+    let resumed = relaunch(after: 100)
+    XCTAssertEqual(resumed.startedLabel, "")
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    finishSession(resumed)
+    XCTAssertEqual(history.records.first?.label, "Write report")
+  }
+
+  func testLabelCaptionIsIdleBeforeStart() {
+    XCTAssertEqual(timer.labelCaption, .idle)
   }
 
   func testPausedSessionKeepsItsLabelOnResume() {

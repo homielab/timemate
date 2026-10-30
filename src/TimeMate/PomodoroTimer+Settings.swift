@@ -43,11 +43,15 @@ extension PomodoroTimer {
     SessionLabel.normalized(defaults.string(forKey: SettingsKey.sessionLabel))
   }
   /// The label to record for the session that ran: the one captured when it began,
-  /// or the label field as it stands when none was saved (older snapshot).
+  /// or the label field as it stands when it began without one (`LabelAssignment`).
   func sessionLabel(for sessionType: SessionType) -> String? {
     guard sessionType == .focus else { return nil }
-    guard let startedLabel else { return sessionLabel }
-    return SessionLabel.normalized(startedLabel)
+    return LabelAssignment.label(started: startedLabel, field: sessionLabel)
+  }
+  /// What editing the label field does right now.
+  var labelCaption: LabelAssignment.Caption {
+    LabelAssignment.caption(
+      inFocusSession: currentSessionType == .focus && state != .idle, started: startedLabel)
   }
   var dailyGoal: Int {
     DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)

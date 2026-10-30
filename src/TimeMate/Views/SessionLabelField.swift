@@ -4,7 +4,8 @@ import SwiftUI
 
 /// One-line "What are you working on?" field shown during focus sessions. The
 /// text is saved in the defaults, so it stays across relaunches, and goes with
-/// every focus session that completes (history and notification).
+/// every focus session that completes (history and notification); see
+/// `LabelAssignment` for which session gets it.
 struct SessionLabelField: View {
   @AppStorage(SettingsKey.sessionLabel) private var label = ""
   @FocusState private var isFocused: Bool
@@ -57,7 +58,7 @@ struct SessionLabelField: View {
           label = String(text.prefix(SessionLabel.maxLength))
         }
       }
-      .help("Saved with each focus session you complete")
+      .help(model.timer.labelCaption.text)
       .accessibilityLabel("What are you working on?")
   }
 }

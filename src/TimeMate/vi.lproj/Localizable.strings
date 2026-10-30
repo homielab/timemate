@@ -303,3 +303,5 @@
 "Long break after this many focus sessions" = "Nghỉ dài sau số phiên tập trung này";
 "By hour" = "Theo giờ";
 "Most focused: %@" = "Tập trung nhất: %@";
+"Saved with this focus session" = "Lưu cùng phiên tập trung này";
+"Applies from the next session" = "Áp dụng từ phiên sau";

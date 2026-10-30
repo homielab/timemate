@@ -10,6 +10,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- A label typed after pressing Start is now saved with that focus session when it began without one; once a session has a label, the field's tooltip says edits apply from the next session.
 - In Vietnamese, the "Last 7 days / Last 30 days" caption, the shortcut recorder hint and the VoiceOver value of the Settings button are now translated.
 - README and the Daily goal tooltip now say a session that runs past midnight counts for the day it ends.
 - The "daily goal reached" notification shows again when you raise the goal and reach it the same day, or reach it again after Reset Statistics.
