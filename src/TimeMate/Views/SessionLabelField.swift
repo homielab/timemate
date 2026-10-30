@@ -56,6 +56,8 @@ struct SessionLabelField: View {
       .focused($isFocused)
       // Return leaves the field, so Space starts and pauses the timer again.
       .onSubmit { isFocused = false }
+      // Esc leaves the field (the label stays); a second Esc closes the popover.
+      .onExitCommand { isFocused = false }
       .onChange(of: label) { text in
         if text.count > SessionLabel.maxLength {
           label = String(text.prefix(SessionLabel.maxLength))

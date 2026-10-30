@@ -114,7 +114,8 @@ extension PomodoroTimer {
       return TimerIntentActions.recordedText(seconds: stopTimer(recording: true))
     case .extend:
       let result = TimerIntentActions.extend(self, minutes: BreakOverlayAccessibility.extendMinutes)
-      if case .atLimit = result { return TimerIntentActions.extendText(result) }
+      if case .added = result { return nil }
+      return TimerIntentActions.extendText(result)
     }
     return nil
   }

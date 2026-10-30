@@ -229,7 +229,7 @@ class PomodoroTimer: ObservableObject {
         SettingsKey.keepBreakScreenOpen, SettingsKey.overlayEnabled,
         SettingsKey.overlaySkipFullscreen, SettingsKey.overlayWaitDuringCalls,
         SettingsKey.breakThroughFocus,
-        SettingsKey.idlePauseMinutes, SettingsKey.resumeOnReturn,
+        SettingsKey.idlePauseMinutes, SettingsKey.resumeOnReturn, SettingsKey.sessionLabel,
       ]
     ) { [weak self] in self?.handleDefaultsChange() }
     notificationCenter.publisher(for: .NSSystemClockDidChange)

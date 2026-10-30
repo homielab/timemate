@@ -4,6 +4,12 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- A duration typed in Settings is saved when the popover closes; Esc while typing puts back the old value, a second Esc closes the popover.
+- The Add Time shortcut with no session running now says "No session to extend" (banner and VoiceOver), and a label typed after Start shows in the backup "session complete" notification.
+- Reset All Settings says your history and statistics are kept and language, shortcuts and Start at Login go back to defaults; if TimeMate can't reopen itself it asks you to open it again.
+
 ## 3.8
 
 ### Changed

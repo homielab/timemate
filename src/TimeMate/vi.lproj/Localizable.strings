@@ -88,7 +88,7 @@
 "Resume when I'm back" = "Tự tiếp tục khi tôi quay lại";
 "Continue a session paused by sleep, the lock or being away a moment after you are back: you unlock the screen, wake the Mac or, after Auto-pause, use the keyboard, mouse or trackpad. A session you paused yourself stays paused." = "Tiếp tục phiên bị dừng do ngủ, khoá màn hình hoặc rời máy ngay sau khi bạn quay lại: mở khoá, đánh thức Mac hoặc, với Tự tạm dừng, dùng bàn phím, chuột hay trackpad. Phiên bạn tự tạm dừng vẫn dừng.";
 "Reset Settings?" = "Đặt lại Cài đặt?";
-"This will restore all settings to their default values, including Start at Login, and restart the app. A running session and today's goal notification are kept. Are you sure?" = "Thao tác này sẽ khôi phục tất cả cài đặt về giá trị mặc định (kể cả Khởi động cùng máy) và khởi động lại ứng dụng. Phiên đang chạy và thông báo mục tiêu hôm nay được giữ lại. Bạn có chắc không?";
+"This will restore all settings to their default values, including language, keyboard shortcuts and Start at Login, and restart the app. Your session history and statistics, a running session and today's goal notification are kept. Are you sure?" = "Thao tác này sẽ khôi phục tất cả cài đặt về giá trị mặc định (kể cả ngôn ngữ, phím tắt và Khởi động cùng máy) và khởi động lại ứng dụng. Lịch sử phiên và thống kê, phiên đang chạy và thông báo mục tiêu hôm nay được giữ lại. Bạn có chắc không?";
 "Cancel" = "Hủy";
 
 "Review on App Store" = "Đánh giá trên App Store";
@@ -294,6 +294,7 @@
 // Restart failure
 "TimeMate couldn't restart" = "TimeMate không khởi động lại được";
 "Quit TimeMate and open it again to apply the change." = "Hãy thoát TimeMate rồi mở lại để áp dụng thay đổi.";
+"Settings were reset. Please open TimeMate again." = "Đã đặt lại cài đặt. Hãy mở lại TimeMate.";
 
 "Next: %1$@ · %2$@" = "Tiếp theo: %1$@ · %2$@";
 "%1$@ started · %2$@" = "Đã bắt đầu %1$@ · %2$@";

@@ -478,4 +478,11 @@ final class HotKeyTests: XCTestCase {
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
     XCTAssertEqual(timer.focusSessionsCompleted, 0)  // skipped while idle: not counted
   }
+
+  func testAddTimeWhileIdleSaysThereIsNoSession() {
+    let timer = makeTimer()
+    XCTAssertEqual(timer.perform(.extend), TimerIntentActions.extendText(.noSession))
+    timer.perform(.startPause)
+    XCTAssertNil(timer.perform(.extend))
+  }
 }

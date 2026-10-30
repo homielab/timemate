@@ -65,7 +65,7 @@ struct AboutSection: View {
         }
       } message: {
         Text(
-          "This will restore all settings to their default values, including Start at Login, and restart the app. A running session and today's goal notification are kept. Are you sure?"
+          "This will restore all settings to their default values, including language, keyboard shortcuts and Start at Login, and restart the app. Your session history and statistics, a running session and today's goal notification are kept. Are you sure?"
         )
       }
     }

@@ -81,6 +81,10 @@ private struct DurationRow: View {
         .foregroundColor(problem == nil ? .primary : .red)
         .focused($isEditing)
         .onSubmit(commit)
+        .onExitCommand {
+          text = "\(minutes)"
+          isEditing = false
+        }
         .help(problem.map { LocalizedStringKey($0.rawValue) } ?? "Enter 1–180 minutes")
         .accessibilityLabel(Text(titleKey))
         .accessibilityValue(accessibilityValue)

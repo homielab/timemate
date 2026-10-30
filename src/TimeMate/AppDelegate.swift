@@ -206,6 +206,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
         !self.hotKeyManager.isRecording,
         event.window === self.popover.contentViewController?.view.window
       else { return event }
+      // Esc while typing in a field cancels the edit; the next Esc closes.
+      if event.window?.firstResponder is NSTextView { return event }
       self.popover.performClose(nil)
       return nil
     }
@@ -275,6 +277,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     installEscapeKeyMonitor()
     updateTickMode()
     popoverModel.setPopoverVisible(true)
+  }
+
+  func popoverWillClose(_ notification: Notification) {
+    // Ends any edit so a typed value (e.g. a duration) is saved, not dropped.
+    popover.contentViewController?.view.window?.makeFirstResponder(nil)
   }
 
   func popoverDidClose(_ notification: Notification) {

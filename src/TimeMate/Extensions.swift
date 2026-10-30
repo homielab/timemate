@@ -41,7 +41,11 @@ extension Bundle {
 
 /// Relaunches the app through Launch Services (no shell, so it works in the
 /// sandbox), then quits this instance.
-func restartApp() {
+/// `failureMessage`: what the alert says when the new instance can't start.
+func restartApp(
+  failureMessage: String = NSLocalizedString(
+    "Quit TimeMate and open it again to apply the change.", comment: "")
+) {
   let configuration = NSWorkspace.OpenConfiguration()
   // Without this, Launch Services would just bring the running instance forward.
   configuration.createsNewApplicationInstance = true
@@ -50,7 +54,7 @@ func restartApp() {
     DispatchQueue.main.async {
       if let error {
         Logger.app.error("Could not relaunch the app: \(error.localizedDescription)")
-        showRestartFailedAlert()
+        showRestartFailedAlert(message: failureMessage)
       } else {
         PomodoroTimer.shared.isRelaunching = true
         NSApp.terminate(nil)
@@ -59,12 +63,11 @@ func restartApp() {
   }
 }
 
-private func showRestartFailedAlert() {
+private func showRestartFailedAlert(message: String) {
   let alert = NSAlert()
   alert.alertStyle = .warning
   alert.messageText = NSLocalizedString("TimeMate couldn't restart", comment: "")
-  alert.informativeText = NSLocalizedString(
-    "Quit TimeMate and open it again to apply the change.", comment: "")
+  alert.informativeText = message
   NSApp.activate(ignoringOtherApps: true)
   alert.runModal()
 }
@@ -95,7 +98,9 @@ func resetAllSettings() {
     SettingsReset.perform(on: .standard, domain: bundleID)
     LoginItemReset.perform()
     Logger.app.notice("All settings have been reset, restarting")
-    restartApp()
+    restartApp(
+      failureMessage: NSLocalizedString(
+        "Settings were reset. Please open TimeMate again.", comment: "Reset relaunch failed"))
   } else {
     Logger.app.error("Could not reset settings: no bundle identifier")
   }

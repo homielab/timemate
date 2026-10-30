@@ -123,6 +123,14 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     XCTAssertEqual(center.pendingInterval, 8 + delay)
   }
 
+  func testLabelTypedAfterStartReachesTheCopy() {
+    timer.startTimer()
+    defaults.set("Write report", forKey: SettingsKey.sessionLabel)
+    XCTAssertTrue(
+      waitUntil { self.center.sessionPending?.content.body.hasPrefix("Write report") == true })
+    XCTAssertEqual(center.pending.count, 1)
+  }
+
   func testPostponedBreakHasNoCopyUntilTheBreakComesBack() {
     timer = makeNotifyingTimer(autoStart: true)
     timer.startTimer()
