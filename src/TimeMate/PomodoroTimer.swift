@@ -403,14 +403,18 @@ class PomodoroTimer: ObservableObject {
       progress = 0
       self.endDate = nil
       timer?.cancel()
-      // The notification posted below replaces the scheduled copy; when that
+      // The notification posted below stands in for the scheduled copy; when that
       // copy has already shown (the app was late), it is not posted again.
       let fallbackShown = fallbackNotificationShown(forEnd: endDate, at: tickTime)
+      // The copy has its own identifier, so cancel it before it shows twice.
+      if fallbackMayBePending && !fallbackShown {
+        removePendingSessionNotification()
+      }
       scheduledFallback = nil
       fallbackMayBePending = false
       lastActivity = endDate
       // Only sessions that run to the end count; skipping never reaches here.
-      let pomodorosBefore = history.todayTotals().pomodoros
+      let pomodorosBefore = history.totals(on: endDate).pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(totalDuration), start: startedAt,
         end: endDate, label: sessionLabel(for: currentSessionType))
@@ -419,7 +423,7 @@ class PomodoroTimer: ObservableObject {
       // session waits for Start: no break screen for a break that is long gone.
       // Reaching the daily goal is still worth telling.
       if isLongOverdue {
-        sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+        sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore, endedAt: endDate)
         advanceToNextSession(start: false)
         restartCycleIfStale()
         saveSnapshot()
@@ -436,7 +440,7 @@ class PomodoroTimer: ObservableObject {
       if !fallbackShown {
         sendNotification()
       }
-      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore, endedAt: endDate)
 
       switch SessionSequence.completion(
         of: currentSessionType, keepBreakScreenOpen: keepBreakScreenOpen,
@@ -686,11 +690,11 @@ class PomodoroTimer: ObservableObject {
   /// day and hour it ran, not for the moment it was ended.
   private func recordFocusSoFar(elapsed: TimeInterval) {
     let end = state == .paused ? (pausedAt ?? now()) : now()
-    let pomodorosBefore = history.todayTotals().pomodoros
+    let pomodorosBefore = history.totals(on: end).pomodoros
     history.recordCompletedSession(
       .focus, duration: elapsed, start: startedAt, end: end,
       label: sessionLabel(for: .focus))
-    sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+    sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore, endedAt: end)
   }
 
   /// "Undo Last Session": removes `record` from the history if it is still the
@@ -925,11 +929,11 @@ class PomodoroTimer: ObservableObject {
       state = .idle
     case .expired(let end, let duration, let startNext):
       lastActivity = end
-      let pomodorosBefore = history.todayTotals().pomodoros
+      let pomodorosBefore = history.totals(on: end).pomodoros
       history.recordCompletedSession(
         currentSessionType, duration: TimeInterval(duration), start: startedAt, end: end,
         label: sessionLabel(for: currentSessionType))
-      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
+      sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore, endedAt: end)
       advanceToNextSession(start: startNext)
     }
   }

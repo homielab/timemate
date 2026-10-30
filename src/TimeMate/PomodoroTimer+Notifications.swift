@@ -25,7 +25,11 @@ extension PomodoroTimer {
       forCompleted: currentSessionType, next: next.sessionType,
       minutes: SessionDuration.sanitized(minutesFor(session: next.sessionType)),
       autoStarted: autoStarted, breakThroughFocus: breakThroughFocus,
-      label: sessionLabel(for: currentSessionType), trigger: trigger)
+      label: sessionLabel(for: currentSessionType),
+      identifier: trigger == nil
+        ? SessionNotification.sessionCompleteIdentifier
+        : SessionNotification.fallbackIdentifier,
+      trigger: trigger)
   }
 
   /// Keeps the scheduled copy of the "session complete" notification in step
@@ -51,7 +55,7 @@ extension PomodoroTimer {
     let request = sessionCompleteRequest(trigger: trigger)
     let fallback = ScheduledFallback(end: end, content: request.content)
     guard fallback != scheduledFallback else { return }
-    // The same identifier: replaces any copy scheduled earlier.
+    // The fallback identifier: replaces any copy scheduled earlier, never the banner.
     postNotification(request)
     scheduledFallback = fallback
     fallbackMayBePending = true
@@ -67,14 +71,20 @@ extension PomodoroTimer {
       && tickTime >= end.addingTimeInterval(SessionNotification.fallbackDelay)
   }
 
-  /// Tells the user once a day per goal when the session that just ended took today's
-  /// pomodoros up to the daily goal.
-  func sendDailyGoalNotificationIfReached(pomodorosBefore: Int) {
+  /// Tells the user once a day per goal when the session that ended at `end` took
+  /// the pomodoros of its day up to the daily goal. `pomodorosBefore` counts that
+  /// day before the session was recorded. A session from an earlier day only
+  /// notifies within `DailyGoal.lateNotificationWindow` of its end (a tick late
+  /// past midnight), not the next morning.
+  func sendDailyGoalNotificationIfReached(pomodorosBefore: Int, endedAt end: Date) {
     let goal = dailyGoal
-    let pomodoros = history.todayTotals().pomodoros
+    let pomodoros = history.totals(on: end).pomodoros
     guard DailyGoal.justReached(before: pomodorosBefore, after: pomodoros, goal: goal)
     else { return }
-    let today = history.currentDate
+    let isToday = history.calendar.isDate(end, inSameDayAs: history.currentDate)
+    guard isToday || history.currentDate.timeIntervalSince(end) <= DailyGoal.lateNotificationWindow
+    else { return }
+    let today = end
     let lastNotified = defaults.object(forKey: SettingsKey.dailyGoalNotifiedAt) as? Date
     let notifiedGoal = defaults.object(forKey: SettingsKey.dailyGoalNotifiedGoal) as? Int
     guard

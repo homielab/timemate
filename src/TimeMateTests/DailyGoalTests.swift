@@ -192,6 +192,34 @@ final class DailyGoalTests: XCTestCase {
     XCTAssertEqual(goalNotifications.count, 2)
   }
 
+  /// Starts a 3 s focus session that ends at 23:50 on 10 March.
+  private func startFocusEndingBeforeMidnight(goal: Int) -> PomodoroTimer {
+    currentTime = calendar.date(
+      from: DateComponents(year: 2026, month: 3, day: 10, hour: 23, minute: 49, second: 57))!
+    let timer = makeTimer(goal: goal)
+    timer.startTimer()
+    return timer
+  }
+
+  func testGoalSessionEndingBeforeMidnightNotifiesOnALateTickAfterIt() {
+    let timer = startFocusEndingBeforeMidnight(goal: 1)
+    currentTime = calendar.date(
+      from: DateComponents(year: 2026, month: 3, day: 11, hour: 0, minute: 0, second: 1))!
+    timer.handleTick()
+    XCTAssertEqual(history.totals(on: timer.history.currentDate).pomodoros, 0)
+    XCTAssertEqual(goalNotifications.count, 1)
+    run(timer, until: 1)
+    XCTAssertEqual(goalNotifications.count, 2, "reaching today's goal still notifies")
+  }
+
+  func testGoalSessionFromYesterdayDoesNotNotifyTheNextMorning() {
+    let timer = startFocusEndingBeforeMidnight(goal: 1)
+    currentTime = calendar.date(from: DateComponents(year: 2026, month: 3, day: 11, hour: 8))!
+    timer.handleTick()
+    XCTAssertEqual(history.totals(on: timer.history.currentDate).pomodoros, 0)
+    XCTAssertTrue(goalNotifications.isEmpty)
+  }
+
   /// Focus lasts 3 s: this lands past the end by more than the grace period.
   private var longPastFocusEnd: TimeInterval { 3 + PomodoroTimer.overdueGracePeriod + 1 }
 

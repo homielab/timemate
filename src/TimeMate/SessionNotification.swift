@@ -172,25 +172,32 @@ enum SessionNotification {
   /// the previous, so Notification Center never holds buttons for an older session.
   static let sessionCompleteIdentifier = "com.homielab.timemate.sessionComplete"
 
+  /// Identifier of the scheduled copy (`fallbackDelay`), kept apart from the
+  /// banner so scheduling the next session's copy never replaces a banner just shown.
+  static let fallbackIdentifier = "com.homielab.timemate.sessionComplete.fallback"
+
+  /// Both "session complete" identifiers: the banner and its scheduled copy.
+  static let sessionCompleteIdentifiers = [sessionCompleteIdentifier, fallbackIdentifier]
+
   /// Removes the "session complete" notification from Notification Center
   /// (the user has moved on), leaving the daily goal one and other apps' alone.
   static func removeDelivered() {
     let center = UNUserNotificationCenter.current()
-    center.removeDeliveredNotifications(withIdentifiers: [sessionCompleteIdentifier])
-    center.removePendingNotificationRequests(withIdentifiers: [sessionCompleteIdentifier])
+    center.removeDeliveredNotifications(withIdentifiers: sessionCompleteIdentifiers)
+    center.removePendingNotificationRequests(withIdentifiers: sessionCompleteIdentifiers)
   }
 
   /// How long after a session's end its scheduled copy of the notification
-  /// fires. The app posts the notification itself as the session ends, under
-  /// the same identifier, which replaces the scheduled copy; so the copy only
-  /// shows when the app is not running or is late (the Mac slept, App Nap).
+  /// fires. The app posts the notification itself as the session ends and
+  /// cancels the scheduled copy; so the copy only shows when the app is not
+  /// running or is late (the Mac slept, App Nap).
   static let fallbackDelay: TimeInterval = 3
 
   /// Cancels the scheduled copy of the "session complete" notification; one
   /// already shown stays in Notification Center.
   static func removePending() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(
-      withIdentifiers: [sessionCompleteIdentifier])
+      withIdentifiers: sessionCompleteIdentifiers)
   }
 
   /// Hands `request` to Notification Center; a failure (notifications denied,

@@ -254,6 +254,7 @@ final class SessionNotificationTests: XCTestCase {
     XCTAssertEqual(first.identifier, SessionNotification.sessionCompleteIdentifier)
     XCTAssertEqual(second.identifier, first.identifier)
     XCTAssertNotEqual(first.identifier, SessionNotification.dailyGoalIdentifier)
+    XCTAssertNotEqual(first.identifier, SessionNotification.fallbackIdentifier)
   }
 
   private func postedRequests(breakThroughFocus: Bool?, notificationsEnabled: Bool = true)

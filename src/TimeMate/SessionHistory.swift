@@ -191,10 +191,12 @@ final class SessionHistory: ObservableObject {
 
   /// Completed focus sessions and focus time of the calendar day containing
   /// the current time.
-  func todayTotals() -> DayTotals {
-    let today = now()
+  func todayTotals() -> DayTotals { totals(on: now()) }
+
+  /// Completed focus sessions and focus time of the calendar day containing `day`.
+  func totals(on day: Date) -> DayTotals {
     let focus = records.filter {
-      $0.kind == .focus && $0.completed && calendar.isDate($0.end, inSameDayAs: today)
+      $0.kind == .focus && $0.completed && calendar.isDate($0.end, inSameDayAs: day)
     }
     return DayTotals(
       pomodoros: focus.count, focusSeconds: focus.reduce(0) { $0 + $1.duration })

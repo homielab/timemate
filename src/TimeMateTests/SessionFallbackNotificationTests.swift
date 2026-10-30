@@ -27,7 +27,9 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     }
 
     func removePending() {
-      pending[SessionNotification.sessionCompleteIdentifier] = nil
+      for identifier in SessionNotification.sessionCompleteIdentifiers {
+        pending[identifier] = nil
+      }
     }
 
     func removeAll() {
@@ -35,7 +37,7 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     }
 
     var sessionPending: UNNotificationRequest? {
-      pending[SessionNotification.sessionCompleteIdentifier]
+      pending[SessionNotification.fallbackIdentifier]
     }
 
     /// Seconds from `now` until the pending copy fires.
@@ -148,6 +150,23 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     XCTAssertEqual(center.shown.count, 1)
     XCTAssertEqual(center.shown.first?.identifier, SessionNotification.sessionCompleteIdentifier)
     XCTAssertNil(center.sessionPending)
+  }
+
+  func testCopyAndBannerUseDifferentIdentifiers() {
+    timer.startTimer()
+    XCTAssertEqual(center.pending.keys.first, SessionNotification.fallbackIdentifier)
+    XCTAssertNotEqual(
+      SessionNotification.fallbackIdentifier, SessionNotification.sessionCompleteIdentifier)
+    finishSession(timer)
+    // The next session's copy, scheduled right after, leaves the banner alone.
+    XCTAssertEqual(center.shown.map(\.identifier), [SessionNotification.sessionCompleteIdentifier])
+    XCTAssertEqual(center.pending.keys.first, SessionNotification.fallbackIdentifier)
+  }
+
+  func testRemovingCancelsBothIdentifiers() {
+    XCTAssertEqual(
+      Set(SessionNotification.sessionCompleteIdentifiers),
+      [SessionNotification.sessionCompleteIdentifier, SessionNotification.fallbackIdentifier])
   }
 
   func testAutoStartedSessionGetsItsOwnCopy() {
@@ -282,9 +301,9 @@ final class SessionFallbackNotificationTests: TimerTestCase {
     timer.startTimer()
     timer.pauseTimer()
     timer = nil
-    center.pending[SessionNotification.sessionCompleteIdentifier] =
+    center.pending[SessionNotification.fallbackIdentifier] =
       UNNotificationRequest(
-        identifier: SessionNotification.sessionCompleteIdentifier,
+        identifier: SessionNotification.fallbackIdentifier,
         content: UNNotificationContent(),
         trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false))
     timer = makeNotifyingTimer()

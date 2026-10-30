@@ -32,6 +32,10 @@ enum DailyGoal {
     !isReached(completed: before, goal: goal) && isReached(completed: after, goal: goal)
   }
 
+  /// How long after its end a session from an earlier day may still notify that
+  /// it reached that day's goal (the Mac woke or the app ticked after midnight).
+  static let lateNotificationWindow: TimeInterval = 60 * 60
+
   /// Whether the "goal reached" notification already went out on `today`'s day for
   /// `goal`; a raised goal (or a cleared flag) notifies again.
   static func wasNotified(
