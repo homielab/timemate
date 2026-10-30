@@ -329,3 +329,6 @@
 "Saved with this focus session" = "Saved with this focus session";
 "Applies from the next session" = "Applies from the next session";
 "Recorded %d min of focus" = "Recorded %d min of focus";
+
+"Reserved by macOS (System Settings → Keyboard → Keyboard Shortcuts). Record a different one." = "Reserved by macOS (System Settings → Keyboard → Keyboard Shortcuts). Record a different one.";
+"macOS or text fields may use this combination. Add ⌥ or ⌘ to be safe." = "macOS or text fields may use this combination. Add ⌥ or ⌘ to be safe.";

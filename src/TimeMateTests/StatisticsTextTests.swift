@@ -203,6 +203,23 @@ final class StatisticsTextTests: XCTestCase {
       "Tập trung nhất: 09:00 – 10:00")
   }
 
+  func testUndoShowsTheDateOnlyForASessionNotFromToday() {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
+    let now = Date(timeIntervalSince1970: 1_000_000)  // 12 Jan 1970, 13:46 UTC
+    let hour: TimeInterval = 3600
+    XCTAssertEqual(
+      StatisticsText.undoDateStyle(start: now - hour, end: now, now: now, calendar: calendar), .none
+    )
+    XCTAssertEqual(
+      StatisticsText.undoDateStyle(
+        start: now - 24 * hour, end: now - 23 * hour, now: now, calendar: calendar), .medium)
+    // Started yesterday, ended today.
+    XCTAssertEqual(
+      StatisticsText.undoDateStyle(
+        start: now - 14 * hour, end: now - 13 * hour, now: now, calendar: calendar), .medium)
+  }
+
   func testUndoLastSessionQuestion() throws {
     XCTAssertEqual(
       StatisticsText.undoLastSession(

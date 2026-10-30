@@ -162,6 +162,15 @@ enum StatisticsText {
       bundle, locale, label, timeRange, minutes)
   }
 
+  /// Date part of the Undo question's time range: none for a session that started
+  /// and ended today, else `.medium` so a session from yesterday shows its date.
+  static func undoDateStyle(start: Date, end: Date, now: Date, calendar: Calendar)
+    -> DateIntervalFormatter.Style
+  {
+    calendar.isDate(start, inSameDayAs: now) && calendar.isDate(end, inSameDayAs: now)
+      ? .none : .medium
+  }
+
   /// "Most focused: 9 – 10 AM": the hour range with the most focus time.
   static func mostFocused(
     _ hours: String, bundle: Bundle = .main, locale: Locale = AppLocale.current

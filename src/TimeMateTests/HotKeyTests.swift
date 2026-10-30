@@ -14,9 +14,12 @@ final class HotKeyTests: XCTestCase {
     super.setUp()
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     defaults = UserDefaults(suiteName: Self.suiteName)
+    // Labels from the US table, whatever the Mac's keyboard layout.
+    HotKeyShortcut.layoutCharacter = { _ in nil }
   }
 
   override func tearDown() {
+    HotKeyShortcut.layoutCharacter = KeyboardLayout.character(for:)
     UserDefaults().removePersistentDomain(forName: Self.suiteName)
     super.tearDown()
   }
@@ -52,10 +55,47 @@ final class HotKeyTests: XCTestCase {
     XCTAssertFalse(HotKeyShortcut(keyCode: 1, modifiers: 0).isValidGlobalHotKey)
   }
 
+  func testLabelsFollowTheKeyboardLayout() {
+    // AZERTY: the US "W" key types Z; Space, arrows and F-keys keep their names.
+    HotKeyShortcut.layoutCharacter = { $0 == UInt32(kVK_ANSI_W) ? "z" : nil }
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_ANSI_W)), "Z")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_ANSI_Q)), "Q")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_LeftArrow)), "←")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_F5)), "F5")
+    HotKeyShortcut.layoutCharacter = { _ in "x" }
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: UInt32(kVK_UpArrow)), "↑")
+    XCTAssertEqual(HotKeyShortcut.keyLabel(for: 200), "X")
+  }
+
+  func testControlWithLetterSpaceOrSideArrowMayClash() {
+    let control = UInt32(controlKey)
+    for key in [kVK_ANSI_A, kVK_ANSI_E, kVK_Space, kVK_LeftArrow, kVK_RightArrow] {
+      XCTAssertTrue(HotKeyShortcut(keyCode: UInt32(key), modifiers: control).mayClashWithSystem)
+    }
+    XCTAssertTrue(
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_A), modifiers: control | UInt32(shiftKey))
+        .mayClashWithSystem)
+    XCTAssertFalse(HotKeyAction.startPause.defaultShortcut.mayClashWithSystem)
+    XCTAssertFalse(
+      HotKeyShortcut(keyCode: UInt32(kVK_ANSI_1), modifiers: control).mayClashWithSystem)
+    XCTAssertFalse(
+      HotKeyShortcut(keyCode: UInt32(kVK_UpArrow), modifiers: control).mayClashWithSystem)
+  }
+
+  func testEnabledMacOSShortcutIsRefused() {
+    let spotlight = HotKeyShortcut(
+      keyCode: UInt32(kVK_Space), modifiers: UInt32(cmdKey | optionKey))
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [spotlight] })
+    XCTAssertEqual(manager.setShortcut(spotlight, for: .skip), .system)
+    XCTAssertNotEqual(manager.shortcut(for: .skip), spotlight)
+    let free = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_K), modifiers: UInt32(cmdKey | optionKey))
+    XCTAssertEqual(manager.setShortcut(free, for: .skip), .ok)
+  }
+
   // MARK: - Persistence
 
   func testMissingDefaultsGiveDefaultShortcutsAndResetAndExtendOff() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     for action in HotKeyAction.allCases {
       XCTAssertEqual(manager.shortcut(for: action), action.defaultShortcut)
     }
@@ -74,12 +114,12 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testResetShortcutCanBeTurnedOnAndRecorded() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     manager.setEnabled(true, for: .reset)
     let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey))
     XCTAssertEqual(manager.setShortcut(shortcut, for: .reset), .ok)
 
-    let reloaded = HotKeyManager(defaults: defaults)
+    let reloaded = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     XCTAssertTrue(reloaded.isEnabled(.reset))
     XCTAssertEqual(reloaded.shortcut(for: .reset), shortcut)
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeyResetKeyCode), kVK_Space)
@@ -155,21 +195,22 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testShortcutIsSavedAsKeyCodeAndModifiersAndReloaded() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     let shortcut = HotKeyShortcut(
       keyCode: UInt32(kVK_ANSI_J), modifiers: UInt32(cmdKey | optionKey))
     XCTAssertEqual(manager.setShortcut(shortcut, for: .skip), .ok)
 
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipKeyCode), kVK_ANSI_J)
     XCTAssertEqual(defaults.integer(forKey: SettingsKey.hotKeySkipModifiers), cmdKey | optionKey)
-    XCTAssertEqual(HotKeyManager(defaults: defaults).shortcut(for: .skip), shortcut)
     XCTAssertEqual(
-      HotKeyManager(defaults: defaults).shortcut(for: .startPause),
+      HotKeyManager(defaults: defaults, systemShortcuts: { [] }).shortcut(for: .skip), shortcut)
+    XCTAssertEqual(
+      HotKeyManager(defaults: defaults, systemShortcuts: { [] }).shortcut(for: .startPause),
       HotKeyAction.startPause.defaultShortcut)
   }
 
   func testShortcutWithoutCommandOrControlIsRefused() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     let shortcut = HotKeyShortcut(keyCode: UInt32(kVK_ANSI_E), modifiers: UInt32(optionKey))
     XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .invalid)
     XCTAssertEqual(manager.shortcut(for: .startPause), HotKeyAction.startPause.defaultShortcut)
@@ -177,7 +218,7 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testShortcutOfAnotherActionIsRefusedWithItsName() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     let startPause = HotKeyAction.startPause.defaultShortcut
     XCTAssertEqual(manager.setShortcut(startPause, for: .skip), .conflict(.startPause))
     XCTAssertEqual(manager.shortcut(for: .skip), HotKeyAction.skip.defaultShortcut)
@@ -188,7 +229,7 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testShortcutOfATurnedOffActionIsFree() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     let resetDefault = HotKeyAction.reset.defaultShortcut
     XCTAssertFalse(manager.isEnabled(.reset))
     XCTAssertEqual(manager.setShortcut(resetDefault, for: .skip), .ok)
@@ -222,7 +263,7 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testReservedSystemShortcutsAreRefused() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     let reserved = [
       kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
       kVK_ANSI_H, kVK_ANSI_Comma, kVK_Space, kVK_Tab, kVK_ANSI_S, kVK_ANSI_M, kVK_ANSI_K,
@@ -246,7 +287,7 @@ final class HotKeyTests: XCTestCase {
       HotKeyShortcut(keyCode: UInt32(kVK_ANSI_E), modifiers: UInt32(controlKey | optionKey)),
       HotKeyShortcut(keyCode: UInt32(kVK_F5), modifiers: UInt32(cmdKey)),
     ]
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     for shortcut in notReserved {
       XCTAssertFalse(shortcut.isReserved)
       XCTAssertEqual(manager.setShortcut(shortcut, for: .startPause), .ok)
@@ -274,17 +315,17 @@ final class HotKeyTests: XCTestCase {
   }
 
   func testDisablingIsSavedPerAction() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     manager.setEnabled(false, for: .startPause)
     XCTAssertEqual(defaults.object(forKey: SettingsKey.hotKeyStartPauseEnabled) as? Bool, false)
 
-    let reloaded = HotKeyManager(defaults: defaults)
+    let reloaded = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     XCTAssertFalse(reloaded.isEnabled(.startPause))
     XCTAssertTrue(reloaded.isEnabled(.skip))
   }
 
   func testInactiveManagerRegistersNothing() {
-    let manager = HotKeyManager(defaults: defaults)
+    let manager = HotKeyManager(defaults: defaults, systemShortcuts: { [] })
     manager.setEnabled(true, for: .skip)
     XCTAssertTrue(manager.failedActions.isEmpty)
   }
@@ -328,7 +369,9 @@ final class HotKeyTests: XCTestCase {
   }
 
   private func makeManager(_ fake: FakeHotKeys) -> HotKeyManager {
-    HotKeyManager(defaults: defaults, registrar: fake.registrar, schedule: fake.schedule)
+    HotKeyManager(
+      defaults: defaults, registrar: fake.registrar, schedule: fake.schedule,
+      systemShortcuts: { [] })
   }
 
   func testRetryFailedRegistersShortcutsFreedByAnotherApp() {

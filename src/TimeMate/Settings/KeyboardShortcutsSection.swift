@@ -26,6 +26,10 @@ struct KeyboardShortcutsSection: View {
             Text(message)
               .font(.caption)
               .foregroundColor(.orange)
+          } else if hotKeys.isEnabled(action), hotKeys.shortcut(for: action).mayClashWithSystem {
+            Text("macOS or text fields may use this combination. Add ⌥ or ⌘ to be safe.")
+              .font(.caption)
+              .foregroundColor(.orange)
           } else if hotKeys.failedActions.contains(action) {
             Text("This shortcut is used by another app. Record a different one.")
               .font(.caption)
@@ -50,6 +54,10 @@ struct KeyboardShortcutsSection: View {
     switch refusals[action] {
     case .reserved:
       return NSLocalizedString("Apps use this for their own commands. Add ⌃ or ⌥.", comment: "")
+    case .system:
+      return NSLocalizedString(
+        "Reserved by macOS (System Settings → Keyboard → Keyboard Shortcuts). Record a different one.",
+        comment: "")
     case .conflict(let other) where !hotKeys.isEnabled(action):
       // Turning the action on was refused; its own recorder is off.
       return String(

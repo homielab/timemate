@@ -160,6 +160,43 @@ struct HotKeyShortcut: Equatable {
     return commandOnly && !Self.functionKeys.contains(Int(keyCode))
   }
 
+  /// ⌃ (or ⇧⌃) with a letter, Space or ←/→: macOS and text fields may already use these
+  /// (⌃A–E move the cursor, ⌃Space switches input source, ⌃←/→ switch Spaces). Allowed,
+  /// but Settings warns.
+  var mayClashWithSystem: Bool {
+    guard modifiers & ~UInt32(shiftKey) == UInt32(controlKey) else { return false }
+    let key = Int(keyCode)
+    return Self.letterKeys.contains(key)
+      || [kVK_Space, kVK_LeftArrow, kVK_RightArrow].contains(key)
+  }
+
+  /// The macOS shortcuts turned on in System Settings → Keyboard → Keyboard Shortcuts
+  /// (Spotlight, Mission Control, screenshots, …).
+  static func enabledSystemShortcuts() -> [HotKeyShortcut] {
+    var unmanaged: Unmanaged<CFArray>?
+    guard CopySymbolicHotKeys(&unmanaged) == noErr,
+      let entries = unmanaged?.takeRetainedValue() as? [[String: Any]]
+    else { return [] }
+    return entries.compactMap { entry in
+      guard (entry["kHISymbolicHotKeyEnabled"] as? Bool) == true,
+        let code = entry["kHISymbolicHotKeyCode"] as? Int,
+        let modifiers = entry["kHISymbolicHotKeyModifiers"] as? Int
+      else { return nil }
+      return HotKeyShortcut(keyCode: UInt32(code), modifiers: UInt32(modifiers))
+    }
+  }
+
+  private static let letterKeys = Set(
+    keyLabels.filter { $0.value.count == 1 && $0.value.first?.isLetter == true }.keys)
+
+  /// Keys that type a character, labelled by the current keyboard layout.
+  private static let characterKeys = Set(
+    keyLabels.filter { $0.value.count == 1 && $0.value.first?.isASCII == true }.keys)
+
+  /// The character the current keyboard layout types for a key code, nil when
+  /// it types none; replaceable so tests don't depend on the Mac's layout.
+  static var layoutCharacter: (UInt32) -> String? = KeyboardLayout.character(for:)
+
   private static let functionKeys: Set<Int> = [
     kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6, kVK_F7, kVK_F8, kVK_F9, kVK_F10,
     kVK_F11, kVK_F12, kVK_F13, kVK_F14, kVK_F15, kVK_F16, kVK_F17, kVK_F18, kVK_F19, kVK_F20,
@@ -245,7 +282,13 @@ struct HotKeyShortcut: Equatable {
       let format = bundle.localizedString(forKey: "Keypad %@", value: "Keypad %@", table: nil)
       return String(format: format, name)
     }
-    return keyLabels[Int(keyCode)] ?? "#\(keyCode)"
+    let key = Int(keyCode)
+    if characterKeys.contains(key) || keyLabels[key] == nil,
+      let typed = layoutCharacter(keyCode)
+    {
+      return typed.uppercased()
+    }
+    return keyLabels[key] ?? "#\(keyCode)"
   }
 
   /// Name of a key as VoiceOver should say it: a word for symbol keys, else its label.
@@ -264,6 +307,8 @@ enum HotKeyAssignment: Equatable {
   case invalid
   /// A system-wide shortcut such as ⌘V (see `HotKeyShortcut.isReserved`).
   case reserved
+  /// A macOS shortcut turned on in System Settings (Spotlight, screenshots, …).
+  case system
   /// Another action of TimeMate already uses the combination.
   case conflict(HotKeyAction)
 }
@@ -332,8 +377,10 @@ final class HotKeyManager: ObservableObject {
     schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void = { delay, work in
       DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     },
+    systemShortcuts: @escaping () -> [HotKeyShortcut] = HotKeyShortcut.enabledSystemShortcuts,
     onAction: @escaping (HotKeyAction) -> Void = { _ in }
   ) {
+    self.systemShortcuts = systemShortcuts
     self.defaults = defaults
     self.registrar = registrar
     self.schedule = schedule
@@ -342,9 +389,18 @@ final class HotKeyManager: ObservableObject {
       shortcuts[action] = Self.loadShortcut(for: action, from: defaults)
       enabled[action] = Self.loadEnabled(for: action, from: defaults)
     }
+    // Key labels follow the keyboard layout: redraw them when it changes.
+    layoutObserver = DistributedNotificationCenter.default().addObserver(
+      forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
+      object: nil, queue: .main
+    ) { [weak self] _ in self?.objectWillChange.send() }
   }
 
+  private let systemShortcuts: () -> [HotKeyShortcut]
+  private var layoutObserver: NSObjectProtocol?
+
   deinit {
+    if let layoutObserver { DistributedNotificationCenter.default().removeObserver(layoutObserver) }
     unregisterAll()
     if let eventHandlerRef {
       RemoveEventHandler(eventHandlerRef)
@@ -384,6 +440,7 @@ final class HotKeyManager: ObservableObject {
   func setShortcut(_ shortcut: HotKeyShortcut, for action: HotKeyAction) -> HotKeyAssignment {
     guard shortcut.isValidGlobalHotKey else { return .invalid }
     guard !shortcut.isReserved else { return .reserved }
+    guard !systemShortcuts().contains(shortcut) else { return .system }
     if let other = enabledAction(using: shortcut, besides: action) {
       return .conflict(other)
     }

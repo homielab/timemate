@@ -329,3 +329,6 @@
 "Saved with this focus session" = "Lưu cùng phiên tập trung này";
 "Applies from the next session" = "Áp dụng từ phiên sau";
 "Recorded %d min of focus" = "Đã ghi %d phút tập trung";
+
+"Reserved by macOS (System Settings → Keyboard → Keyboard Shortcuts). Record a different one." = "macOS đã dùng tổ hợp này (Cài đặt hệ thống → Bàn phím → Phím tắt). Hãy ghi tổ hợp khác.";
+"macOS or text fields may use this combination. Add ⌥ or ⌘ to be safe." = "macOS hoặc ô nhập chữ có thể đang dùng tổ hợp này. Thêm ⌥ hoặc ⌘ cho an toàn.";

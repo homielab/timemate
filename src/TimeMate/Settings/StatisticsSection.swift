@@ -117,7 +117,8 @@ private struct UndoLastSessionButton: View {
       ?? Bundle.main.localizedString(forKey: "No label", value: nil, table: nil)
     let formatter = DateIntervalFormatter()
     formatter.locale = AppLocale.current
-    formatter.dateStyle = .none
+    formatter.dateStyle = StatisticsText.undoDateStyle(
+      start: record.start, end: record.end, now: Date(), calendar: .current)
     formatter.timeStyle = .short
     return StatisticsText.undoLastSession(
       label: label, timeRange: formatter.string(from: record.start, to: record.end),
@@ -372,6 +373,8 @@ private struct LabelRow: View {
         .frame(width: 90, alignment: .leading)
         .lineLimit(1)
         .truncationMode(.tail)
+        // A long label is cut; the tooltip shows it in full.
+        .help(spokenName)
 
       GeometryReader { proxy in
         RoundedRectangle(cornerRadius: 2)
