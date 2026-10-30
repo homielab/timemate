@@ -61,7 +61,7 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
         // Window animations need an unlocked screen: set the end state, finish later.
         for window in windows { window.alphaValue = alpha }
         if alpha == 0 { self?.fadeOuts.append(done) } else { done() }
-      }, tip: tip)
+      }, screenChangeDelay: nil, tip: tip)
   }
 
   /// Hands out "tip 1", "tip 2", … one per pick.
@@ -421,5 +421,44 @@ final class BreakOverlayWindowControllerTests: XCTestCase {
     let closed = waitUntil { !controller.model.countdown.isLive }
     XCTAssertTrue(closed, "the windows close when the fade ends")
     XCTAssertFalse(controller.isShowingOverlay)
+  }
+
+  func testScreenChangeRebuildsWindowsWithoutTheEntrance() {
+    let controller = makeController(animated: false)
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+    XCTAssertEqual(Set(controller.windowSkipsEntrance), [false], "the first show animates in")
+    let tip = controller.model.tip
+
+    postScreenChange()
+
+    XCTAssertEqual(Set(controller.windowSkipsEntrance), [true])
+    XCTAssertEqual(Set(controller.windowTips), [tip])
+  }
+
+  func testScreenChangesAreCoalesced() {
+    var scheduled: [(TimeInterval, DispatchWorkItem)] = []
+    let controller = BreakOverlayWindowController(
+      timer: timer, defaults: defaults, animated: false, isFullscreenProbe: { false },
+      workspaceNotificationCenter: NotificationCenter(), fallbackPollInterval: nil,
+      settleDelay: nil, scheduleRecheck: { scheduled.append(($0, $1)) },
+      runFade: { windows, alpha, _, done in
+        for window in windows { window.alphaValue = alpha }
+        done()
+      })
+    timer.startTimer()
+    timer.skipSession()
+    drainMainQueue()
+
+    postScreenChange()
+    postScreenChange()
+
+    XCTAssertEqual(scheduled.count, 2)
+    XCTAssertTrue(scheduled[0].1.isCancelled, "a newer change replaces the pending rebuild")
+    XCTAssertEqual(scheduled[1].0, BreakOverlayWindowController.screenChangeDelay)
+    XCTAssertEqual(Set(controller.windowSkipsEntrance), [false], "no rebuild before the delay")
+    scheduled[1].1.perform()
+    XCTAssertEqual(Set(controller.windowSkipsEntrance), [true])
   }
 }

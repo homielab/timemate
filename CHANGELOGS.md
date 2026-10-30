@@ -9,6 +9,7 @@ All notable changes to TimeMate will be documented in this file.
 - Settings → Statistics → **By label**: the "Other" bar no longer runs over the minutes and out of the card when the labels outside the top five add up to more than the longest one.
 - **Export sessions CSV…** keeps labels such as `@Acme`, `-research` or `+5` as typed; only labels a spreadsheet would run as a formula (`=SUM(1)`, `-1+1`, `@A1`) still get a leading `'`.
 - **Weekends don't break the streak** always skips Saturday and Sunday, also where the system region has another weekend (Friday–Saturday in the UAE).
+- Plugging in or unplugging a display, docking or changing the resolution during a break no longer blanks the break screen for a couple of seconds: the tip, countdown and buttons stay in place.
 
 ## 3.7
 

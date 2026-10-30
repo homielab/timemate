@@ -65,6 +65,10 @@ class BreakOverlayWindowController: NSObject {
   private var frontmostAppObservers: [NSObjectProtocol] = []
   private var fullscreenPoll: Timer?
   private var settleRecheck: DispatchWorkItem?
+  /// Screen changes arrive in bursts (dock, KVM): rebuild once they settle.
+  static let screenChangeDelay: TimeInterval = 0.5
+  private let screenChangeDelayValue: TimeInterval?
+  private var pendingScreenRebuild: DispatchWorkItem?
   private var clickMonitor: Any?
   private var lastClickRecheck: Date?
   /// Whether a re-check is scheduled for when a full-screen animation has settled.
@@ -107,6 +111,13 @@ class BreakOverlayWindowController: NSObject {
     windows.compactMap { ($0.contentView as? NSHostingView<BreakOverlayView>)?.rootView.model.tip }
   }
 
+  /// Whether each break window skips the entrance animation (true after a screen change).
+  var windowSkipsEntrance: [Bool] {
+    windows.compactMap {
+      ($0.contentView as? NSHostingView<BreakOverlayView>)?.rootView.skipsEntrance
+    }
+  }
+
   /// The titles of the break screen windows, one per screen.
   var windowTitles: [String] { windows.map(\.title) }
 
@@ -121,6 +132,7 @@ class BreakOverlayWindowController: NSObject {
     settleDelay: TimeInterval? = OverlayPolicy.settleRecheckDelay,
     scheduleRecheck: @escaping RecheckScheduler = BreakOverlayWindowController.scheduleOnMain,
     runFade: @escaping FadeRunner = BreakOverlayWindowController.animateFade,
+    screenChangeDelay: TimeInterval? = BreakOverlayWindowController.screenChangeDelay,
     tip: @escaping () -> String = RelaxationTips.random
   ) {
     self.isFullscreenProbe = isFullscreenProbe
@@ -130,6 +142,7 @@ class BreakOverlayWindowController: NSObject {
     self.settleDelay = settleDelay
     self.scheduleRecheck = scheduleRecheck
     self.runFade = runFade
+    self.screenChangeDelayValue = screenChangeDelay
     self.timer = timer
     self.defaults = defaults
     self.animated = animated
@@ -161,7 +174,7 @@ class BreakOverlayWindowController: NSObject {
     if screenObserver == nil {
       screenObserver = NotificationCenter.default.addObserver(
         forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
-      ) { [weak self] _ in self?.handleScreenConfigurationChange() }
+      ) { [weak self] _ in self?.scheduleScreenRebuild() }
     }
     setupEventMonitor()
   }
@@ -169,6 +182,8 @@ class BreakOverlayWindowController: NSObject {
   private func stopObserving() {
     if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
     screenObserver = nil
+    pendingScreenRebuild?.cancel()
+    pendingScreenRebuild = nil
     if let monitor = eventMonitor { NSEvent.removeMonitor(monitor) }
     eventMonitor = nil
   }
@@ -176,13 +191,28 @@ class BreakOverlayWindowController: NSObject {
   /// Re-creates the windows for the new screen layout. A break screen that is fading out
   /// is left to close: rebuilding it would cancel the close and bring it back. The
   /// countdown keeps running across the rebuild.
+  private func scheduleScreenRebuild() {
+    pendingScreenRebuild?.cancel()
+    guard let delay = screenChangeDelayValue else {
+      handleScreenConfigurationChange()
+      return
+    }
+    let work = DispatchWorkItem { [weak self] in
+      self?.pendingScreenRebuild = nil
+      self?.handleScreenConfigurationChange()
+    }
+    pendingScreenRebuild = work
+    scheduleRecheck(delay, work)
+  }
+
+  /// The rebuilt windows show the break as it is, without replaying the entrance.
   private func handleScreenConfigurationChange() {
     guard isShowingOverlay, windows.first?.isVisible == true else { return }
-    createWindows()
+    createWindows(skipsEntrance: true)
     showWindows(animated: false)  // Snap to new layout
   }
 
-  private func createWindows() {
+  private func createWindows(skipsEntrance: Bool = false) {
     closeAllWindows()  // Clear existing
     startObserving()
 
@@ -213,7 +243,8 @@ class BreakOverlayWindowController: NSObject {
       // Borderless windows show no title, but VoiceOver reads it to name the window.
       window.title = BreakOverlayAccessibility.windowTitle()
 
-      let contentView = BreakOverlayView(model: model, isPrimary: isPrimary)
+      let contentView = BreakOverlayView(
+        model: model, isPrimary: isPrimary, skipsEntrance: skipsEntrance)
       window.contentView = NSHostingView(rootView: contentView)
 
       windows.append(window)

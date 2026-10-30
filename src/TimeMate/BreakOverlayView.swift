@@ -21,11 +21,15 @@ struct BreakOverlayView: View {
   /// Only the overlay on the main screen plays the animation.
   let isPrimary: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var isAnimating = false
+  /// A window rebuilt after a screen change shows its content at once.
+  let skipsEntrance: Bool
+  @State private var isAnimating: Bool
 
-  init(model: BreakOverlayModel, isPrimary: Bool) {
+  init(model: BreakOverlayModel, isPrimary: Bool, skipsEntrance: Bool = false) {
     self.model = model
     self.isPrimary = isPrimary
+    self.skipsEntrance = skipsEntrance
+    _isAnimating = State(initialValue: skipsEntrance)
   }
 
   init(timer: PomodoroTimer, isPrimary: Bool) {
@@ -34,7 +38,7 @@ struct BreakOverlayView: View {
 
   /// The entrance animation, or none when Reduce Motion is on.
   private func entrance(_ duration: Double, delay: Double = 0) -> Animation? {
-    reduceMotion ? nil : .easeOut(duration: duration).delay(delay)
+    reduceMotion || skipsEntrance ? nil : .easeOut(duration: duration).delay(delay)
   }
 
   var body: some View {
