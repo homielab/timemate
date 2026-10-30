@@ -4,6 +4,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+## 3.9
+
 ### Added
 
 - The Shortcuts actions **Start Focus** and **Start Focus with Label** take an optional number of minutes (1–180): automate a 15-minute session without changing the Focus duration in Settings; it counts in the cycle, Today and the daily goal like any other. The label of **Start Focus with Label** now suggests the labels you used in the last 90 days, and you can still type a new one.

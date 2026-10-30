@@ -1,16 +1,12 @@
-TimeMate 3.8 gives Shortcuts richer timer data and makes breaks, statistics and notifications more reliable.
+TimeMate 3.9 lets Shortcuts start a focus session of any length and makes keyboard shortcuts follow your keyboard layout.
 
 New
-• The Shortcuts actions Get Timer Status and Get Today's Progress now return details you can branch on: the timer's state, session, minutes and seconds left and label; today's pomodoros, focus minutes, goal and streak.
-• Statistics follow your Mac's region and 12/24-hour clock in the app's language.
+• The Shortcuts actions Start Focus and Start Focus with Label take an optional number of minutes (1–180): automate a 15-minute session without changing the Focus duration in Settings.
+• Start Focus with Label suggests the labels you used in the last 90 days, and you can still type a new one.
 
 Fixes
-• Quitting mid-session (or updating, logging out, shutting down) pauses the session instead of counting it as finished, so your history and streak only hold time you worked.
-• Skip on a session that hasn't started only moves to the next session, and Restart asks before throwing away focus sessions already done.
-• The Skip button delay now holds for every way out of a break, including Reset, the menu bar menu, notifications and Shortcuts.
-• When the break screen waits for a call or a full-screen app, the alarm sound waits too.
-• After the break screen or popover closes, the app you were using gets the keyboard back.
-• Settings fit small screens, the break screen stays steady when displays change, and ⌘ alone with a letter can no longer be taken as a shortcut.
-• The "daily goal reached" notification now also comes for a session that ended just before midnight.
-• CSV export keeps labels as typed, quoting only those a spreadsheet would run as formulas.
-• Better VoiceOver labels and many smaller fixes.
+• Keyboard shortcuts show the keys of your layout (AZERTY, QWERTZ, Dvorak…); a combination macOS already uses is refused.
+• Undo Last Session shows the date when the session wasn't today, and long label names show in full on hover.
+• A duration typed in Settings is saved when the popover closes; Esc puts back the old value.
+• Add Time with no session running now says "No session to extend".
+• Reset All Settings says your history and statistics are kept.

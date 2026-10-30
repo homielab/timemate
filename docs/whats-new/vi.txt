@@ -1,16 +1,12 @@
-TimeMate 3.8 cho Phím tắt lấy được nhiều thông tin hẹn giờ hơn, và giúp giờ nghỉ, thống kê cùng thông báo ổn định hơn.
+TimeMate 3.9 cho Phím tắt bắt đầu phiên tập trung với thời lượng tuỳ ý và làm phím tắt bàn phím theo kiểu bàn phím của bạn.
 
 Mới
-• Tác vụ Lấy trạng thái hẹn giờ và Lấy tiến độ hôm nay trong Phím tắt nay trả về chi tiết để rẽ nhánh: trạng thái, phiên, số phút và giây còn lại, nhãn; số pomodoro, phút tập trung, mục tiêu và chuỗi ngày của hôm nay.
-• Thống kê theo vùng và kiểu đồng hồ 12/24 giờ của Mac, bằng ngôn ngữ của ứng dụng.
+• Tác vụ Bắt đầu tập trung và Bắt đầu tập trung với nhãn trong Phím tắt nhận thêm số phút tuỳ chọn (1–180): tự động hoá phiên 15 phút mà không đổi thời lượng Tập trung trong Cài đặt.
+• Bắt đầu tập trung với nhãn gợi ý các nhãn bạn đã dùng trong 90 ngày qua, bạn vẫn gõ được nhãn mới.
 
 Sửa lỗi
-• Thoát giữa phiên (hoặc cập nhật, đăng xuất, tắt máy) nay tạm dừng phiên thay vì tính là đã xong, nên lịch sử và chuỗi ngày chỉ ghi thời gian bạn thực sự làm.
-• Bỏ qua một phiên chưa bắt đầu chỉ chuyển sang phiên kế tiếp, và Bắt đầu lại sẽ hỏi trước khi bỏ các phiên tập trung đã xong.
-• Thời gian chờ nút Bỏ qua nay áp dụng cho mọi cách kết thúc giờ nghỉ, kể cả Đặt lại, menu trên thanh menu, thông báo và Phím tắt.
-• Khi màn hình nghỉ chờ cuộc gọi hoặc ứng dụng toàn màn hình, âm báo cũng chờ theo.
-• Sau khi màn hình nghỉ hoặc popover đóng, ứng dụng bạn đang dùng nhận lại bàn phím.
-• Cài đặt vừa màn hình nhỏ, màn hình nghỉ không chớp khi đổi màn hình, và không còn gán được ⌘ đi cùng một chữ làm phím tắt.
-• Thông báo "đã đạt mục tiêu ngày" nay cũng đến với phiên kết thúc ngay trước nửa đêm.
-• Xuất CSV giữ nguyên nhãn như bạn gõ, chỉ thêm dấu ' cho nhãn mà bảng tính sẽ chạy như công thức.
-• Nhãn VoiceOver tốt hơn và nhiều sửa lỗi nhỏ khác.
+• Phím tắt hiện đúng phím theo kiểu bàn phím (AZERTY, QWERTZ, Dvorak…); tổ hợp macOS đã dùng sẽ bị từ chối.
+• Hoàn tác phiên gần nhất hiện ngày khi phiên không phải hôm nay, và tên nhãn dài hiện đủ khi rê chuột.
+• Thời lượng gõ trong Cài đặt được lưu khi đóng popover; Esc trả lại giá trị cũ.
+• Thêm thời gian khi không có phiên nào chạy nay báo "Không có phiên để kéo dài".
+• Đặt lại mọi cài đặt cho biết lịch sử và thống kê được giữ lại.
