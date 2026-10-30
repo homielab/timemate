@@ -32,6 +32,35 @@ final class PomodoroTimerUndoTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .longBreak)
   }
 
+  func testUndoTheGoalSessionLetsTheNextOneNotifyAgain() {
+    var goalPosts = 0
+    defaults.set(3, forKey: SettingsKey.focusDuration)
+    defaults.set(2, forKey: SettingsKey.shortBreakDuration)
+    defaults.set(false, forKey: SettingsKey.autoStartNextSession)
+    defaults.set(true, forKey: SettingsKey.notificationsEnabled)
+    defaults.set(0.0, forKey: SettingsKey.alarmVolume)
+    defaults.set(1, forKey: SettingsKey.dailyGoal)
+    timer = PomodoroTimer(
+      defaults: defaults,
+      now: { [weak self] in self?.currentTime ?? Date(timeIntervalSince1970: 0) },
+      workspaceNotificationCenter: workspaceCenter,
+      distributedNotificationCenter: distributedCenter,
+      history: history,
+      notificationCenter: clockCenter,
+      postNotification: {
+        if $0.identifier == SessionNotification.dailyGoalIdentifier { goalPosts += 1 }
+      },
+      removeSessionNotifications: {},
+      removePendingSessionNotification: {},
+      playSound: { _, _ in },
+      isFullscreenProbe: { false })
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 1)
+    XCTAssertNotNil(undoLast())
+    runFocusAndBreak()
+    XCTAssertEqual(goalPosts, 2)
+  }
+
   func testUndoSessionBeforeLongBreakKeepsCurrentCycle() {
     timer = makeTimer(autoStart: false)
     for _ in 0..<4 { runFocusAndBreak() }
