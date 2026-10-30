@@ -90,9 +90,12 @@ final class BreakOverlayModel: ObservableObject {
       return
     }
     let storedGoal = defaults.object(forKey: SettingsKey.dailyGoal) as? Int
+    let skipWeekends = defaults.bool(forKey: SettingsKey.streakSkipsWeekends)
     today = TodaySummary(
       pomodoros: totals.pomodoros, minutes: totals.focusMinutes, goal: storedGoal,
-      streak: { history.goalStreak(goal: DailyGoal.sanitized(storedGoal)) })
+      streak: {
+        history.goalStreak(goal: DailyGoal.sanitized(storedGoal), skipWeekends: skipWeekends)
+      })
   }
 
   /// Starts the countdown for a break screen that has just appeared: the skip delay

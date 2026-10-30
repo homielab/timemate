@@ -114,11 +114,14 @@ enum TimerIntentActions {
 
   /// Today's completed pomodoros and focus minutes from `history`, measured
   /// against `goal` (`DailyGoal.off` or less means no goal).
-  static func todayProgress(history: SessionHistory, goal: Int) -> TodayProgress {
+  static func todayProgress(
+    history: SessionHistory, goal: Int, skipWeekends: Bool = false
+  ) -> TodayProgress {
     let totals = history.todayTotals()
     return TodayProgress(
       completed: totals.pomodoros, goal: goal > DailyGoal.off ? goal : nil,
-      focusMinutes: totals.focusMinutes, streak: history.goalStreak(goal: goal))
+      focusMinutes: totals.focusMinutes,
+      streak: history.goalStreak(goal: goal, skipWeekends: skipWeekends))
   }
 
   /// Spoken / shown answer of "Get Today's Progress", e.g. "Today: 3 of 8 pomodoros, 75 minutes. Streak: 4 days".
@@ -286,7 +289,8 @@ struct GetTodayProgressIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
     let timer = PomodoroTimer.shared
-    let progress = TimerIntentActions.todayProgress(history: timer.history, goal: timer.dailyGoal)
+    let progress = TimerIntentActions.todayProgress(
+      history: timer.history, goal: timer.dailyGoal, skipWeekends: timer.streakSkipsWeekends)
     return .result(
       value: progress.completed,
       dialog: IntentDialog(stringLiteral: TimerIntentActions.progressText(progress)))

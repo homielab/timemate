@@ -917,4 +917,52 @@ final class SessionStatisticsTests: XCTestCase {
     hours[9] = 600
     XCTAssertEqual(SessionStatistics.mostFocusedHour(hours), 9)
   }
+
+  // MARK: Weekends that don't break the streak
+
+  /// Goal streak days from Monday 2026-10-26, one count per day, ending on `end`.
+  private func weekDays(_ counts: [Int], endingOn end: (Int, Int, Int)) -> (
+    [SessionStatistics.Day], Calendar
+  ) {
+    let utc = calendar("UTC")
+    return (streakDays(counts, endingOn: end, in: utc), utc)
+  }
+
+  func testWeekendWithoutPomodorosKeepsTheStreakWhenSkipped() {
+    // Mon–Fri reached, Sat/Sun empty, Monday reached.
+    let (days, utc) = weekDays([4, 4, 4, 4, 4, 0, 0, 4], endingOn: (2026, 11, 2))
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 6)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: false, calendar: utc), 1)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 6)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: days, goal: 4, skipWeekends: false, calendar: utc), 5)
+  }
+
+  func testMissedWeekdayStillBreaksTheStreakWhenWeekendsAreSkipped() {
+    let (days, utc) = weekDays([4, 4, 4, 0, 4, 0, 0, 4], endingOn: (2026, 11, 2))
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 2)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 3)
+  }
+
+  func testEmptyWeekendTodayDoesNotBreakTheStreak() {
+    // Today is Sunday 2026-11-01 with no pomodoros; Saturday is empty too.
+    let (days, utc) = weekDays([4, 4, 4, 4, 4, 0, 0], endingOn: (2026, 11, 1))
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 5)
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: false, calendar: utc), 0)
+  }
+
+  func testWeekendThatMetTheGoalCounts() {
+    let (days, utc) = weekDays([4, 4, 4, 4, 4, 4, 0, 4], endingOn: (2026, 11, 2))
+    XCTAssertEqual(
+      SessionStatistics.goalStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 7)
+    XCTAssertEqual(
+      SessionStatistics.longestStreak(days: days, goal: 4, skipWeekends: true, calendar: utc), 7)
+  }
 }

@@ -112,12 +112,15 @@ private struct TodayStatsView: View {
   @ObservedObject var history: SessionHistory
   @EnvironmentObject var appDelegate: AppDelegate
   @AppStorage(SettingsKey.dailyGoal) private var storedGoal = DailyGoal.off
+  @AppStorage(SettingsKey.streakSkipsWeekends) private var skipWeekends = false
 
   var body: some View {
     let totals = history.todayTotals()
     let summary = TodaySummary(
       pomodoros: totals.pomodoros, minutes: totals.focusMinutes, goal: storedGoal,
-      streak: { history.goalStreak(goal: DailyGoal.sanitized(storedGoal)) })
+      streak: {
+        history.goalStreak(goal: DailyGoal.sanitized(storedGoal), skipWeekends: skipWeekends)
+      })
     if !summary.hasGoal {
       Text(summary.visibleText)
         .font(.caption)

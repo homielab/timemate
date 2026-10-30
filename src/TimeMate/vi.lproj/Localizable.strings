@@ -227,6 +227,8 @@
 
 // Daily goal (Settings → Statistics, popover, statistics rows)
 "Daily goal" = "Mục tiêu mỗi ngày";
+"Weekends don't break the streak" = "Cuối tuần không làm đứt chuỗi";
+"A Saturday or Sunday that misses the goal is skipped instead of ending the streak." = "Thứ Bảy hoặc Chủ Nhật chưa đạt mục tiêu được bỏ qua thay vì làm đứt chuỗi.";
 "Off" = "Tắt";
 "Pomodoros to finish each day. TimeMate tells you once when you reach it." = "Số pomodoro cần hoàn thành mỗi ngày. TimeMate báo một lần khi bạn đạt mục tiêu.";
 "%@, goal reached" = "%@, đạt mục tiêu";

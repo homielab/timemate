@@ -52,6 +52,7 @@ extension PomodoroTimer {
   var dailyGoal: Int {
     DailyGoal.sanitized(defaults.object(forKey: SettingsKey.dailyGoal) as? Int)
   }
+  var streakSkipsWeekends: Bool { defaults.bool(forKey: SettingsKey.streakSkipsWeekends) }
 
   /// Seconds in `minutes` of session time. Debug builds treat minutes as
   /// seconds so sessions can be tried out quickly.

@@ -263,14 +263,18 @@ enum SessionStatistics {
   /// the streak, it just isn't part of it. 0 with no goal. The same goal applies to
   /// every day, since the goal isn't stored per day. `carried` days (from before
   /// the first of `days`, see `GoalStreakCarry`) are added only when the streak
-  /// reaches back over all of `days`.
-  static func goalStreak(days: [Day], goal: Int, carried: Int = 0) -> Int {
+  /// reaches back over all of `days`. With `skipWeekends` a Saturday or Sunday that
+  /// missed the goal neither breaks the streak nor counts; one that met it counts.
+  static func goalStreak(
+    days: [Day], goal: Int, carried: Int = 0, skipWeekends: Bool = false,
+    calendar: Calendar = .current
+  ) -> Int {
     guard goal > DailyGoal.off else { return 0 }
     var streak = 0
     for (offset, day) in days.reversed().enumerated() {
       if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
         streak += 1
-      } else if offset > 0 {
+      } else if offset > 0, !(skipWeekends && calendar.isDateInWeekend(day.date)) {
         return streak
       }
     }
@@ -278,13 +282,20 @@ enum SessionStatistics {
   }
 
   /// The longest run of consecutive `days` that met `goal`, anywhere in `days`
-  /// (today included only once reached). 0 with no goal.
-  static func longestStreak(days: [Day], goal: Int) -> Int {
+  /// (today included only once reached). 0 with no goal. `skipWeekends` as in
+  /// `goalStreak`.
+  static func longestStreak(
+    days: [Day], goal: Int, skipWeekends: Bool = false, calendar: Calendar = .current
+  ) -> Int {
     guard goal > DailyGoal.off else { return 0 }
     var best = 0
     var run = 0
     for day in days {
-      run = DailyGoal.isReached(completed: day.pomodoros, goal: goal) ? run + 1 : 0
+      if DailyGoal.isReached(completed: day.pomodoros, goal: goal) {
+        run += 1
+      } else if !(skipWeekends && calendar.isDateInWeekend(day.date)) {
+        run = 0
+      }
       best = max(best, run)
     }
     return best
@@ -351,10 +362,13 @@ extension SessionHistory {
   }
 
   /// Consecutive days up to today that met `goal`: the kept history, plus the
-  /// days carried from trimmed history when the streak runs back to them.
-  func goalStreak(goal: Int) -> Int {
+  /// days carried from trimmed history when the streak runs back to them. With
+  /// `skipWeekends` (weekends that missed the goal don't break the streak) the
+  /// carry is ignored, because it was counted with every day able to break it;
+  /// the streak then reaches back at most over the kept 90 days.
+  func goalStreak(goal: Int, skipWeekends: Bool = false) -> Int {
     let today = calendar.startOfDay(for: currentDate)
-    if let carry = goalStreakCarry, carry.throughDay < today,
+    if !skipWeekends, let carry = goalStreakCarry, carry.throughDay < today,
       let span = calendar.dateComponents([.day], from: carry.throughDay, to: today).day, span > 0
     {
       return SessionStatistics.goalStreak(
@@ -365,16 +379,16 @@ extension SessionHistory {
     return SessionStatistics.goalStreak(
       days: SessionStatistics.days(
         from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
-      goal: goal)
+      goal: goal, skipWeekends: skipWeekends, calendar: calendar)
   }
 
   /// The longest goal streak within the kept history (the last 90 days); trimmed
   /// days are not counted, since the carry keeps only the current streak.
-  func longestGoalStreak(goal: Int) -> Int {
+  func longestGoalStreak(goal: Int, skipWeekends: Bool = false) -> Int {
     SessionStatistics.longestStreak(
       days: SessionStatistics.days(
         from: records, endingOn: currentDate, count: Self.retentionDays, calendar: calendar),
-      goal: goal)
+      goal: goal, skipWeekends: skipWeekends, calendar: calendar)
   }
 
   /// The CSV export, with the `goal_reached` column when `goal` is set: the last

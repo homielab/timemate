@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 struct StatisticsSection: View {
   @EnvironmentObject var model: PopoverTimerModel
   @AppStorage(SettingsKey.dailyGoal) private var dailyGoal = DailyGoal.off
+  @AppStorage(SettingsKey.streakSkipsWeekends) private var streakSkipsWeekends = false
   @AppStorage(SettingsKey.statisticsDays) private var storedDays = SessionStatistics.weekLength
   @State private var showingResetAlert = false
 
@@ -16,7 +17,15 @@ struct StatisticsSection: View {
     SettingsSection(titleKey: "Statistics", systemImage: "chart.bar.fill") {
       DailyGoalRow(goal: $dailyGoal)
 
-      GoalStreakLabel(history: model.timer.history, goal: DailyGoal.sanitized(dailyGoal))
+      if dailyGoal > DailyGoal.off {
+        SettingsToggleRow(titleKey: "Weekends don't break the streak", isOn: $streakSkipsWeekends)
+          .help(
+            "A Saturday or Sunday that misses the goal is skipped instead of ending the streak.")
+      }
+
+      GoalStreakLabel(
+        history: model.timer.history, goal: DailyGoal.sanitized(dailyGoal),
+        skipWeekends: streakSkipsWeekends)
 
       Picker(selection: $storedDays) {
         Text("7 days").tag(SessionStatistics.weekLength)
@@ -75,10 +84,11 @@ struct StatisticsSection: View {
 private struct GoalStreakLabel: View {
   @ObservedObject var history: SessionHistory
   let goal: Int
+  let skipWeekends: Bool
 
   var body: some View {
-    let streak = history.goalStreak(goal: goal)
-    let best = history.longestGoalStreak(goal: goal)
+    let streak = history.goalStreak(goal: goal, skipWeekends: skipWeekends)
+    let best = history.longestGoalStreak(goal: goal, skipWeekends: skipWeekends)
     if streak > 0 {
       Text(StatisticsText.streak(days: streak))
         .font(.caption)
