@@ -10,6 +10,7 @@ All notable changes to TimeMate will be documented in this file.
 
 ### Fixed
 
+- A focus session paused in the evening and skipped (or recorded with Record and Reset) the next morning now counts for the day and hour it ran, not for the morning, so Today, the daily goal, the streak, By hour and the CSV export stay right.
 - After the Mac slept through the night in the middle of a focus session (or a postponed break), the menu bar now shows a fresh focus session at full length, so Start runs what you see instead of a leftover break from last night. The session that ended is still counted in History.
 
 ## 3.6

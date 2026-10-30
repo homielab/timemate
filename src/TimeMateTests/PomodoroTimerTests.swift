@@ -396,6 +396,29 @@ final class PomodoroTimerTests: TimerTestCase {
     XCTAssertEqual(timer.currentSessionType, .shortBreak)
   }
 
+  func testSkipNextDayRecordsPausedFocusAtItsPause() {
+    timer.startTimer()
+    runTicks(timer, 2)
+    timer.pauseTimer()
+    let pausedAt = currentTime!
+    advanceClock(by: 16 * 3600)  // paused in the afternoon, skipped next morning
+    timer.skipSession()
+    XCTAssertEqual(history.records.count, 1)
+    XCTAssertEqual(history.records.first?.end, pausedAt)
+    XCTAssertEqual(history.todayTotals().pomodoros, 0)
+  }
+
+  func testRecordAndResetNextDayRecordsPausedFocusAtItsPause() {
+    timer.startTimer()
+    runTicks(timer, 2)
+    timer.pauseTimer()
+    let pausedAt = currentTime!
+    advanceClock(by: 16 * 3600)
+    timer.stopTimer(recording: true)
+    XCTAssertEqual(history.records.first?.end, pausedAt)
+    XCTAssertEqual(history.todayTotals().pomodoros, 0)
+  }
+
   func testSkipFocusPastHalfRecordsTheTimeItRan() {
     defaults.set("Write report", forKey: SettingsKey.sessionLabel)
     timer.startTimer()

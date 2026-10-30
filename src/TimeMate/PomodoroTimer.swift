@@ -584,10 +584,14 @@ class PomodoroTimer: ObservableObject {
         total: TimeInterval(totalDuration))
   }
 
+  /// Records the focus time run so far. A paused session ended at its pause,
+  /// so one paused in the evening and skipped the next morning counts for the
+  /// day and hour it ran, not for the moment it was ended.
   private func recordFocusSoFar(elapsed: TimeInterval) {
+    let end = state == .paused ? (pausedAt ?? now()) : now()
     let pomodorosBefore = history.todayTotals().pomodoros
     history.recordCompletedSession(
-      .focus, duration: elapsed, start: startedAt, end: now(),
+      .focus, duration: elapsed, start: startedAt, end: end,
       label: sessionLabel(for: .focus))
     sendDailyGoalNotificationIfReached(pomodorosBefore: pomodorosBefore)
   }
