@@ -232,6 +232,135 @@ final class TimerIntentActionsTests: XCTestCase {
     XCTAssertEqual(defaults.string(forKey: SettingsKey.sessionLabel), "Writing")
   }
 
+  // Debug builds read minutes as seconds, so "15 minutes" lasts 15 s here.
+
+  func testStartFocusForMinutesRunsThatLongWithoutChangingTheSetting() {
+    TimerIntentActions.startFocus(timer, minutes: 15)
+
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.sessionLengthSeconds, 15)
+    XCTAssertEqual(timer.timeRemaining, 15)
+    XCTAssertEqual(defaults.integer(forKey: SettingsKey.focusDuration), 125)
+  }
+
+  func testStartFocusForMinutesKeepsMinutesWithinOneTo180() {
+    TimerIntentActions.startFocus(timer, minutes: 500)
+    XCTAssertEqual(timer.sessionLengthSeconds, 180)
+
+    timer.stopTimer()
+    TimerIntentActions.startFocus(timer, minutes: 0)
+    XCTAssertEqual(timer.sessionLengthSeconds, 1)
+  }
+
+  func testStartFocusForMinutesCountsLikeAnyFocusSession() {
+    timer.stopTimer()
+    let history = makeHistory()
+    timer = PomodoroTimer(
+      defaults: defaults, now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(), history: history,
+      playSound: { _, _ in }, isFullscreenProbe: { false })
+
+    TimerIntentActions.startFocus(timer, label: "Email", minutes: 15)
+    currentTime += 15
+    timer.handleTick()
+
+    XCTAssertEqual(timer.focusSessionsCompleted, 1)
+    XCTAssertEqual(history.todayTotals().pomodoros, 1)
+    XCTAssertEqual(history.records.last?.duration, 15)
+    XCTAssertEqual(history.records.last?.label, "Email")
+    // The break and the focus session after it take their lengths from Settings.
+    XCTAssertEqual(timer.currentSessionType, .shortBreak)
+    XCTAssertEqual(timer.sessionLengthSeconds, 60)
+    TimerIntentActions.startFocus(timer)
+    XCTAssertEqual(timer.sessionLengthSeconds, 125)
+  }
+
+  func testStartFocusForMinutesLeavesARunningOrPausedSessionsLength() {
+    TimerIntentActions.startFocus(timer)
+    TimerIntentActions.startFocus(timer, minutes: 15)
+    XCTAssertEqual(timer.sessionLengthSeconds, 125)
+
+    XCTAssertNoThrow(try TimerIntentActions.pause(timer))
+    TimerIntentActions.startFocus(timer, minutes: 15)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.sessionLengthSeconds, 125)
+  }
+
+  func testStartFocusForMinutesSkipsTheIdleBreak() {
+    finishFocusSession()
+    TimerIntentActions.startFocus(timer, minutes: 15)
+
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.sessionLengthSeconds, 15)
+  }
+
+  func testStartFocusForMinutesContinuesPastAFinishedBreak() {
+    finishFocusSession()
+    timer.isWaitingToContinue = true
+    TimerIntentActions.startFocus(timer, minutes: 15)
+
+    XCTAssertEqual(timer.currentSessionType, .focus)
+    XCTAssertEqual(timer.state, .active)
+    XCTAssertEqual(timer.sessionLengthSeconds, 15)
+  }
+
+  func testStartFocusForMinutesSurvivesARelaunch() {
+    TimerIntentActions.startFocus(timer, minutes: 15)
+    currentTime += 5
+    timer.handleTick()
+
+    let relaunched = PomodoroTimer(
+      defaults: defaults, now: { [unowned self] in self.currentTime },
+      workspaceNotificationCenter: NotificationCenter(), playSound: { _, _ in },
+      isFullscreenProbe: { false })
+
+    XCTAssertEqual(relaunched.state, .active)
+    XCTAssertEqual(relaunched.sessionLengthSeconds, 15)
+    XCTAssertEqual(relaunched.timeRemaining, 10)
+    relaunched.stopTimer()
+  }
+
+  func testLabelSuggestionsAreRecentLabelsNewestFirst() {
+    let history = makeHistory()
+    for (index, label) in ["Email", "Design", "email", "Write report"].enumerated() {
+      history.recordCompletedSession(
+        .focus, duration: 60, end: currentTime + TimeInterval(index), label: label)
+    }
+    history.recordCompletedSession(.focus, duration: 60, end: currentTime + 10)
+
+    XCTAssertEqual(
+      SessionLabelQuery.suggestions(history: history).map(\.id),
+      ["Write report", "email", "Design"])
+  }
+
+  func testTypingALabelOffersItThenSavedLabelsContainingIt() {
+    let history = makeHistory()
+    for (index, label) in ["Design review", "Email", "Web design"].enumerated() {
+      history.recordCompletedSession(
+        .focus, duration: 60, end: currentTime + TimeInterval(index), label: label)
+    }
+
+    XCTAssertEqual(
+      SessionLabelQuery.entities(matching: " desi ", history: history).map(\.id),
+      ["desi", "Web design", "Design review"])
+    XCTAssertEqual(
+      SessionLabelQuery.entities(matching: "email", history: history).map(\.id), ["Email"])
+    XCTAssertEqual(
+      SessionLabelQuery.entities(matching: "Gym", history: history).map(\.id), ["Gym"])
+    XCTAssertEqual(
+      SessionLabelQuery.entities(matching: "  ", history: history).map(\.id),
+      ["Web design", "Email", "Design review"])
+  }
+
+  func testLabelEntityIsTheCleanedUpLabel() async throws {
+    XCTAssertNil(SessionLabelEntity("  \n "))
+    XCTAssertEqual(SessionLabelEntity(" Write\nreport ")?.id, "Write report")
+    let found = try await SessionLabelQuery().entities(for: ["Design", " "])
+    XCTAssertEqual(found.map(\.id), ["Design"])
+  }
+
   func testExtendAddsTimeToARunningSession() {
     TimerIntentActions.start(timer)
     currentTime += 20

@@ -89,6 +89,9 @@ class PomodoroTimer: ObservableObject {
   /// before the bell does not relabel the one just done. `nil` = not captured
   /// (a snapshot from an older version): the label field is read live.
   private(set) var startedLabel: String?
+  /// Length in seconds of the focus session `startFocus(minutes:)` is about to
+  /// begin, used instead of the Focus setting for that session only.
+  private var oneOffFocusSeconds: Int?
   /// When a session last began or ended; an idle timer whose cycle is older
   /// than `SessionCycle.isStale` allows starts the cycle over.
   private(set) var lastActivity: Date?
@@ -280,6 +283,10 @@ class PomodoroTimer: ObservableObject {
     defer { saveSnapshot() }
     if state != .paused {
       resetForCurrentSession()
+      if currentSessionType == .focus, let seconds = oneOffFocusSeconds {
+        totalDuration = seconds
+        timeRemaining = seconds
+      }
       startedLabel = sessionLabel ?? ""
       startedAt = now()
     }
@@ -743,10 +750,19 @@ class PomodoroTimer: ObservableObject {
   /// Like `startOrContinue`, but asks for focus: an idle timer sitting on a
   /// break (the break did not start by itself) moves on to focus first, with
   /// the focus session before the break counted once, as it already was.
-  func startFocus() {
+  /// With `minutes` (kept within `SessionDuration.minuteRange`), a focus
+  /// session that begins now lasts that long instead of the Focus setting, which
+  /// stays as it is; it counts in the cycle, history and goal like any other. A
+  /// running or paused session keeps its length.
+  func startFocus(minutes: Int? = nil) {
     if !isWaitingToContinue, state == .idle, isBreak {
       advanceToNextSession(start: false)
     }
+    oneOffFocusSeconds = minutes.map {
+      let range = SessionDuration.minuteRange
+      return Self.seconds(forMinutes: min(max($0, range.lowerBound), range.upperBound))
+    }
+    defer { oneOffFocusSeconds = nil }
     startOrContinue()
   }
 

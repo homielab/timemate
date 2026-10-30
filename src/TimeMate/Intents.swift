@@ -18,13 +18,14 @@ enum TimerIntentActions {
   /// break. The label goes into the popover's "What are you working on?" field
   /// only when a new session begins (idle, or past a finished break); a running
   /// or paused session keeps the label it began with. A blank or missing label
-  /// leaves the field as it is.
-  static func startFocus(_ timer: PomodoroTimer, label: String? = nil) {
+  /// leaves the field as it is. `minutes` (1 to 180) sets the length of that
+  /// new session only; the Focus setting stays as it is.
+  static func startFocus(_ timer: PomodoroTimer, label: String? = nil, minutes: Int? = nil) {
     let beginsNewSession = timer.isWaitingToContinue || timer.state == .idle
     if beginsNewSession, let label = SessionLabel.normalized(label) {
       timer.defaults.set(label, forKey: SettingsKey.sessionLabel)
     }
-    timer.startFocus()
+    timer.startFocus(minutes: minutes)
   }
 
   /// Shortest and longest extension "Add Time" accepts, in minutes.
@@ -235,12 +236,25 @@ struct StartTimerIntent: AppIntent {
 struct StartFocusSessionIntent: AppIntent {
   static var title: LocalizedStringResource = "Start Focus"
   static var description = IntentDescription(
-    "Starts a TimeMate focus session, or resumes the current session. A break that has not started yet is skipped."
+    "Starts a TimeMate focus session, or resumes the current session. A break that has not started yet is skipped. Minutes (1 to 180) sets the length of a new session without changing Settings."
   )
+
+  @Parameter(title: "Minutes", inclusiveRange: (1, 180))
+  var minutes: Int?
+
+  static var parameterSummary: some ParameterSummary {
+    When(\.$minutes, .hasAnyValue) {
+      Summary("Start focus for \(\.$minutes) min")
+    } otherwise: {
+      Summary("Start focus") {
+        \.$minutes
+      }
+    }
+  }
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    TimerIntentActions.startFocus(.shared)
+    TimerIntentActions.startFocus(.shared, minutes: minutes)
     return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }
@@ -248,19 +262,29 @@ struct StartFocusSessionIntent: AppIntent {
 struct StartFocusIntent: AppIntent {
   static var title: LocalizedStringResource = "Start Focus with Label"
   static var description = IntentDescription(
-    "Sets what you are working on and starts a TimeMate focus session, or resumes the current session. A running session keeps its label."
+    "Sets what you are working on and starts a TimeMate focus session, or resumes the current session. A running session keeps its label. Minutes (1 to 180) sets the length of a new session without changing Settings."
   )
 
+  /// Suggests the labels of recent sessions; a new one can be typed.
   @Parameter(title: "Label", requestValueDialog: "What are you working on?")
-  var label: String
+  var label: SessionLabelEntity
+
+  @Parameter(title: "Minutes", inclusiveRange: (1, 180))
+  var minutes: Int?
 
   static var parameterSummary: some ParameterSummary {
-    Summary("Start focus on \(\.$label)")
+    When(\.$minutes, .hasAnyValue) {
+      Summary("Start focus on \(\.$label) for \(\.$minutes) min")
+    } otherwise: {
+      Summary("Start focus on \(\.$label)") {
+        \.$minutes
+      }
+    }
   }
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    TimerIntentActions.startFocus(.shared, label: label)
+    TimerIntentActions.startFocus(.shared, label: label.id, minutes: minutes)
     return .result(dialog: TimerIntentActions.statusDialog(.shared))
   }
 }

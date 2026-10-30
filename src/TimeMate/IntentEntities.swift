@@ -149,3 +149,61 @@ struct TodayProgressQuery: EntityQuery {
     [await MainActor.run { TodayProgressEntity(TimerIntentActions.todayProgress(.shared)) }]
   }
 }
+
+/// A focus session label as "Start Focus with Label" takes it: one of the
+/// labels used in the last 90 days, or a new one. The label is its own id.
+struct SessionLabelEntity: AppEntity {
+  static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Label")
+  static var defaultQuery = SessionLabelQuery()
+
+  /// The label, already cleaned up by `SessionLabel.normalized`.
+  let id: String
+
+  var displayRepresentation: DisplayRepresentation {
+    DisplayRepresentation(title: LocalizedStringResource(stringLiteral: id))
+  }
+
+  /// `nil` for a blank label.
+  init?(_ text: String) {
+    guard let label = SessionLabel.normalized(text) else { return nil }
+    id = label
+  }
+}
+
+/// Suggests the labels of recent focus sessions and takes any typed label.
+struct SessionLabelQuery: EntityStringQuery {
+  /// How many recent labels the picker lists before anything is typed.
+  static let suggestionLimit = 20
+
+  func entities(for identifiers: [String]) async throws -> [SessionLabelEntity] {
+    identifiers.compactMap(SessionLabelEntity.init)
+  }
+
+  func entities(matching string: String) async throws -> [SessionLabelEntity] {
+    await MainActor.run { Self.entities(matching: string, history: PomodoroTimer.shared.history) }
+  }
+
+  func suggestedEntities() async throws -> [SessionLabelEntity] {
+    await MainActor.run { Self.suggestions(history: PomodoroTimer.shared.history) }
+  }
+
+  /// The labels of the latest focus sessions, newest first, each once.
+  static func suggestions(history: SessionHistory) -> [SessionLabelEntity] {
+    history.recentLabels(limit: suggestionLimit).compactMap(SessionLabelEntity.init)
+  }
+
+  /// What typing `string` offers: the label as typed (or the saved label it
+  /// matches apart from case, so statistics keep one name), then the saved
+  /// labels that contain it, newest first.
+  static func entities(matching string: String, history: SessionHistory) -> [SessionLabelEntity] {
+    let saved = history.recentLabels(limit: .max)
+    guard let typed = SessionLabel.normalized(string) else {
+      return saved.prefix(suggestionLimit).compactMap(SessionLabelEntity.init)
+    }
+    let same = saved.first { $0.caseInsensitiveCompare(typed) == .orderedSame }
+    let containing = saved.filter {
+      $0 != same && $0.range(of: typed, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    }
+    return ([same ?? typed] + containing).compactMap(SessionLabelEntity.init)
+  }
+}
