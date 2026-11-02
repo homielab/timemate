@@ -4,6 +4,8 @@ All notable changes to TimeMate will be documented in this file.
 
 ## Unreleased
 
+## 3.10
+
 ### Fixed
 
 - Opening TimeMate again brings back its menu bar icon after it was ⌘-dragged out of the menu bar, so Settings stay reachable with the Dock icon hidden.

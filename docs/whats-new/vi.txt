@@ -1,12 +1,7 @@
-TimeMate 3.9 cho Phím tắt bắt đầu phiên tập trung với thời lượng tuỳ ý và làm phím tắt bàn phím theo kiểu bàn phím của bạn.
-
-Mới
-• Tác vụ Bắt đầu tập trung và Bắt đầu tập trung với nhãn trong Phím tắt nhận thêm số phút tuỳ chọn (1–180): tự động hoá phiên 15 phút mà không đổi thời lượng Tập trung trong Cài đặt.
-• Bắt đầu tập trung với nhãn gợi ý các nhãn bạn đã dùng trong 90 ngày qua, bạn vẫn gõ được nhãn mới.
+TimeMate 3.10 sửa biểu tượng thanh menu, khởi động lại, màn hình nghỉ và thống kê Theo giờ.
 
 Sửa lỗi
-• Phím tắt hiện đúng phím theo kiểu bàn phím (AZERTY, QWERTZ, Dvorak…); tổ hợp macOS đã dùng sẽ bị từ chối.
-• Hoàn tác phiên gần nhất hiện ngày khi phiên không phải hôm nay, và tên nhãn dài hiện đủ khi rê chuột.
-• Thời lượng gõ trong Cài đặt được lưu khi đóng popover; Esc trả lại giá trị cũ.
-• Thêm thời gian khi không có phiên nào chạy nay báo "Không có phiên để kéo dài".
-• Đặt lại mọi cài đặt cho biết lịch sử và thống kê được giữ lại.
+• Mở lại TimeMate sẽ đưa biểu tượng thanh menu trở lại sau khi bị kéo ra, nên vẫn vào được Cài đặt khi ẩn biểu tượng Dock.
+• Khởi động lại để đổi ngôn ngữ hoặc sau khi Đặt lại mọi cài đặt không còn ghi phiên hai lần.
+• Màn hình nghỉ hiện lại khi màn hình kết nối lại, và giờ nghỉ được nhận lại sau khi khởi động lại vẫn giữ độ trễ Bỏ qua.
+• Thống kê Theo giờ chia phiên có tạm dừng theo đúng các giờ đã chạy.

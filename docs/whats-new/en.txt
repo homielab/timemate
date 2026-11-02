@@ -1,12 +1,7 @@
-TimeMate 3.9 lets Shortcuts start a focus session of any length and makes keyboard shortcuts follow your keyboard layout.
-
-New
-• The Shortcuts actions Start Focus and Start Focus with Label take an optional number of minutes (1–180): automate a 15-minute session without changing the Focus duration in Settings.
-• Start Focus with Label suggests the labels you used in the last 90 days, and you can still type a new one.
+TimeMate 3.10 fixes the menu bar icon, restarts, the break screen and the By hour statistics.
 
 Fixes
-• Keyboard shortcuts show the keys of your layout (AZERTY, QWERTZ, Dvorak…); a combination macOS already uses is refused.
-• Undo Last Session shows the date when the session wasn't today, and long label names show in full on hover.
-• A duration typed in Settings is saved when the popover closes; Esc puts back the old value.
-• Add Time with no session running now says "No session to extend".
-• Reset All Settings says your history and statistics are kept.
+• Opening TimeMate again brings back its menu bar icon after it was dragged out, so Settings stay reachable with the Dock icon hidden.
+• Restarting to change the language or after Reset All Settings no longer records the session twice.
+• The break screen comes back when displays reconnect, and a break picked up after a restart keeps its skip delay.
+• Statistics By hour spreads a paused session over the hours it really ran.
