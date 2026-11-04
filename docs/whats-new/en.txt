@@ -1,7 +1,7 @@
 TimeMate 3.10 fixes the menu bar icon, restarts, the break screen and the By hour statistics.
 
 Fixes
-• Opening TimeMate again brings back its menu bar icon after it was dragged out, so Settings stay reachable with the Dock icon hidden.
+• Opening TimeMate again brings back its menu bar icon if you dragged it out. It can't hide forever.
 • Restarting to change the language or after Reset All Settings no longer records the session twice.
 • The break screen comes back when displays reconnect, and a break picked up after a restart keeps its skip delay.
 • Statistics By hour spreads a paused session over the hours it really ran.

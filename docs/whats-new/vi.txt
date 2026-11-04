@@ -1,7 +1,7 @@
 TimeMate 3.10 sửa biểu tượng thanh menu, khởi động lại, màn hình nghỉ và thống kê Theo giờ.
 
 Sửa lỗi
-• Mở lại TimeMate sẽ đưa biểu tượng thanh menu trở lại sau khi bị kéo ra, nên vẫn vào được Cài đặt khi ẩn biểu tượng Dock.
+• Mở lại TimeMate là biểu tượng thanh menu quay về, kể cả khi bạn đã kéo nó đi. Nó không trốn mãi được đâu.
 • Khởi động lại để đổi ngôn ngữ hoặc sau khi Đặt lại mọi cài đặt không còn ghi phiên hai lần.
 • Màn hình nghỉ hiện lại khi màn hình kết nối lại, và giờ nghỉ được nhận lại sau khi khởi động lại vẫn giữ độ trễ Bỏ qua.
 • Thống kê Theo giờ chia phiên có tạm dừng theo đúng các giờ đã chạy.
