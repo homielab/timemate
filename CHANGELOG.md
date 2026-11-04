@@ -1,10 +1,10 @@
-# CHANGELOGS
+# Changelog
 
-All notable changes to TimeMate will be documented in this file.
+All notable changes to TimeMate are documented here. Format: [Keep a Changelog](https://keepachangelog.com).
 
-## Unreleased
+## [Unreleased]
 
-## 3.10
+## [3.10] - 2026-11-02
 
 ### Fixed
 
@@ -13,7 +13,7 @@ All notable changes to TimeMate will be documented in this file.
 - The break screen comes back when your displays reconnect, and keeps its Skip delay after a restart.
 - Statistics → By hour now spreads a paused session over the hours you really worked.
 
-## 3.9
+## [3.9] - 2026-10-31
 
 ### Added
 
@@ -27,7 +27,7 @@ All notable changes to TimeMate will be documented in this file.
 - Add Time in Shortcuts now says "No session to extend" when nothing is running.
 - Reset All Settings tells you your history and statistics are kept.
 
-## 3.8
+## [3.8] - 2026-10-31
 
 ### Changed
 
@@ -50,7 +50,7 @@ All notable changes to TimeMate will be documented in this file.
 - Plugging in or unplugging a display during a break no longer blanks the break screen.
 - A few small fixes in Settings, VoiceOver and keyboard shortcuts.
 
-## 3.7
+## [3.7] - 2026-10-30
 
 ### Added
 
@@ -67,7 +67,7 @@ All notable changes to TimeMate will be documented in this file.
 - A session paused in the evening and finished the next day counts for the day and hour you really worked.
 - More Vietnamese texts are translated.
 
-## 3.6
+## [3.6] - 2026-10-30
 
 ### Added
 
@@ -106,14 +106,14 @@ All notable changes to TimeMate will be documented in this file.
 - Statistics, CSV export and the daily goal notification are more accurate.
 - Squashed many more small bugs that liked to sneak in.
 
-## 3.5
+## [3.5] - 2026-10-25
 
 ### Changed
 
 - The long break can last up to 60 minutes.
 - A new app icon.
 
-## 3.4
+## [3.4] - 2026-09-20
 
 ### Added
 
@@ -129,6 +129,6 @@ All notable changes to TimeMate will be documented in this file.
 
 - A few texts that were not translated in English and Vietnamese.
 
-## 3.3 – Previous release
+## [3.3]
 
 See [releases](https://apps.apple.com/us/app/timemate-pomodoro-timer/id6754137356) for earlier changes.
